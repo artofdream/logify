@@ -1,11 +1,11 @@
 ---
 id: WI-20260903-initialize-github-main
 type: work-item
-status: active
+status: done
 owner: codex
 created: 2026-09-03T22:06:45Z
-updated: 2026-09-03T22:06:45Z
-lease_expires: 2026-09-03T23:06:45Z
+updated: 2026-09-03T22:07:36Z
+lease_expires: null
 scope:
   - repository Git index and initial main history
   - all canonical untracked files except AGENTS-1.md and ignored build outputs
@@ -47,14 +47,22 @@ base branch, so initializing `main` is the required bootstrap operation.
 
 ## Validation
 
-Application validation passed immediately before this work item. Staged-tree and
-remote verification remain pending.
+- `gofmt -w internal/analyzer` passed before staging.
+- `go test ./...`, `go vet ./...`, and the native build passed.
+- Fixture execution produced 6 events from 3 files with 0 warnings.
+- Staged-tree and working-tree `git diff --check` passed.
+- Initial commit `cbc0c2408891df04ab8219e898875e6b56246a0a` was pushed to
+  `origin/main` and upstream tracking was established.
+- `AGENTS-1.md` remains untracked and was not modified or committed.
 
 ## Activity log
 
 - `2026-09-03T22:06:45Z` — codex — opened bootstrap work item after resolving and
   validating Claude's parser findings.
+- `2026-09-03T22:07:36Z` — codex — initial commit pushed successfully; lease
+  released.
 
 ## Handoff or completion
 
-Pending initial commit and push.
+Complete. The remote now has a base branch, so subsequent changes should use
+feature branches and pull requests.
