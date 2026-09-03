@@ -31,12 +31,17 @@ are claims requiring a probe. For Logify:
 2. `docs/requirements/README.md` and affected FR/NFRs
 3. `docs/knowledge/index.md`
 4. Relevant ADRs and open questions
-5. Active work items with overlapping scope
+5. Active/queued cloud dispatches and work items with overlapping scope
 6. Relevant code, tests, and recent handoffs
 
 Requirements define intended behavior. Code and tests show implemented reality.
 ADRs preserve rationale. Work items coordinate temporary ownership. Handoffs and
 session notes are evidence, not higher-authority truth.
+
+Cloud assignments are published under `docs/collaboration/dispatches/` on
+`main`. They reserve requirement scope across machines when local worktrees and
+chat context are unavailable. Fetch before planning, and do not duplicate an
+`active`, `queued`, or `review` dispatch without a documented takeover.
 
 ## Before editing: claim bounded work
 
@@ -44,6 +49,7 @@ session notes are evidence, not higher-authority truth.
 
    ```text
    rg -n "^status: (active|review)$|^scope:" docs/collaboration/work-items
+   rg -n "^status: (active|queued|review)$|^requirements:" docs/collaboration/dispatches
    ```
 
 2. Inspect any potentially overlapping work item and the actual working-tree

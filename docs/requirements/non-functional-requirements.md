@@ -284,6 +284,8 @@
   4. Expired leases do not authorize overwriting uncommitted work.
   5. Overlap conflicts stop edits and preserve both artifacts until an explicit,
      documented resolution.
+  6. Remote assignments are published on the shared branch with requirement IDs,
+     owner, state, dependency, intended branch, and observed task/PR references.
 
 ### NFR-028 — Outer harness coverage
 
