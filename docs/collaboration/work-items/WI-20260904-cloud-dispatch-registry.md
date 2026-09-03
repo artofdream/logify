@@ -1,11 +1,11 @@
 ---
 id: WI-20260904-cloud-dispatch-registry
 type: work-item
-status: active
+status: done
 owner: codex
 created: 2026-09-03T22:13:16Z
-updated: 2026-09-03T22:13:16Z
-lease_expires: 2026-09-03T23:13:16Z
+updated: 2026-09-03T22:14:55Z
+lease_expires: null
 scope:
   - docs/collaboration/README.md
   - docs/collaboration/dispatches/**
@@ -49,13 +49,22 @@ PR exists yet.
 
 ## Validation
 
-Pending registry checks, diff check, commit, and push.
+- Five dispatch records exist: one observed active setup and four queued batches.
+- Each record declares requirements, owner, state, dependency, intended branch,
+  task reference, and PR reference.
+- `git diff --check` and staged diff checks passed.
+- Registry commit `1f0bf7d87cd755b611acdffb8565512d16eaea4c` was pushed to
+  `origin/main`.
+- `AGENTS-1.md` remained untracked and untouched.
 
 ## Activity log
 
 - `2026-09-03T22:13:16Z` — codex — confirmed clean tracked state, no active work
   item, and only the untouched untracked `AGENTS-1.md`.
+- `2026-09-03T22:14:55Z` — codex — registry validated and published; lease
+  released.
 
 ## Handoff or completion
 
-Pending.
+Complete. Dependent dispatches remain queued and must not be described as running
+until a task identifier is observed after their prerequisite merges.
