@@ -10,9 +10,13 @@ first are non-negotiable decision gates. For delegated work, follow
 `docs/multi-agent-workflow.md`; the coordinating agent remains responsible for
 integration and final verification.
 
-Claude may be working concurrently in this checkout. Before editing, read
+Other agents (Codex, Claude, Cursor Agent, Antigravity, Grok, or others) may be
+working concurrently in this checkout. Before editing, read
 `docs/collaboration/README.md`, inspect active work items and `git status`, then
-register bounded path ownership. Use `owner: codex` in Codex work/session files.
+register bounded path ownership. Use `owner: <your-agent-id>` in your own
+work/session files (for example `codex`, `claude`, `cursor-agent`,
+`antigravity`, or `grok-bot`) — pick one stable identifier and use it
+consistently across your work items, handoffs, and commit trailers.
 
 Product behavior and quality constraints are defined in `docs/requirements/`.
 Use the documentation-first workflow described there: update FR/NFRs before
@@ -31,7 +35,7 @@ requirement implemented until every acceptance criterion is verified.
 - `docs/requirements/`: canonical functional and non-functional requirements.
 - `docs/principles.md`: non-negotiable decision and delivery principles.
 - `docs/multi-agent-workflow.md`: delegation, handoff, and verification protocol.
-- `docs/collaboration/`: Codex–Claude work ownership and handoff records.
+- `docs/collaboration/`: multi-agent work ownership and handoff records.
 - `docs/knowledge/`: Obsidian-compatible durable Second Brain.
 
 ## Working rules
@@ -53,6 +57,8 @@ requirement implemented until every acceptance criterion is verified.
 
 ## Multi-agent coordination
 
+- Any number of agents (human or autonomous) may be active on this repository at
+  once. Nothing below assumes exactly two.
 - Delegate only bounded, independently verifiable work with named FR/NFR IDs and
   explicit file or area ownership.
 - Avoid concurrent edits to the same files. All agents share one working tree, so

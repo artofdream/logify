@@ -4,9 +4,10 @@ Use multiple agents only when work can be divided into bounded, independently
 verifiable tasks. A coordinating agent owns scope, integration, validation, and
 the final claim of completion.
 
-When Codex, Claude, or another autonomous tool may work in the same checkout,
-`docs/collaboration/README.md` is the canonical shared-worktree protocol. Register
-a work item and advisory path lease there before editing.
+When Codex, Claude, Cursor Agent, Antigravity, Grok, or another autonomous tool
+may work in the same checkout, `docs/collaboration/README.md` is the canonical
+shared-worktree protocol. Register a work item and advisory path lease there
+before editing. This scales to any number of concurrent agents, not just two.
 
 ## Roles
 

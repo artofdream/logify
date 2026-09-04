@@ -3,14 +3,15 @@ id: collaboration-protocol
 type: protocol
 status: active
 owner: human
-updated: 2026-09-03
-tags: [collaboration, codex, claude, second-brain]
+updated: 2026-09-04
+tags: [collaboration, multi-agent, second-brain]
 ---
 
-# Codex–Claude collaboration protocol
+# Multi-agent collaboration protocol
 
-This protocol coordinates Codex, Claude, humans, and other autonomous tools that
-may share the same checkout. It is document based, local first, Git reviewable,
+This protocol coordinates Codex, Claude, Cursor Agent, Antigravity, Grok, humans,
+and any other autonomous tool that may share the same checkout, working
+sequentially or in parallel. It is document based, local first, Git reviewable,
 and compatible with Obsidian. Files are the coordination API.
 
 It adapts two ideas from the [Adaptive Experience Architecture](https://architecture.artof.link/):
@@ -55,8 +56,9 @@ chat context are unavailable. Fetch before planning, and do not duplicate an
 2. Inspect any potentially overlapping work item and the actual working-tree
    status.
 3. Create one `work-items/WI-YYYYMMDD-short-slug.md` from the template. Declare
-   exact owned paths, affected requirements, owner (`codex`, `claude`, or human),
-   and an ISO-8601 UTC lease expiry.
+   exact owned paths, affected requirements, owner (a stable per-agent
+   identifier, e.g. `codex`, `claude`, `cursor-agent`, `antigravity`,
+   `grok-bot`, or a human's name), and an ISO-8601 UTC lease expiry.
 4. Use a short advisory lease and renew it by updating `updated` and
    `lease_expires`. A lease communicates intent; it is not a filesystem lock.
 5. If scope overlaps, perform read/review work only, select disjoint paths, or
@@ -64,6 +66,10 @@ chat context are unavailable. Fetch before planning, and do not duplicate an
 
 An expired lease is not permission to overwrite. Inspect Git and the working tree,
 then document takeover or request a transfer.
+
+This protocol does not assume exactly two participants. Any number of agents may
+hold non-overlapping leases at the same time; the coordination cost is in
+declaring and checking scope, not in the count of agents involved.
 
 ## During work
 
@@ -90,8 +96,8 @@ Before setting a work item to `done`:
 
 ## Conflict protocol
 
-1. Both agents stop editing overlapping paths.
-2. Preserve both diffs or artifacts; do not discard either silently.
+1. All agents with overlapping paths stop editing those paths.
+2. Preserve every diff or artifact in conflict; do not discard any silently.
 3. Compare requirements, ADRs, tests, and direct evidence.
 4. A coordinator records the resolution and rationale, or creates an open question.
 5. Reassign path ownership explicitly before work resumes.
