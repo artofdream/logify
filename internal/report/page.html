@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Logify incident timeline</title>
+<style>{{.CSS}}</style>
+</head>
+<body>
+<header>
+  <h1>Logify incident timeline</h1>
+  <p id="meta" class="muted"></p>
+</header>
+<main>
+  <div id="stats" class="stats" aria-label="Analysis summary"></div>
+  <p class="legend" role="note">
+    <span><strong>Observed evidence</strong> — parsed log records in the timeline</span>
+    <span><strong>Operator metadata</strong> — issues, tags, flags, and workflow you add</span>
+    <span><strong>Inferred correlations</strong> — not available in this report</span>
+  </p>
+  <section class="storage" aria-labelledby="storage-heading">
+    <h2 id="storage-heading" class="visually-hidden">Follow-up storage</h2>
+    <p id="storage-notice" class="notice"></p>
+    <div class="storage-actions">
+      <button type="button" id="btn-export">Export follow-up JSON</button>
+      <button type="button" id="btn-import">Import follow-up JSON</button>
+      <button type="button" id="btn-clear">Clear local follow-up data</button>
+      <input id="import-file" type="file" accept=".json,application/json" hidden>
+    </div>
+    <p id="storage-feedback" class="feedback" role="status" aria-live="polite"></p>
+  </section>
+  <div class="tabs" role="tablist" aria-label="Report views">
+    <button type="button" role="tab" id="tab-timeline" aria-controls="view-timeline" aria-selected="true">Timeline</button>
+    <button type="button" role="tab" id="tab-issues" aria-controls="view-issues" aria-selected="false">Issue queue</button>
+  </div>
+  <section id="view-timeline" class="view" role="tabpanel" aria-labelledby="tab-timeline">
+    <div class="controls">
+      <label>Search<input id="q" type="search" placeholder="Messages, files, instances"></label>
+      <label>Severity<select id="sev"><option value="">All severities</option></select></label>
+      <label>Instance<select id="inst"><option value="">All instances</option></select></label>
+      <label>Source<select id="src"><option value="">All sources</option></select></label>
+    </div>
+    <div id="timeline"></div>
+  </section>
+  <section id="view-issues" class="view" role="tabpanel" aria-labelledby="tab-issues" hidden>
+    <div class="controls issue-controls">
+      <label>Search issues<input id="iq" type="search" placeholder="Title, tags, evidence, owner"></label>
+      <label>State<select id="istate"><option value="">All states</option></select></label>
+      <label>Tags (all of)<input id="itags" type="text" placeholder="comma-separated tags"></label>
+      <label>Flag<select id="iflag">
+        <option value="">All flags</option>
+        <option value="flagged">Flagged only</option>
+      </select></label>
+      <label>Owner<input id="iowner" type="search" placeholder="Imported owner"></label>
+      <label>Severity<select id="isev"><option value="">All severities</option></select></label>
+      <label>Instance<select id="iinst"><option value="">All instances</option></select></label>
+      <label class="check">Overdue only<input id="ioverdue" type="checkbox"></label>
+    </div>
+    <div id="issue-feedback" class="feedback" role="status" aria-live="polite"></div>
+    <div id="issues"></div>
+  </section>
+</main>
+<script>
+const REPORT = {{.Data}};
+{{.FollowUp}}
+{{.Page}}
+</script>
+</body>
+</html>

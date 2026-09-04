@@ -159,7 +159,7 @@
 ### NFR-017 — Stable follow-up identities
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Acceptance criteria:**
   1. Issue identifiers do not depend on timeline display order.
   2. Evidence identifiers remain stable for unchanged normalized input across
@@ -170,7 +170,7 @@
 ### NFR-018 — Portable follow-up data
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Acceptance criteria:**
   1. Exported follow-up data uses a documented, non-proprietary format.
   2. The format carries an explicit schema version.
@@ -181,7 +181,7 @@
 ### NFR-019 — Safe issue metadata handling
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Acceptance criteria:**
   1. Imported titles, tags, notes, owners, and other metadata are treated as
      untrusted input and cannot inject executable HTML or JavaScript.
@@ -192,7 +192,7 @@
 ### NFR-020 — Transparent local persistence
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Acceptance criteria:**
   1. The UI states where follow-up data is currently stored.
   2. The UI warns before an action that would discard unsaved changes.
@@ -202,13 +202,16 @@
 ### NFR-021 — Issue-workflow usability
 
 - **Priority:** Should
-- **Status:** Proposed
+- **Status:** Partial
 - **Acceptance criteria:**
   1. Creating, flagging, tagging, and changing issue state are keyboard operable.
   2. Flag and state are communicated by text/icon semantics, not color alone.
   3. Common issue actions provide immediate visible confirmation.
   4. Filtering remains responsive with at least 10,000 tracked issues on documented
      reference hardware.
+- **Gap:** Controls are native buttons/inputs with text labels for flag and
+  state, and actions update a live status region. There is no measured 10,000-issue
+  filter probe or automated accessibility audit.
 
 ## Engineering principles
 

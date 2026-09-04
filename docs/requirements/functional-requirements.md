@@ -192,7 +192,7 @@
 ### FR-017 — Create an issue from timeline evidence
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Rationale:** A diagnostic finding must become an explicit unit of follow-up
   work without losing its supporting evidence.
 - **Acceptance criteria:**
@@ -201,11 +201,15 @@
   3. The originating event signature, instance, source file, line, first seen,
      last seen, and occurrence count remain linked as evidence.
   4. Creating an issue never changes the source log bundle.
+- **Note:** Evidence identity is computed in the report package from signature,
+  instance, file, and line (ADR-0001). `firstSeen` is the representative event
+  timestamp (first discovered row for that group), not a chronological minimum
+  unless discovery order matches time order.
 
 ### FR-018 — Tag issues
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Rationale:** Tags support classification across component, team, symptom, and
   investigation dimensions.
 - **Acceptance criteria:**
@@ -217,7 +221,7 @@
 ### FR-019 — Flag issues for attention
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Rationale:** Operators need a fast visual marker independent of log severity.
 - **Acceptance criteria:**
   1. A user can flag and unflag an issue.
@@ -228,7 +232,7 @@
 ### FR-020 — Track issue workflow state
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Acceptance criteria:**
   1. Every issue has one of: `open`, `investigating`, `blocked`, `resolved`, or
      `dismissed`.
@@ -250,7 +254,7 @@
 ### FR-022 — Persist issue tracking data
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Rationale:** Follow-up data must outlive a browser session while the generated
   HTML report remains portable and offline.
 - **Acceptance criteria:**
@@ -267,7 +271,7 @@
 ### FR-023 — Present an issue work queue
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Acceptance criteria:**
   1. The report exposes a dedicated issue list separate from the raw timeline.
   2. Each item shows title, flag, state, tags, owner, due date, linked evidence,
@@ -278,6 +282,10 @@
   5. Counts distinguish raw events, deduplicated event groups, and tracked issues.
   6. The UI distinguishes observed log evidence, inferred correlations, and
      operator-authored issue metadata.
+- **Note:** Owner, due date, and notes are displayed when present (including
+  after import). Editors for those fields are FR-021 and are not in this
+  baseline. Observed-record counts are the sum of group `occurrences`.
+  Correlations are labeled as not available (FR-012 remains Proposed).
 
 ### FR-024 — Merge recurring evidence into an existing issue
 
