@@ -120,8 +120,8 @@
   2. Severity is communicated by text, not color alone.
   3. Text and interactive controls meet WCAG 2.2 AA contrast requirements.
   4. Automated accessibility checks cover the generated report.
-- **Gap:** Controls rely on placeholder/option text and no automated accessibility
-  check exists.
+- **Gap:** Current controls are explicitly labeled and use native keyboard
+  interactions, but no automated accessibility or formal contrast check exists.
 
 ## Maintainability and verification
 
@@ -157,7 +157,7 @@
 ### NFR-017 — Stable follow-up identities
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Rationale:** Follow-up records must reconnect to the same normalized evidence
   without relying on mutable presentation order or browser-generated randomness.
 - **Acceptance criteria:**
@@ -181,18 +181,20 @@
 ### NFR-019 — Safe issue metadata handling
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Partial
 - **Acceptance criteria:**
   1. Imported or user-authored titles, tags, notes, owners, and other metadata are
      treated as untrusted input and cannot inject executable HTML or JavaScript.
   2. Import applies documented size and count limits.
   3. Invalid records are rejected with actionable errors without discarding valid
      records unless atomic import is explicitly selected.
+- **Gap:** FR-017 safely renders and bounds user-authored titles. Import, its
+  limits, and partial-record error handling remain FR-022 scope.
 
 ### NFR-020 — Transparent local persistence
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Partial
 - **Acceptance criteria:**
   1. The UI states where follow-up data is currently stored.
   2. The UI warns before an action that would discard unsaved changes.
@@ -201,11 +203,13 @@
 - **Delivery note:** Before FR-022, issue creation may use report-memory storage
   only if the report labels it as transient and warns before page unload. Export,
   import, and explicit clearing remain required before this NFR can be Implemented.
+- **Gap:** The report discloses in-tab memory storage, warns on unload, and makes
+  no network calls. Explicit export, import, and clear remain FR-022 scope.
 
 ### NFR-021 — Issue-workflow usability
 
 - **Priority:** Should
-- **Status:** Proposed
+- **Status:** Partial
 - **Acceptance criteria:**
   1. Creating, flagging, tagging, and changing issue state are keyboard operable.
   2. Flag and state are communicated by text/icon semantics, not color alone.
@@ -215,6 +219,9 @@
 - **Delivery note:** Feature slices satisfy the interaction criteria for the
   controls they introduce; the NFR remains Partial until the complete issue
   workflow and the 10,000-issue performance probe exist.
+- **Gap:** FR-017 issue creation and title editing use labeled native controls and
+  visible status feedback. Flag/tag/state interactions and the 10,000-issue
+  performance probe remain unimplemented.
 
 ## Engineering principles
 

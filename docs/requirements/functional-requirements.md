@@ -188,7 +188,7 @@
 ### FR-017 — Create an issue from timeline evidence
 
 - **Priority:** Must
-- **Status:** Proposed
+- **Status:** Implemented
 - **Rationale:** A diagnostic finding must become an explicit unit of follow-up
   work without losing its supporting evidence.
 - **Acceptance criteria:**

@@ -1,15 +1,15 @@
 ---
 id: WI-20260903-fr-017-issue-creation
 type: work-item
-status: active
+status: review
 owner: codex
 created: 2026-09-03T22:14:52Z
-updated: 2026-09-04T05:46:46Z
-lease_expires: 2026-09-04T07:46:46Z
+updated: 2026-09-04T06:08:00Z
+lease_expires: null
 scope:
   - docs/collaboration/dispatches/DSP-20260904-FR017.md
   - docs/collaboration/work-items/WI-20260903-fr-017-issue-creation.md
-  - docs/collaboration/handoffs/HO-20260903-fr-017-issue-creation.md
+  - docs/collaboration/handoffs/HO-20260904-0610-codex-fr-017.md
   - docs/knowledge/decisions/ADR-0001-follow-up-identities.md
   - docs/requirements/functional-requirements.md
   - docs/requirements/non-functional-requirements.md
@@ -88,6 +88,31 @@ The repository CI installs Go 1.22 and runs formatting, tests, vet, build, fixtu
 execution, and PR diff checks. Its observed results will be recorded before the
 requirement or work item is marked complete.
 
+Final observed evidence:
+
+- GitHub Actions run `33842921381`, commit
+  `c4fdcd1fa6f90a182edebf2a6a4b7ae538b66ccc`: `validate` job passed.
+  - gofmt reported no unformatted files.
+  - `go vet ./...` passed.
+  - `go build -o /tmp/logify ./cmd/logify` passed.
+  - `go test ./... -v` passed: analyzer tests `ok` in 0.004s and report tests
+    `ok` in 0.003s, including the new FR-017/NFR-017/NFR-019 cases.
+  - fixture execution wrote `/tmp/sample-report.html` with 6 events from 3 files
+    and 0 warnings; the report existence/doctype probes passed.
+  - PR diff check passed.
+- The same workflow's `enable auto-merge` job failed with `GraphQL: Pull Request
+  is still a draft (mergePullRequest)`. This is expected evidence that draft PR
+  #1 remained unmerged; it is not a validation-job failure.
+- A Node DOM execution probe passed: one stable issue was created, complete
+  evidence remained available, an unsafe title was edited as text, duplicate
+  creation reused the identity, focus/status and unload guards fired, and no
+  network call occurred.
+- Remote commit `61f62dd...` and local committed tree both resolved to
+  `4c1f20d2314ffbcf47d57b1018834c27c43f4390`; the subsequent formatter/evidence
+  tree also matched locally and remotely at
+  `d7986fb2be3fc206b58a7a8c68fad221bb062923`.
+- `git diff --check` and staged diff checks passed throughout.
+
 ## Activity log
 
 - `2026-09-03T22:14:52Z` — codex — read mandated project guidance, requirements,
@@ -108,7 +133,15 @@ requirement or work item is marked complete.
   ready-PR auto-merge job from violating the unmerged-PR constraint. CI run
   `33842702057` identified only `internal/analyzer/model.go` as unformatted; all
   later validation steps were skipped. Corrected the struct-column formatting.
+- `2026-09-04T06:08:00Z` — codex — CI run `33842921381` passed every required
+  validation step in its `validate` job. The expected draft-only auto-merge job
+  failure preserved the unmerged constraint. Node DOM behavior probe also passed;
+  requirement statuses were updated from observed evidence, the lease was
+  cleared, and the work item entered review.
 
 ## Handoff or completion
 
-Active; no handoff yet.
+Review. See
+[`HO-20260904-0610-codex-fr-017`](../handoffs/HO-20260904-0610-codex-fr-017.md)
+and draft PR [#1](https://github.com/artofdream/logify/pull/1). Do not merge as
+part of this handoff.
