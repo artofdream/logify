@@ -1,11 +1,11 @@
 ---
 id: WI-20260904-report-crash-quick-wins
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-04T19:40:00Z
-updated: 2026-09-04T19:40:00Z
-lease_expires: 2026-09-04T23:59:00Z
+updated: 2026-09-04T19:50:00Z
+lease_expires: 2026-09-05T00:00:00Z
 scope:
   - cmd/logify/
   - internal/analyzer/analyzer.go
@@ -54,13 +54,22 @@ license. FR-017 dispatch is active on other files and is not in this scope.
 
 ## Validation
 
-Pending.
+- `gofmt -l cmd internal` — clean
+- `go test ./... -count=1` — pass (`analyzer`, `report`)
+- `go vet ./...` — pass
+- `go build -o /tmp/logify ./cmd/logify` — pass
+- `/tmp/logify -output /tmp/sample-report.html testdata/case` — 6 events, 3 files, 0 warnings
+- Node parse of embedded JSON: `events` and `warnings` are arrays; `warnings.length` is 0 (no throw)
+- `git diff --check` — pass
+- PR: https://github.com/artofdream/logify/pull/2
 
 ## Activity log
 
 - `2026-09-04T19:40:00Z` — cursor-agent — claimed bounded quick-win paths after
   confirming no overlapping active work item on these files.
+- `2026-09-04T19:50:00Z` — cursor-agent — implementation and local validation
+  complete; PR #2 opened for review.
 
 ## Handoff or completion
 
-In progress.
+In review on PR #2. Do not mark done until the PR is reviewed and merged.
