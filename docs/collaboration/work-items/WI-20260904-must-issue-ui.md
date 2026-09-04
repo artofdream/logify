@@ -1,10 +1,10 @@
 ---
 id: WI-20260904-must-issue-ui
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-04T19:45:00Z
-updated: 2026-09-04T19:45:00Z
+updated: 2026-09-04T20:20:00Z
 lease_expires: 2026-09-05T08:00:00Z
 scope:
   - internal/report/
@@ -68,7 +68,21 @@ implements the report-layer design cleanly on the crash-fix branch.
 
 ## Validation
 
-Pending implementation.
+- `gofmt -l cmd internal` — clean
+- `go test ./... -count=1` — pass (`analyzer`, `report`, including Node
+  `followup_node_test.js` and `node --check` on page scripts)
+- `go vet ./...` — pass
+- `go build -o /tmp/logify ./cmd/logify` — pass
+- `/tmp/logify -output /tmp/sample-report.html testdata/case` — 6 events from
+  3 files, 0 warnings; embedded `events`/`warnings` are arrays; each event
+  has `evidence-v1-…`; no `http://` / `https://`
+- `git diff --check` — pass
+- Browser (file:///tmp/sample-report.html): create issue, title edit, tags
+  (case-insensitive unique), flag, state open→investigating→resolved (evidence
+  kept), filters, issue↔evidence navigation, export
+  `logify-follow-up-v1` / schemaVersion 1, clear, import restore, mobile 375px
+  readable. No page-script errors.
+- PR: https://github.com/artofdream/logify/pull/3 (draft vs `main`, on top of #2)
 
 ## Activity log
 
@@ -76,5 +90,11 @@ Pending implementation.
   inspecting PR #2 work item (review, crash-fix only) and sequential
   FR-017–FR-024 dispatches. Recorded explicit takeover: human asked for one
   combined Must UI PR on the crash-fix branch.
+- `2026-09-04T20:20:00Z` — cursor-agent — implementation, Go/Node tests,
+  fixture generation, and in-browser create/export/import verification
+  complete; draft PR #3 opened for review.
 
 ## Handoff or completion
+
+In review on PR #3. Do not mark done until the PR is reviewed and merged.
+Do not merge from this task.
