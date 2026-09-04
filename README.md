@@ -31,11 +31,13 @@ go build -o logify.exe ./cmd/logify
 .\logify.exe -output report.html C:\path\to\support-bundle
 ```
 
-Optional RFC3339 bounds filter timestamped events (untimestamped events are excluded when a bound is active):
+Optional RFC3339 bounds filter timestamped events (untimestamped events are excluded when a bound is active). Bounds are compared as absolute instants. Java and Apache error timestamps without an offset are parsed as UTC, so they will not stay in a `+02:00` "morning" window unless that window still covers the UTC instant. Apache access stamps that include an offset are compared using that offset.
 
 ```powershell
 .\logify.exe -from 2026-09-03T08:00:00+02:00 -to 2026-09-03T12:00:00+02:00 C:\logs
 ```
+
+On `testdata/case`, that example keeps the two Apache access events (`10:00:03+02:00` and `10:00:04+02:00`) and drops Tomcat/Apache error lines whose timezone-less `10:00:00,123` / `10:00:05` stamps become `10:00Z` and fall after `12:00+02:00` (`10:00:00.000Z`). `-from` / `-to` require a zone or `Z`; a value such as `2026-09-03T08:00:00` is rejected.
 
 ## Behavior
 
@@ -46,6 +48,7 @@ Optional RFC3339 bounds filter timestamped events (untimestamped events are excl
 - Normalizes every record into a common model, assigns HTTP severity from status class, and sorts timestamped events chronologically.
 - Generates stable signatures from normalized first lines and aggregates repeats per instance while retaining first/last occurrence times.
 - Embeds all data, styles, and JavaScript in the report. Filters work offline by text, severity, instance, and source.
+- Treat the HTML file as sensitive: it contains a copy of parsed log text (messages, paths, and host identifiers) and should be shared like the original bundle.
 
 ## Current limits
 

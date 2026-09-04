@@ -3,7 +3,7 @@ id: aea-framework-adoption
 type: framework-mapping
 status: active
 owner: human
-updated: 2026-09-03
+updated: 2026-09-04
 sources:
   - https://architecture.artof.link/
   - https://architecture.artof.link/schema.html
@@ -56,8 +56,8 @@ Status here is evidence-based and intentionally conservative.
 
 | Layer | Logify implementation | Status | Current probe/evidence | Gap |
 |---|---|---|---|---|
-| Guides | `AGENTS.md`, `CLAUDE.md`, requirements, collaboration protocol | Adopted locally | Files exist and cross-link | Repository is not yet committed; running agents must reload guidance |
-| Sensors | Go tests, fixtures, `go vet`, build, `git diff --check` | Partial | Commands pass locally | No CI, cross-platform matrix, docs/link checker, benchmark, or accessibility sensor |
+| Guides | `AGENTS.md`, `CLAUDE.md`, requirements, collaboration protocol | Adopted on `main` | Files exist, cross-link, and are committed | Running agents must reload guidance; no freshness/link checker |
+| Sensors | Go tests, fixtures, `go vet`, build, `git diff --check`, Ubuntu CI | Partial | `validate` job on `main` push/PR; local commands pass | No Windows/macOS test runners, docs/link checker, benchmark, accessibility sensor, or in-browser report execution |
 | Loop | Interpret → Act → Verify → Remember | Adopted as protocol | Collaboration steps and handoff gates are documented | No automation enforces every transition |
 | Memory | Git-reviewable Obsidian-compatible Markdown vault | Adopted locally | Vault structure and templates validate | No freshness/index automation; uncommitted memory is not shared history |
 | Permissions | Read-only source handling, scoped agent work items, advisory leases | Partial | Protocol and work-item schema exist | Leases are advisory; no merge coordinator or technical path lock exists |

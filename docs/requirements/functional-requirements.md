@@ -164,7 +164,7 @@
 ### FR-015 — Report recoverable scan problems
 
 - **Priority:** Must
-- **Status:** Implemented
+- **Status:** Partial
 - **Acceptance criteria:**
   1. An unreadable supported file or scanner failure produces a warning where
      the scanner can continue.
@@ -173,6 +173,10 @@
   4. Each warning identifies the affected file, failure category, and line or
      range where available.
   5. Summary counts reconcile processed, skipped, and failed inputs.
+- **Gap:** Warnings are plain `path: error` strings with no failure category or
+  line/range. Mid-file scanner overflow now keeps events parsed before the
+  failure, but skipped/failed input counts are not reconciled separately from
+  `filesScanned` and the warning list.
 
 ### FR-016 — Support compressed and rotated logs
 
