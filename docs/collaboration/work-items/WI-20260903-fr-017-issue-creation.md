@@ -79,6 +79,10 @@ Interim observations; final required validation remains pending:
   `/root/.cache/ms-playwright/chromium_headless_shell-1234/...`, but no browser
   executable exists. No browser interaction claim is based on that attempt.
 - `git diff --check` passed after implementation edits.
+- GitHub Actions CI run `33842702057` installed Go 1.22.12, then failed its
+  formatting gate because `internal/analyzer/model.go` was not gofmt-formatted.
+  Vet, build, tests, fixture execution, and PR diff checks were skipped. The
+  formatter-only discrepancy was corrected for the next run.
 
 The repository CI installs Go 1.22 and runs formatting, tests, vet, build, fixture
 execution, and PR diff checks. Its observed results will be recorded before the
@@ -100,6 +104,10 @@ requirement or work item is marked complete.
   responsive/keyboard-native controls, transient-storage disclosure, unload
   warning, focused Go tests, and user documentation. JavaScript syntax and diff
   checks passed; Go and browser runtime gaps are recorded under Validation.
+- `2026-09-04T06:04:00Z` — codex — opened draft PR #1 to prevent the repository's
+  ready-PR auto-merge job from violating the unmerged-PR constraint. CI run
+  `33842702057` identified only `internal/analyzer/model.go` as unformatted; all
+  later validation steps were skipped. Corrected the struct-column formatting.
 
 ## Handoff or completion
 
