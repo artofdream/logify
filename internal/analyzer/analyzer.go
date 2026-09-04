@@ -32,7 +32,7 @@ func Analyze(root string, o Options) (Result, error) {
 	if !i.IsDir() {
 		return Result{}, fmt.Errorf("%s is not a directory", abs)
 	}
-	r := Result{Root: abs, GeneratedAt: time.Now()}
+	r := Result{Root: abs, GeneratedAt: time.Now(), Events: []Event{}, Warnings: []string{}}
 	e = filepath.WalkDir(abs, func(p string, d os.DirEntry, we error) error {
 		if we != nil {
 			r.Warnings = append(r.Warnings, we.Error())
@@ -45,7 +45,6 @@ func Analyze(root string, o Options) (Result, error) {
 		es, x := parseFile(abs, p)
 		if x != nil {
 			r.Warnings = append(r.Warnings, fmt.Sprintf("%s: %v", p, x))
-			return nil
 		}
 		for _, v := range es {
 			if o.From != nil && (!v.HasTimestamp || v.Timestamp.Before(*o.From)) {
@@ -137,13 +136,28 @@ func parseFile(root, path string) ([]Event, error) {
 }
 func detect(p string) string {
 	n := strings.ToLower(filepath.Base(p))
-	if strings.Contains(n, "access") {
+	if isApacheAccessName(n) {
 		return "apache-access"
 	}
 	if n == "error.log" || n == "error_log" || n == "ssl_error.log" || n == "ssl_error_log" {
 		return "apache-error"
 	}
 	return "tomcat-java"
+}
+
+// isApacheAccessName matches conventional Apache/Tomcat access names, not every
+// filename that merely contains the substring "access" (e.g. AccessControl.log).
+func isApacheAccessName(n string) bool {
+	if n == "access.log" || n == "access_log" {
+		return true
+	}
+	if strings.Contains(n, "access_log") {
+		return true
+	}
+	if strings.Contains(n, "_access_") || strings.Contains(n, "-access-") {
+		return true
+	}
+	return strings.HasSuffix(n, "_access.log") || strings.HasSuffix(n, "-access.log")
 }
 func instance(rel string) string {
 	p := strings.Split(filepath.ToSlash(rel), "/")

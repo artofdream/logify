@@ -19,7 +19,9 @@
   1. Path handling uses Go portability APIs.
   2. Windows builds produce a runnable `.exe`.
   3. CI verifies Windows, Linux, and macOS builds and tests.
-- **Gap:** Cross-platform CI is not configured yet.
+- **Gap:** CI `validate` runs tests and a fixture smoke on Ubuntu only. The
+  release workflow cross-compiles Linux, Windows, and macOS (amd64/arm64) from
+  Ubuntu; it does not run the test suite on Windows or macOS runners.
 
 ### NFR-003 — Offline operation
 
