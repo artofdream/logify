@@ -42,6 +42,13 @@
     return d.toISOString();
   }
 
+  function localISODate(nowIso) {
+    var d = nowIso ? new Date(nowIso) : new Date();
+    var month = d.getMonth() + 1;
+    var day = d.getDate();
+    return d.getFullYear() + '-' + (month < 10 ? '0' : '') + month + '-' + (day < 10 ? '0' : '') + day;
+  }
+
   function issueIDFromEvidence(evidenceId) {
     return 'issue-v1-' + text(evidenceId).replace(/^evidence-v1-/, '');
   }
@@ -86,8 +93,7 @@
 
   function isOverdue(issue, nowIso) {
     if (!issue.due || CLOSED[issue.state]) return false;
-    var today = (nowIso || isoNow()).slice(0, 10);
-    return issue.due < today;
+    return issue.due < localISODate(nowIso);
   }
 
   function extraFields(raw) {

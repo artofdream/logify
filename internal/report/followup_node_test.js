@@ -214,6 +214,38 @@ function store(events, extra) {
   assert.strictEqual(round.issueCount(), 2);
 })();
 
+// FR-023: overdue uses the operator local calendar day, not the UTC ISO date.
+(function overdueUsesLocalDate() {
+  function pad(n) { return n < 10 ? '0' + n : String(n); }
+  function localYMD(d) {
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  // 04:00 UTC is the previous local day west of UTC; 20:00 UTC is the next
+  // local day east of UTC. Either can disagree with toISOString().slice(0, 10).
+  var offset = new Date(Date.UTC(2026, 8, 4, 12, 0, 0)).getTimezoneOffset();
+  var instant = offset > 0
+    ? new Date(Date.UTC(2026, 8, 4, 4, 0, 0))
+    : new Date(Date.UTC(2026, 8, 4, 20, 0, 0));
+  var clockNow = function () { return instant.toISOString(); };
+  var localDay = localYMD(instant);
+  var utcDay = instant.toISOString().slice(0, 10);
+  var s = store([event()], { now: clockNow });
+  var id = s.createFromEvent(event()).issue.id;
+  var exported = JSON.parse(s.exportJSON());
+
+  exported.issues[0].due = localDay;
+  var today = store([event()], { now: clockNow });
+  today.importJSON(JSON.stringify(exported));
+  assert.strictEqual(today.isOverdue(today.get(id)), false);
+  assert.strictEqual(today.filter({ overdue: true }).length, 0);
+
+  exported.issues[0].due = utcDay;
+  var utc = store([event()], { now: clockNow });
+  utc.importJSON(JSON.stringify(exported));
+  assert.strictEqual(utc.isOverdue(utc.get(id)), utcDay < localDay);
+  assert.strictEqual(utc.filter({ overdue: true }).length, utcDay < localDay ? 1 : 0);
+})();
+
 // Empty events/warnings equivalent: store must not throw.
 (function emptySafe() {
   var s = follow.createStore(null, { now: now });
