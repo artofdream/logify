@@ -1,0 +1,90 @@
+name: Release
+
+# Builds cross-platform logify binaries and attaches them to a GitHub Release
+# whenever a version tag (vX.Y.Z) is pushed. Per AGENTS.md's "Working rules",
+# generated executables are never committed to the repo — this workflow is
+# the sanctioned way to distribute them.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: gofmt check
+        run: |
+          fmt_out="$(gofmt -l cmd internal)"
+          if [ -n "$fmt_out" ]; then
+            echo "gofmt found unformatted files:"
+            echo "$fmt_out"
+            exit 1
+          fi
+      - run: go vet ./...
+      - run: go test ./...
+
+  build:
+    needs: validate
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          ext=""
+          if [ "${{ matrix.goos }}" = "windows" ]; then ext=".exe"; fi
+          out="dist/logify-${{ matrix.goos }}-${{ matrix.goarch }}${ext}"
+          mkdir -p dist
+          # NOTE: cmd/logify has no `version` variable to inject via -ldflags -X
+          # today, so the tag is only reflected in the filename/Release, not
+          # the binary itself. Add a `var version = "dev"` in cmd/logify and
+          # a `-ldflags "-X main.version=${GITHUB_REF_NAME}"` here if you want
+          # `logify -version` to report it later.
+          go build -trimpath -o "$out" ./cmd/logify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: logify-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*
+          retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum * > checksums.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
