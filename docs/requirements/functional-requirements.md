@@ -197,6 +197,10 @@
   3. The originating event signature, instance, source file, line, first seen,
      last seen, and occurrence count remain linked as evidence.
   4. Creating an issue never changes the source log bundle.
+  5. Creating the same issue again in one report reuses the evidence-derived issue
+     identity rather than creating a display-order-dependent duplicate.
+  6. Until FR-022 is implemented, the report identifies issue data as transient,
+     warns before discarding it, and does not imply that it has been persisted.
 
 ### FR-018 — Tag issues
 

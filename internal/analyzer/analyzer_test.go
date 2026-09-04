@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestAnalyzeFixtures(t *testing.T) {
@@ -33,6 +34,9 @@ func TestAnalyzeFixtures(t *testing.T) {
 		}
 		if v.Signature == "" {
 			t.Error("missing signature")
+		}
+		if !strings.HasPrefix(v.EvidenceID, "evidence-v1-") {
+			t.Errorf("missing versioned evidence ID: %q", v.EvidenceID)
 		}
 	}
 	if !stack {
@@ -69,5 +73,63 @@ func TestSignatureNormalizesIDs(t *testing.T) {
 	b := Event{SourceType: "x", Severity: Error, Message: "failure request 67890"}
 	if signature(a) != signature(b) {
 		t.Error("volatile IDs should normalize")
+	}
+}
+
+// FR-017 / NFR-017: evidence identity is stable, versioned, and independent of
+// mutable observation details or timeline display order.
+func TestEvidenceIDStableAndProvenanceBound(t *testing.T) {
+	base := Event{
+		Signature: "cafebabe",
+		Instance:  "tomcat-a",
+		File:      filepath.Join("tomcat-a", "catalina.out"),
+		Line:      17,
+	}
+	got := evidenceID(base)
+	if got != evidenceID(base) || !strings.HasPrefix(got, "evidence-v1-") || len(got) != len("evidence-v1-")+64 {
+		t.Fatalf("unstable or malformed evidence ID %q", got)
+	}
+
+	changedDisplayDetails := base
+	changedDisplayDetails.Message = "a different display message"
+	changedDisplayDetails.Occurrences = 99
+	changedDisplayDetails.Timestamp = time.Date(2026, 9, 4, 1, 2, 3, 0, time.UTC)
+	if evidenceID(changedDisplayDetails) != got {
+		t.Fatal("display/count/time details changed evidence identity")
+	}
+
+	for name, mutate := range map[string]func(*Event){
+		"signature": func(e *Event) { e.Signature = "deadbeef" },
+		"instance":  func(e *Event) { e.Instance = "tomcat-b" },
+		"file":      func(e *Event) { e.File = "tomcat-a/localhost.log" },
+		"line":      func(e *Event) { e.Line++ },
+	} {
+		t.Run(name, func(t *testing.T) {
+			changed := base
+			mutate(&changed)
+			if evidenceID(changed) == got {
+				t.Fatalf("%s did not change evidence identity", name)
+			}
+		})
+	}
+}
+
+// FR-010 / FR-017: a deduplicated group's evidence retains its actual minimum
+// and maximum observation times even when discovery order is not chronological.
+func TestDedupTracksFirstAndLastSeen(t *testing.T) {
+	later := time.Date(2026, 9, 4, 12, 0, 0, 0, time.UTC)
+	earlier := later.Add(-2 * time.Hour)
+	a := Event{Instance: "a", Signature: "same", Occurrences: 1, FirstSeen: &later, LastSeen: &later}
+	b := Event{Instance: "a", Signature: "same", Occurrences: 1, FirstSeen: &earlier, LastSeen: &earlier}
+
+	got := dedup([]Event{a, b})
+	if len(got) != 1 || got[0].Occurrences != 2 {
+		t.Fatalf("dedup result: %#v", got)
+	}
+	if got[0].FirstSeen == nil || !got[0].FirstSeen.Equal(earlier) {
+		t.Fatalf("first seen = %v, want %v", got[0].FirstSeen, earlier)
+	}
+	if got[0].LastSeen == nil || !got[0].LastSeen.Equal(later) {
+		t.Fatalf("last seen = %v, want %v", got[0].LastSeen, later)
 	}
 }

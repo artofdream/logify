@@ -16,10 +16,10 @@ Codex and Claude coordinate through a [document-based shared-checkout
 protocol](docs/collaboration/README.md) backed by an
 [Obsidian-compatible project knowledge vault](docs/knowledge/index.md).
 
-The planned next product layer turns timeline findings into follow-up issues with
+The report can turn timeline evidence into transient follow-up issues with stable
+evidence-derived identities and editable titles. Planned follow-up slices add
 tags, attention flags, workflow states, ownership, notes, due dates, and portable
-offline export/import. These capabilities are specified as proposed requirements
-and are not part of the current executable yet.
+offline export/import.
 
 ## Build and run
 
@@ -46,7 +46,16 @@ Optional RFC3339 bounds filter timestamped events (untimestamped events are excl
 - Normalizes every record into a common model, assigns HTTP severity from status class, and sorts timestamped events chronologically.
 - Generates stable signatures from normalized first lines and aggregates repeats per instance while retaining first/last occurrence times.
 - Embeds all data, styles, and JavaScript in the report. Filters work offline by text, severity, instance, and source.
+- Creates one transient issue per event or deduplicated group. Each issue links
+  its versioned identity to signature, instance, relative source path and line,
+  first/last seen, and occurrence count. The
+  [identity scheme](docs/knowledge/decisions/ADR-0001-follow-up-identities.md) is
+  independent of timeline display order.
 
 ## Current limits
 
 Format detection is filename/path based and intentionally conservative. Logs with custom date formats, multi-line messages that do not resemble Java stack traces, compressed/rotated logs without a recognized suffix, and timezone-less timestamps may need additional parser profiles. Timezone-less Java and Apache error timestamps are treated as UTC by Go's parser.
+
+Issues currently exist only in the open report tab. The report does not persist
+or transmit them and warns before a reload or close would discard them. Portable
+offline export/import is tracked separately by FR-022.

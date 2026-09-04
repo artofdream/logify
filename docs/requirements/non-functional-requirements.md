@@ -158,6 +158,8 @@
 
 - **Priority:** Must
 - **Status:** Proposed
+- **Rationale:** Follow-up records must reconnect to the same normalized evidence
+  without relying on mutable presentation order or browser-generated randomness.
 - **Acceptance criteria:**
   1. Issue identifiers do not depend on timeline display order.
   2. Evidence identifiers remain stable for unchanged normalized input across
@@ -181,8 +183,8 @@
 - **Priority:** Must
 - **Status:** Proposed
 - **Acceptance criteria:**
-  1. Imported titles, tags, notes, owners, and other metadata are treated as
-     untrusted input and cannot inject executable HTML or JavaScript.
+  1. Imported or user-authored titles, tags, notes, owners, and other metadata are
+     treated as untrusted input and cannot inject executable HTML or JavaScript.
   2. Import applies documented size and count limits.
   3. Invalid records are rejected with actionable errors without discarding valid
      records unless atomic import is explicitly selected.
@@ -196,6 +198,9 @@
   2. The UI warns before an action that would discard unsaved changes.
   3. A user can explicitly export, import, and clear local follow-up data.
   4. No follow-up data is transmitted over a network.
+- **Delivery note:** Before FR-022, issue creation may use report-memory storage
+  only if the report labels it as transient and warns before page unload. Export,
+  import, and explicit clearing remain required before this NFR can be Implemented.
 
 ### NFR-021 — Issue-workflow usability
 
@@ -207,6 +212,9 @@
   3. Common issue actions provide immediate visible confirmation.
   4. Filtering remains responsive with at least 10,000 tracked issues on documented
      reference hardware.
+- **Delivery note:** Feature slices satisfy the interaction criteria for the
+  controls they introduce; the NFR remains Partial until the complete issue
+  workflow and the 10,000-issue performance probe exist.
 
 ## Engineering principles
 

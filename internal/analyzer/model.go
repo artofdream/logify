@@ -24,8 +24,10 @@ type Event struct {
 	Line         int       `json:"line"`
 	Message      string    `json:"message"`
 	Signature    string    `json:"signature"`
+	EvidenceID   string    `json:"evidenceId"`
 	Occurrences  int       `json:"occurrences"`
-	LastSeen     time.Time `json:"lastSeen"`
+	FirstSeen    *time.Time `json:"firstSeen,omitempty"`
+	LastSeen     *time.Time `json:"lastSeen,omitempty"`
 	StatusCode   int       `json:"statusCode,omitempty"`
 }
 type Result struct {

@@ -158,8 +158,14 @@ func decorate(e *Event, src, inst, file string, line int) {
 	e.File = filepath.ToSlash(file)
 	e.Line = line
 	e.Signature = signature(*e)
+	e.EvidenceID = evidenceID(*e)
 	e.Occurrences = 1
-	e.LastSeen = e.Timestamp
+	if e.HasTimestamp {
+		firstSeen := e.Timestamp
+		lastSeen := e.Timestamp
+		e.FirstSeen = &firstSeen
+		e.LastSeen = &lastSeen
+	}
 }
 func java(s string) (Event, bool) {
 	m := javaStart.FindStringSubmatch(s)
@@ -260,6 +266,25 @@ func signature(e Event) string {
 	sum := sha256.Sum256([]byte(e.SourceType + "|" + string(e.Severity) + "|" + norm))
 	return hex.EncodeToString(sum[:8])
 }
+
+func evidenceID(e Event) string {
+	fields := []string{
+		"logify-evidence-v1",
+		e.Signature,
+		e.Instance,
+		filepath.ToSlash(e.File),
+		strconv.Itoa(e.Line),
+	}
+	h := sha256.New()
+	for i, field := range fields {
+		if i > 0 {
+			h.Write([]byte{0})
+		}
+		h.Write([]byte(field))
+	}
+	return "evidence-v1-" + hex.EncodeToString(h.Sum(nil))
+}
+
 func dedup(in []Event) []Event {
 	type key struct{ inst, sig string }
 	idx := map[key]int{}
@@ -268,8 +293,13 @@ func dedup(in []Event) []Event {
 		k := key{e.Instance, e.Signature}
 		if i, ok := idx[k]; ok {
 			out[i].Occurrences++
-			if e.HasTimestamp && e.Timestamp.After(out[i].LastSeen) {
-				out[i].LastSeen = e.Timestamp
+			if e.FirstSeen != nil && (out[i].FirstSeen == nil || e.FirstSeen.Before(*out[i].FirstSeen)) {
+				firstSeen := *e.FirstSeen
+				out[i].FirstSeen = &firstSeen
+			}
+			if e.LastSeen != nil && (out[i].LastSeen == nil || e.LastSeen.After(*out[i].LastSeen)) {
+				lastSeen := *e.LastSeen
+				out[i].LastSeen = &lastSeen
 			}
 			continue
 		}
