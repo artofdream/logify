@@ -22,6 +22,7 @@ Only `active` may carry a task identifier; only `review` may claim an observed P
 An agent must not duplicate `active`, `queued`, or `review` requirements without
 an explicit takeover recorded here and in the related work item.
 
-Queued dependencies are dispatched only after their prerequisites merge. Every
-transition records observed evidence; never invent a task ID, branch, PR, test
-result, or merge state.
+Queued dependencies are dispatched only after their prerequisites merge unless a
+human explicitly requests a combined takeover (see DSP-20260904-MUST-ISSUE-UI).
+Every transition records observed evidence; never invent a task ID, branch, PR,
+test result, or merge state.

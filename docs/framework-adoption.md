@@ -57,7 +57,7 @@ Status here is evidence-based and intentionally conservative.
 | Layer | Logify implementation | Status | Current probe/evidence | Gap |
 |---|---|---|---|---|
 | Guides | `AGENTS.md`, `CLAUDE.md`, requirements, collaboration protocol | Adopted on `main` | Files exist, cross-link, and are committed | Running agents must reload guidance; no freshness/link checker |
-| Sensors | Go tests, fixtures, `go vet`, build, `git diff --check`, Ubuntu CI | Partial | `validate` job on `main` push/PR; local commands pass | No Windows/macOS test runners, docs/link checker, benchmark, accessibility sensor, or in-browser report execution |
+| Sensors | Go tests, fixtures, `go vet`, build, `git diff --check`, Ubuntu CI, Node `--check` and `followup.js` store tests | Partial | `validate` job on `main` push/PR; local commands pass; `TestFollowUpStoreCreateExportImport` executes the follow-up store | No Windows/macOS test runners, docs/link checker, benchmark, accessibility sensor, or full in-browser DOM/page execution |
 | Loop | Interpret → Act → Verify → Remember | Adopted as protocol | Collaboration steps and handoff gates are documented | No automation enforces every transition |
 | Memory | Git-reviewable Obsidian-compatible Markdown vault | Adopted locally | Vault structure and templates validate | No freshness/index automation; uncommitted memory is not shared history |
 | Permissions | Read-only source handling, scoped agent work items, advisory leases | Partial | Protocol and work-item schema exist | Leases are advisory; no merge coordinator or technical path lock exists |
