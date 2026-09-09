@@ -4,7 +4,7 @@ type: work-item
 status: active
 owner: cursor-agent
 created: 2026-09-09T20:40:00Z
-updated: 2026-09-09T20:40:00Z
+updated: 2026-09-09T20:42:00Z
 lease_expires: 2026-09-10T08:40:00Z
 scope:
   - .github/workflows/ci.yml
@@ -59,7 +59,10 @@ fixture smoke. Remote: PR CI matrix legs.
 ## Activity log
 
 - `2026-09-09T20:40:00Z` — cursor-agent — claimed NFR-002 CI matrix scope.
+- `2026-09-09T20:42:00Z` — cursor-agent — matrix + docs pushed; local Linux
+  validation passed; NFR-002 remains Partial pending green Win/macOS CI.
+  PR: https://github.com/artofdream/logify/pull/9
 
 ## Handoff or completion
 
-Pending.
+Pending remote `test` matrix on ubuntu/windows/macos.

@@ -14,7 +14,7 @@
 ### NFR-002 — Cross-platform behavior
 
 - **Priority:** Must
-- **Status:** Implemented
+- **Status:** Partial
 - **Acceptance criteria:**
   1. Path handling uses Go portability APIs.
   2. Windows builds produce a runnable `.exe`.
@@ -30,6 +30,10 @@
      `go test`, and fixture smoke (bash on Unix, PowerShell on Windows).
      `gofmt` and `git diff --check` remain Linux-only. A `validate` aggregator
      still gates draft-skipping auto-merge.
+- **Gap:** AC1 and AC2 are verified. AC3 is implemented in the workflow; status
+  stays Partial until a PR/push has a green `test` matrix on all three OS
+  runners. Local Linux validation on this change: `gofmt`, `go test ./...`,
+  `go build`, `go vet`, `git diff --check`, and `testdata/case` smoke passed.
 
 
 ### NFR-003 — Offline operation
