@@ -60,17 +60,56 @@
   }
   function evidenceAnchor(event) { return 'evidence-' + digest(event.evidenceId); }
   function issueAnchor(issue) { return 'issue-' + digest(issue.id); }
+  var STATE_LABELS = {
+    open: 'Open',
+    investigating: 'Investigating',
+    blocked: 'Blocked',
+    resolved: 'Resolved',
+    dismissed: 'Dismissed'
+  };
+  var pendingFocus = null;
+  var detailFeedbackTimer = null;
+
+  function stateLabel(state) {
+    return STATE_LABELS[state] || String(state || '');
+  }
+
   function showFeedback(id, message, isError) {
     var node = $(id);
     node.textContent = message || '';
     node.className = isError ? 'feedback error' : 'feedback';
   }
+
+  function showDetailFeedback(message, isError) {
+    if (detailFeedbackTimer) clearTimeout(detailFeedbackTimer);
+    detailFeedbackTimer = setTimeout(function () {
+      showFeedback('issue-feedback', message, isError);
+    }, 400);
+  }
+
+  function rememberFocus(issueId, control) {
+    pendingFocus = { issueId: issueId, control: control || '' };
+  }
+
+  function applyPendingFocus() {
+    if (!pendingFocus) return;
+    var card = document.getElementById(issueAnchor({ id: pendingFocus.issueId }));
+    var control = pendingFocus.control;
+    pendingFocus = null;
+    if (!card) return;
+    var target = control ? card.querySelector('[data-control="' + control + '"]') : null;
+    if (!target) target = card.querySelector('[data-control="tag-input"]') || card;
+    if (target && typeof target.focus === 'function') target.focus();
+  }
+
   function switchView(name) {
     var timeline = name === 'timeline';
     $('view-timeline').hidden = !timeline;
     $('view-issues').hidden = timeline;
     $('tab-timeline').setAttribute('aria-selected', timeline ? 'true' : 'false');
     $('tab-issues').setAttribute('aria-selected', timeline ? 'false' : 'true');
+    $('tab-timeline').tabIndex = timeline ? 0 : -1;
+    $('tab-issues').tabIndex = timeline ? -1 : 0;
   }
 
   function renderStats() {
@@ -209,23 +248,33 @@
     var heading = el('div', 'issue-heading');
     var left = el('div');
     left.appendChild(el('div', 'issue-id', issue.id));
-    if (issue.flagged) left.appendChild(el('span', 'flag-badge', 'Flagged'));
-    left.appendChild(el('span', 'state-badge', issue.state));
+    if (issue.flagged) {
+      var flagBadge = el('span', 'flag-badge', 'Flagged');
+      flagBadge.setAttribute('aria-label', 'Flag: flagged');
+      left.appendChild(flagBadge);
+    }
+    var stateBadge = el('span', 'state-badge', 'State: ' + stateLabel(issue.state));
+    stateBadge.setAttribute('aria-label', 'Workflow state: ' + stateLabel(issue.state));
+    left.appendChild(stateBadge);
     if (overdue) left.appendChild(el('span', 'overdue-badge', 'Overdue'));
     if (!issue.evidenceMatched) left.appendChild(el('span', 'unmatched', 'Evidence not in this report'));
     heading.appendChild(left);
     var tools = el('div', 'event-actions');
     var flagBtn = el('button', '', issue.flagged ? 'Unflag' : 'Flag for attention');
     flagBtn.type = 'button';
+    flagBtn.setAttribute('data-control', 'flag');
     flagBtn.setAttribute('aria-pressed', issue.flagged ? 'true' : 'false');
+    flagBtn.setAttribute('aria-label', (issue.flagged ? 'Unflag ' : 'Flag for attention ') + issue.id);
     flagBtn.addEventListener('click', function () {
       var next = !issue.flagged;
       store.setFlagged(issue.id, next);
+      rememberFocus(issue.id, 'flag');
       renderAll();
       showFeedback('issue-feedback', (next ? 'Flagged ' : 'Unflagged ') + issue.id);
     });
     var evBtn = el('button', '', 'Show evidence');
     evBtn.type = 'button';
+    evBtn.setAttribute('data-control', 'evidence');
     evBtn.disabled = !issue.evidenceMatched;
     evBtn.addEventListener('click', function () {
       var live = events.filter(function (e) { return e.evidenceId === issue.evidence.id; })[0];
@@ -239,26 +288,32 @@
     var titleLabel = el('label', '', 'Title');
     var title = document.createElement('input');
     title.type = 'text';
+    title.id = 'title-' + digest(issue.id);
+    title.setAttribute('data-control', 'title');
     title.maxLength = LogifyFollowUp.LIMITS.maxTitle;
     title.value = issue.title;
     title.addEventListener('input', function () {
       store.updateTitle(issue.id, title.value);
-      showFeedback('issue-feedback', 'Updated title for ' + issue.id);
+      showDetailFeedback('Updated title for ' + issue.id);
     });
     titleLabel.appendChild(title);
     card.appendChild(titleLabel);
 
-    var stateLabel = el('label', '', 'Workflow state');
+    var stateField = el('label', '', 'Workflow state');
     var state = document.createElement('select');
-    LogifyFollowUp.STATES.forEach(function (s) { option(state, s, s); });
+    state.id = 'state-' + digest(issue.id);
+    state.setAttribute('data-control', 'state');
+    state.setAttribute('aria-label', 'Workflow state for ' + issue.id);
+    LogifyFollowUp.STATES.forEach(function (s) { option(state, s, stateLabel(s)); });
     state.value = issue.state;
     state.addEventListener('change', function () {
       store.setState(issue.id, state.value);
+      rememberFocus(issue.id, 'state');
       renderAll();
-      showFeedback('issue-feedback', 'State for ' + issue.id + ' is now ' + state.value);
+      showFeedback('issue-feedback', 'State for ' + issue.id + ' is now ' + stateLabel(state.value));
     });
-    stateLabel.appendChild(state);
-    card.appendChild(stateLabel);
+    stateField.appendChild(state);
+    card.appendChild(stateField);
 
     var op = el('div', 'box');
     op.appendChild(el('h3', '', 'Operator metadata'));
@@ -268,9 +323,11 @@
       var chip = el('span', 'tag', tag);
       var rm = el('button', '', 'Remove');
       rm.type = 'button';
-      rm.setAttribute('aria-label', 'Remove tag ' + tag);
+      rm.setAttribute('data-control', 'tag-remove');
+      rm.setAttribute('aria-label', 'Remove tag ' + tag + ' from ' + issue.id);
       rm.addEventListener('click', function () {
         store.removeTag(issue.id, tag);
+        rememberFocus(issue.id, 'tag-input');
         renderAll();
         showFeedback('issue-feedback', 'Removed tag from ' + issue.id);
       });
@@ -279,22 +336,36 @@
     });
     op.appendChild(tags);
     var add = el('div', 'tag-add');
+    var tagLabel = el('label', '', 'New tag');
     var tagInput = document.createElement('input');
     tagInput.type = 'text';
+    tagInput.id = 'tag-' + digest(issue.id);
+    tagInput.setAttribute('data-control', 'tag-input');
+    tagInput.setAttribute('autocomplete', 'off');
     tagInput.maxLength = LogifyFollowUp.LIMITS.maxTagLength;
-    tagInput.placeholder = 'Add tag';
+    tagInput.placeholder = 'e.g. database';
+    tagLabel.appendChild(tagInput);
     var addBtn = el('button', '', 'Add tag');
     addBtn.type = 'button';
-    addBtn.addEventListener('click', function () {
+    addBtn.setAttribute('data-control', 'tag-add');
+    function submitTag() {
       var result = store.addTag(issue.id, tagInput.value);
       if (result.error) {
         showFeedback('issue-feedback', result.error, true);
         return;
       }
+      rememberFocus(issue.id, 'tag-input');
       renderAll();
       showFeedback('issue-feedback', result.added ? 'Tagged ' + issue.id : 'Tag already present');
+    }
+    addBtn.addEventListener('click', submitTag);
+    tagInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitTag();
+      }
     });
-    add.appendChild(tagInput);
+    add.appendChild(tagLabel);
     add.appendChild(addBtn);
     op.appendChild(add);
 
@@ -302,6 +373,8 @@
     var ownerLabel = el('label', '', 'Owner');
     var ownerInput = document.createElement('input');
     ownerInput.type = 'text';
+    ownerInput.id = 'owner-' + digest(issue.id);
+    ownerInput.setAttribute('data-control', 'owner');
     ownerInput.maxLength = LogifyFollowUp.LIMITS.maxOwner;
     ownerInput.autocomplete = 'off';
     ownerInput.placeholder = 'Optional owner';
@@ -309,10 +382,10 @@
     ownerInput.addEventListener('input', function () {
       var result = store.setOwner(issue.id, ownerInput.value);
       if (result.error) {
-        showFeedback('issue-feedback', result.error, true);
+        showDetailFeedback(result.error, true);
         return;
       }
-      showFeedback('issue-feedback', 'Updated owner for ' + issue.id);
+      showDetailFeedback('Updated owner for ' + issue.id);
     });
     ownerLabel.appendChild(ownerInput);
     details.appendChild(ownerLabel);
@@ -321,6 +394,8 @@
     var dueRow = el('div', 'due-row');
     var dueInput = document.createElement('input');
     dueInput.type = 'date';
+    dueInput.id = 'due-' + digest(issue.id);
+    dueInput.setAttribute('data-control', 'due');
     dueInput.value = issue.due || '';
     dueInput.addEventListener('change', function () {
       var result = store.setDue(issue.id, dueInput.value);
@@ -328,17 +403,20 @@
         showFeedback('issue-feedback', result.error, true);
         return;
       }
+      rememberFocus(issue.id, 'due');
       renderAll();
       showFeedback('issue-feedback', dueInput.value ? ('Due date for ' + issue.id + ' is ' + dueInput.value) : ('Cleared due date for ' + issue.id));
     });
     var clearDue = el('button', '', 'Clear due date');
     clearDue.type = 'button';
+    clearDue.setAttribute('data-control', 'due-clear');
     clearDue.addEventListener('click', function () {
       var result = store.setDue(issue.id, null);
       if (result.error) {
         showFeedback('issue-feedback', result.error, true);
         return;
       }
+      rememberFocus(issue.id, 'due');
       renderAll();
       showFeedback('issue-feedback', 'Cleared due date for ' + issue.id);
     });
@@ -350,6 +428,8 @@
 
     var notesLabel = el('label', '', 'Notes');
     var notes = document.createElement('textarea');
+    notes.id = 'notes-' + digest(issue.id);
+    notes.setAttribute('data-control', 'notes');
     notes.maxLength = LogifyFollowUp.LIMITS.maxNotes;
     notes.rows = 5;
     notes.placeholder = 'Optional investigation notes';
@@ -357,10 +437,10 @@
     notes.addEventListener('input', function () {
       var result = store.setNotes(issue.id, notes.value);
       if (result.error) {
-        showFeedback('issue-feedback', result.error, true);
+        showDetailFeedback(result.error, true);
         return;
       }
-      showFeedback('issue-feedback', 'Updated notes for ' + issue.id);
+      showDetailFeedback('Updated notes for ' + issue.id);
     });
     notesLabel.appendChild(notes);
     details.appendChild(notesLabel);
@@ -387,19 +467,32 @@
     return card;
   }
 
-  function renderIssues() {
+  function renderIssues(opts) {
+    opts = opts || {};
     var root = $('issues');
     clear(root);
     var visible = store.filter(issueFilters());
-    if (!store.issueCount()) {
+    var total = store.issueCount();
+    var summary = $('issue-summary');
+    var summaryText;
+    if (!total) {
+      summaryText = 'No issues yet. Create one from a timeline event or group.';
+    } else {
+      summaryText = 'Showing ' + visible.length + ' of ' + total + ' issue(s).';
+    }
+    summary.textContent = summaryText;
+    if (!total) {
       root.appendChild(el('div', 'empty', 'No issues yet. Create one from a timeline event or group.'));
       return;
     }
     if (!visible.length) {
       root.appendChild(el('div', 'empty', 'No issues match the current filters.'));
+      if (opts.announceCount) showFeedback('issue-feedback', summaryText);
       return;
     }
     visible.forEach(function (issue) { root.appendChild(renderIssueCard(issue)); });
+    if (opts.announceCount) showFeedback('issue-feedback', summaryText);
+    applyPendingFocus();
   }
 
   function renderWarnings() {
@@ -467,7 +560,7 @@
   fillUnique($('src'), events.map(function (e) { return e.sourceType; }));
   fillUnique($('isev'), events.map(function (e) { return e.severity; }));
   fillUnique($('iinst'), events.map(function (e) { return e.instance; }));
-  LogifyFollowUp.STATES.forEach(function (s) { option($('istate'), s, s); });
+  LogifyFollowUp.STATES.forEach(function (s) { option($('istate'), s, stateLabel(s)); });
 
   $('meta').textContent = (REPORT.root || '.') + ' • generated ' + formatTime(REPORT.generatedAt);
   var redaction = REPORT.redaction || {};
@@ -481,11 +574,24 @@
     $(id).addEventListener('input', renderTimeline);
   });
   ['iq', 'istate', 'itags', 'iflag', 'iowner', 'isev', 'iinst', 'ioverdue'].forEach(function (id) {
-    $(id).addEventListener('input', renderIssues);
-    $(id).addEventListener('change', renderIssues);
+    $(id).addEventListener('input', function () { renderIssues({ announceCount: true }); });
+    $(id).addEventListener('change', function () { renderIssues({ announceCount: true }); });
   });
   $('tab-timeline').addEventListener('click', function () { switchView('timeline'); });
   $('tab-issues').addEventListener('click', function () { switchView('issues'); });
+  [$('tab-timeline'), $('tab-issues')].forEach(function (tab, index, tabs) {
+    tab.addEventListener('keydown', function (e) {
+      var next = index;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (index + 1) % tabs.length;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (index - 1 + tabs.length) % tabs.length;
+      else if (e.key === 'Home') next = 0;
+      else if (e.key === 'End') next = tabs.length - 1;
+      else return;
+      e.preventDefault();
+      tabs[next].focus();
+      tabs[next].click();
+    });
+  });
   $('btn-export').addEventListener('click', exportFollowUp);
   $('btn-import').addEventListener('click', function () { $('import-file').click(); });
   $('import-file').addEventListener('change', function () {

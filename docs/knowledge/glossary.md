@@ -28,5 +28,7 @@ updated: 2026-09-09
 - **Work item:** a bounded unit of agent/human work with advisory path ownership.
 - **Lease:** time-limited declaration of edit intent; not a filesystem lock.
 - **Probe:** a direct observation, test, or command that supports a status claim.
+- **Issue-filter probe:** Node harness that imports 10,000 synthetic issues and
+  times `store.filter` for NFR-021 AC4. It does not render issue cards.
 - **Promotion:** moving durable learning from session/handoff context into a
   canonical requirement, ADR, test, fixture, or knowledge note.

@@ -28,6 +28,11 @@ Recoverable scan problems are structured warnings (`walk-error`, `open-error`,
 message. `filesScanned` equals `filesProcessed + filesFailed`; `filesSkipped`
 counts walk paths that could not be visited (FR-015 / ADR-0004).
 
+Issue-workflow usability (NFR-021 / ADR-0006): flag and state are named in
+text; common actions restore focus after a card rebuild and confirm in a live
+status region. `nfr021_filter_probe.js` times `store.filter` at 10,000 issues;
+the page still renders every matching card (see Q-002).
+
 This note describes observed structure. Requirements remain authoritative for
 intended behavior, and tests/compiler output remain evidence of implementation.
 

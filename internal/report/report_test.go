@@ -40,6 +40,12 @@ func TestWriteSelfContained(t *testing.T) {
 	if !strings.Contains(s, "Sensitive copy.") || !strings.Contains(s, "embeds parsed log text") {
 		t.Fatal("report is missing the NFR-006 sensitivity banner")
 	}
+	if !strings.Contains(s, "issue-workflow-hint") || !strings.Contains(s, "issue-summary") {
+		t.Fatal("report is missing NFR-021 issue-workflow usability chrome")
+	}
+	if !strings.Contains(s, `aria-live="polite"`) || !strings.Contains(s, `aria-atomic="true"`) {
+		t.Fatal("report is missing live status semantics")
+	}
 }
 
 func TestWriteEmptySlicesAreJSONArrays(t *testing.T) {
@@ -224,7 +230,7 @@ func TestWriteEscapesOperatorAndLogText(t *testing.T) {
 
 func TestPageScriptsAreSyntacticallyValid(t *testing.T) {
 	node := requireNode(t)
-	for _, name := range []string{"followup.js", "page.js", "followup_node_test.js"} {
+	for _, name := range []string{"followup.js", "page.js", "followup_node_test.js", "nfr021_a11y_test.js", "nfr021_filter_probe.js"} {
 		cmd := exec.Command(node, "--check", name)
 		cmd.Dir = "."
 		if out, err := cmd.CombinedOutput(); err != nil {
@@ -301,6 +307,30 @@ func mustRead(t *testing.T, path string) []byte {
 		t.Fatal(err)
 	}
 	return b
+}
+
+func TestNFR021IssueWorkflowA11yContracts(t *testing.T) {
+	// NFR-021 AC1–AC3: source-contract audit, not a browser AT or axe run.
+	node := requireNode(t)
+	cmd := exec.Command(node, "nfr021_a11y_test.js")
+	cmd.Dir = "."
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("NFR-021 a11y contracts: %v\n%s", err, out)
+	}
+}
+
+func TestNFR021IssueFilterProbe(t *testing.T) {
+	// NFR-021 AC4: 10,000-issue store.filter probe. Fails only on the CI guard,
+	// not on the 100ms interactive target (see the printed JSON + research note).
+	node := requireNode(t)
+	cmd := exec.Command(node, "nfr021_filter_probe.js")
+	cmd.Dir = "."
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("NFR-021 filter probe: %v\n%s", err, out)
+	}
+	t.Logf("%s", out)
 }
 
 func requireNode(t *testing.T) string {

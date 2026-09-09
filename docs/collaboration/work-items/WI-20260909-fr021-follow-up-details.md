@@ -104,9 +104,11 @@ this work item takes the report UI paths for FR-021 only.
 - `2026-09-09T20:24:00Z` — cursor-agent — PR #4 squash-merged to `main` as
   `01ae8bf` at 2026-09-09T19:52:40Z. Close-out verifies merge, not a re-run
   of product probes. FR-024 is draft PR #5 (not this item). Lease released.
+- `2026-09-09T20:54:28Z` — cursor-agent — Report UI paths for NFR-021 usability
+  transferred to WI-20260909-nfr021-issue-workflow-usability / DSP-20260909-NFR021.
 
 ## Handoff or completion
 
 Done. Merged as PR #4 on 2026-09-09T19:52:40Z
 (`01ae8bf57cc57a02ed610acbeb229feda4d44519`). FR-024 is a separate draft
-(PR #5) and is not marked done here.
+(PR #5). NFR-021 usability is WI-20260909-nfr021-issue-workflow-usability.
