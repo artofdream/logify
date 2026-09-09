@@ -1,11 +1,11 @@
 ---
 id: WI-20260904-must-issue-ui
 type: work-item
-status: review
+status: done
 owner: cursor-agent
 created: 2026-09-04T19:45:00Z
-updated: 2026-09-04T20:20:00Z
-lease_expires: 2026-09-05T08:00:00Z
+updated: 2026-09-09T20:24:00Z
+lease_expires: null
 scope:
   - internal/report/
   - README.md
@@ -82,7 +82,11 @@ implements the report-layer design cleanly on the crash-fix branch.
   kept), filters, issue↔evidence navigation, export
   `logify-follow-up-v1` / schemaVersion 1, clear, import restore, mobile 375px
   readable. No page-script errors.
-- PR: https://github.com/artofdream/logify/pull/3 (draft vs `main`, on top of #2)
+- PR: https://github.com/artofdream/logify/pull/3 (merged vs `main`, on top of #2)
+- Merge (verified 2026-09-09, GitHub API + `origin/main`): squash
+  `64bbc1c7c42763ee824dd962542ee0835faa2d51` at 2026-09-04T20:28:16Z.
+  This close-out checked merge evidence only; it did not re-run the Go/Node
+  or in-browser probes above.
 
 ## Activity log
 
@@ -96,8 +100,13 @@ implements the report-layer design cleanly on the crash-fix branch.
 - `2026-09-09T19:21:31Z` — cursor-agent — PR #3 is on `main` (`64bbc1c`).
   FR-021 editor work transfers to WI-20260909-fr021-follow-up-details /
   DSP-20260909-FR021. This item keeps the merged Must UI scope only.
+- `2026-09-09T20:24:00Z` — cursor-agent — marked done. PR #3 squash
+  `64bbc1c` (2026-09-04T20:28:16Z) verified on `origin/main`. FR-021 later
+  merged as PR #4 (`01ae8bf`, 2026-09-09T19:52:40Z). FR-024 is draft PR #5
+  and is out of this item. Lease released.
 
 ## Handoff or completion
 
-Must UI merged in PR #3. FR-021 remains Proposed and is owned by
-WI-20260909-fr021-follow-up-details. Do not merge from this task.
+Done. Must UI (FR-017…020, FR-022, FR-023) merged as PR #3 on
+2026-09-04T20:28:16Z (`64bbc1c7c42763ee824dd962542ee0835faa2d51`).
+Follow-on: FR-021 merged as PR #4 (`01ae8bf`); FR-024 remains draft PR #5.
