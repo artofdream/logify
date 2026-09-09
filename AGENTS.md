@@ -108,6 +108,11 @@ On PowerShell, use `.\logify.exe` instead of `./logify.exe`. If Go is not on
 Report commands and observed outcomes exactly, including anything not run or
 failed.
 
+CI (`.github/workflows/ci.yml`) runs `go vet`, `go test`, a native `go build`,
+and the fixture smoke on `ubuntu-latest`, `windows-latest`, and `macos-latest`.
+`gofmt` and `git diff --check` run on Linux only. The `validate` job is a
+single aggregator over that matrix so draft auto-merge can keep requiring it.
+
 ## Scope discipline
 
 - Prefer focused packages and table-driven tests over broad rewrites.

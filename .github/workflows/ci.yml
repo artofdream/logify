@@ -10,9 +10,24 @@ permissions:
   contents: read
 
 jobs:
-  validate:
-    name: validate
-    runs-on: ubuntu-latest
+  # NFR-002 AC3: native test + build on each supported OS. gofmt and
+  # git diff --check stay Linux-only (bash + LF-stable checkout).
+  test:
+    name: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            bin: logify
+            lint: true
+          - os: windows-latest
+            bin: logify.exe
+            lint: false
+          - os: macos-latest
+            bin: logify
+            lint: false
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,6 +38,7 @@ jobs:
           go-version: "1.22"
 
       - name: gofmt (no unformatted files)
+        if: matrix.lint
         run: |
           out="$(gofmt -l cmd internal)"
           if [ -n "$out" ]; then
@@ -35,20 +51,47 @@ jobs:
         run: go vet ./...
 
       - name: go build
-        run: go build -o /tmp/logify ./cmd/logify
+        run: go build -o ${{ matrix.bin }} ./cmd/logify
 
       - name: go test
         run: go test ./... -v
 
       - name: fixture bundle smoke test
+        if: runner.os != 'Windows'
         run: |
-          /tmp/logify -output /tmp/sample-report.html testdata/case
-          test -s /tmp/sample-report.html
-          grep -q "<!doctype html>" /tmp/sample-report.html
+          ./${{ matrix.bin }} -output sample-report.html testdata/case
+          test -s sample-report.html
+          grep -q "<!doctype html>" sample-report.html
+
+      - name: fixture bundle smoke test
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\${{ matrix.bin }} -output sample-report.html testdata\case
+          if (-not (Test-Path -LiteralPath sample-report.html)) { throw "missing sample-report.html" }
+          if ((Get-Item -LiteralPath sample-report.html).Length -eq 0) { throw "empty sample-report.html" }
+          if (-not (Select-String -LiteralPath sample-report.html -Pattern '<!doctype html>' -SimpleMatch -Quiet)) {
+            throw "sample-report.html missing <!doctype html>"
+          }
 
       - name: whitespace/diff check (PRs only)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && matrix.lint
         run: git diff --check "origin/${{ github.event.pull_request.base.ref }}...HEAD"
+
+  # Single required-check name for branch protection. Succeeds only when
+  # every OS matrix leg of `test` succeeded.
+  validate:
+    name: validate
+    needs: test
+    if: ${{ always() && !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: require all OS test legs
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "test matrix result: ${{ needs.test.result }}"
+            exit 1
+          fi
 
   # Enables GitHub's native auto-merge on a PR once `validate` passes, so a
   # green PR merges itself against branch-protection's required status check

@@ -14,14 +14,23 @@
 ### NFR-002 — Cross-platform behavior
 
 - **Priority:** Must
-- **Status:** Partial
+- **Status:** Implemented
 - **Acceptance criteria:**
   1. Path handling uses Go portability APIs.
   2. Windows builds produce a runnable `.exe`.
   3. CI verifies Windows, Linux, and macOS builds and tests.
-- **Gap:** CI `validate` runs tests and a fixture smoke on Ubuntu only. The
-  release workflow cross-compiles Linux, Windows, and macOS (amd64/arm64) from
-  Ubuntu; it does not run the test suite on Windows or macOS runners.
+- **Evidence:**
+  1. Analyzer and report path handling uses `path/filepath` (`Abs`, `WalkDir`,
+     `Rel`, `Base`, `Join`, `ToSlash`). Event `File` values are slash-normalized
+     for display. Inspected; no product rewrite.
+  2. `.github/workflows/release.yml` cross-compiles `windows/amd64` and
+     `windows/arm64` to `logify-windows-*.exe` from Ubuntu.
+  3. `.github/workflows/ci.yml` `test` job matrices `ubuntu-latest`,
+     `windows-latest`, and `macos-latest` for `go vet`, native `go build`,
+     `go test`, and fixture smoke (bash on Unix, PowerShell on Windows).
+     `gofmt` and `git diff --check` remain Linux-only. A `validate` aggregator
+     still gates draft-skipping auto-merge.
+
 
 ### NFR-003 — Offline operation
 
