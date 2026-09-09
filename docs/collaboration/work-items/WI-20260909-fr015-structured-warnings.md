@@ -1,10 +1,10 @@
 ---
 id: WI-20260909-fr015-structured-warnings
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-09T20:29:00Z
-updated: 2026-09-09T20:29:00Z
+updated: 2026-09-09T20:35:00Z
 lease_expires: 2026-09-10T08:00:00Z
 scope:
   - cmd/logify/main.go
@@ -65,19 +65,46 @@ this lease is active.
 
 ## Validation
 
+Observed on this branch:
+
 ```text
 gofmt -w cmd internal
 go test ./...
+# ? cmd/logify [no test files]
+# ok internal/analyzer
+# ok internal/report
 go build -o logify.exe ./cmd/logify
 go vet ./...
 git diff --check
 ./logify.exe -output sample-report.html testdata/case
+# Wrote sample-report.html (6 events from 3 files; processed=3 skipped=0 failed=0; 0 warnings)
 ```
+
+Generated `logify.exe` and `sample-report.html` were deleted after the probe
+and were not committed.
+
+Mixed-bundle CLI (temp dir: readable log, 000-mode dir, 000-mode `.log`,
+overflow `.log`):
+
+```text
+Wrote /tmp/fr015-warning-report.html (2 events from 3 files; processed=2 skipped=1 failed=1; 3 warnings)
+  blocked [walk-error] open …/blocked: permission denied
+  huge.log:2 [scan-overflow] bufio.Scanner: token too long
+  locked.log [open-error] open …/locked.log: permission denied
+```
+
+Browser probe of that report: stats 3/2/1/1/3, Scan warnings listed all three
+categories with `huge.log:2`, timeline kept `before` and `visible`.
 
 ## Activity log
 
 - `2026-09-09T20:29:00Z` — cursor-agent — claimed FR-015 structured warnings
   after fetching `origin/main` at `01ae8bf`. No active/queued dispatch overlaps
   FR-015. Draft PRs #5–#7 left untouched.
+- `2026-09-09T20:35:00Z` — cursor-agent — validation commands above passed.
+  Draft PR https://github.com/artofdream/logify/pull/8. FR-015 marked
+  Implemented from those probes.
 
 ## Handoff or completion
+
+PR #8 is open against `main` and must not be merged by this agent.

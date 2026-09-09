@@ -164,7 +164,7 @@
 ### FR-015 — Report recoverable scan problems
 
 - **Priority:** Must
-- **Status:** Partial
+- **Status:** Implemented
 - **Acceptance criteria:**
   1. An unreadable supported file or scanner failure produces a warning where
      the scanner can continue.
@@ -192,9 +192,15 @@
   - Identity: `filesScanned = filesProcessed + filesFailed`.
     `filesScanned + filesSkipped = filesProcessed + filesFailed + filesSkipped`.
   Unsupported filenames are a discovery filter, not skipped inputs.
-- **Gap:** Warnings are still being migrated from plain `path: error` strings;
-  skipped/failed counts are being added. Status stays Partial until every
-  acceptance criterion has a passing probe.
+- **Verification:** `TestOpenErrorKeepsOtherFiles`, `TestWalkErrorSkippedAndOtherFilesKept`,
+  `TestOverflowKeepsEarlierEvents`, `TestWarningFromScanCategories`,
+  `TestWriteStructuredWarningsAndCounts`, plus `go test ./...`, `go vet`,
+  and `./logify.exe -output sample-report.html testdata/case` →
+  `6 events from 3 files; processed=3 skipped=0 failed=0; 0 warnings`.
+  A mixed unreadable/overflow bundle produced
+  `processed=2 skipped=1 failed=1; 3 warnings` with categories `walk-error`,
+  `scan-overflow`, and `open-error`; the HTML report listed those warnings and
+  kept the `before` and `visible` events.
 
 ### FR-016 — Support compressed and rotated logs
 
