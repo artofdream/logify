@@ -39,6 +39,7 @@ Import/link/dismiss/acknowledge do not change workflow state.
 - `./logify.exe -output sample-report.html testdata/case` — 6 events, 3 files, 0 warnings; report contains Link to existing issue, Recurring evidence review, `logify-follow-up-v1`; no `http://` / `https://`; no `innerHTML`
 - `git diff --check` — pass
 - Browser `file:///workspace/sample-report.html`: create issue; link POST /api into it (two evidence refs); unlink additional (originating remains, state open); clear; import review JSON; signature match listed; imported state resolved; notes `<script>alert(1)</script>` as text; Link to issue keeps resolved
+- GitHub Actions `CI / validate` succeeded on `d6045d7` ([run 34400361393](https://github.com/artofdream/logify/actions/runs/34400361393/job/102630453047)); auto-merge skipped
 
 ## Assumptions and confidence
 
