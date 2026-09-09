@@ -33,6 +33,9 @@ func TestWriteSelfContained(t *testing.T) {
 	if !strings.Contains(s, FollowUpSchema) || !strings.Contains(s, "Issue queue") {
 		t.Fatal("report is missing the issue work queue")
 	}
+	if !strings.Contains(s, "Clear due date") || !strings.Contains(s, "Overdue only") {
+		t.Fatal("report is missing FR-021 follow-up detail editors")
+	}
 }
 
 func TestWriteEmptySlicesAreJSONArrays(t *testing.T) {
@@ -130,7 +133,7 @@ func TestPageScriptsAreSyntacticallyValid(t *testing.T) {
 }
 
 func TestFollowUpStoreCreateExportImport(t *testing.T) {
-	// FR-017 / FR-018 / FR-019 / FR-020 / FR-022 / FR-023: executed page-script
+	// FR-017 / FR-018 / FR-019 / FR-020 / FR-021 / FR-022 / FR-023: executed page-script
 	// store, not only embedded JSON shape. The prior happy-path crash was missed
 	// because CI never ran the report JavaScript.
 	node := requireNode(t)

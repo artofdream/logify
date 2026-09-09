@@ -41,7 +41,7 @@ main { max-width: 1400px; margin: auto; padding: 20px 5vw 48px; }
   align-items: center;
 }
 .stats { margin: 15px 0; }
-.stat, .event, .issue, .notice, .legend, input, select, button {
+.stat, .event, .issue, .notice, .legend, input, select, button, textarea {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 9px;
@@ -77,15 +77,20 @@ label.check {
   align-items: center;
   font-weight: 600;
 }
-input, select, button {
+input, select, button, textarea {
   padding: 10px;
   color: var(--text);
   font: inherit;
 }
+textarea {
+  min-height: 6rem;
+  width: 100%;
+  resize: vertical;
+}
 button { cursor: pointer; font-weight: 700; }
 button:hover:not(:disabled) { border-color: var(--accent); }
 button:disabled { cursor: default; opacity: .7; }
-button:focus-visible, input:focus-visible, select:focus-visible {
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
@@ -117,7 +122,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 .issue-heading { justify-content: space-between; margin-bottom: 10px; }
 .issue-id { font: 12px ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--muted); overflow-wrap: anywhere; }
-.flag-badge, .state-badge, .unmatched {
+.issue.overdue { border-left-color: var(--danger); }
+.flag-badge, .state-badge, .unmatched, .overdue-badge {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 999px;
@@ -130,7 +136,16 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   color: var(--flag);
 }
 .state-badge { border: 1px solid var(--line); }
+.overdue-badge {
+  background: #3a1218;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
 .unmatched { border: 1px solid var(--danger); color: var(--danger); }
+.follow-up-fields { display: grid; gap: 10px; margin-top: 10px; }
+.due-row { display: flex; gap: 8px; align-items: center; }
+.due-row input { flex: 1; }
+.hint { font-weight: 400; color: var(--muted); font-size: 12px; }
 .meta-grid, .evidence {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);

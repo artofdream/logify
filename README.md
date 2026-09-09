@@ -26,8 +26,8 @@ Follow-up data can be **exported and imported** as `logify-follow-up.json`
 (schema `logify-follow-up-v1`). Browser local storage is a convenience cache for
 the same generated report; it is not the portable copy and is never sent over
 the network. Import validates the schema version, skips invalid records, and
-reports unmatched evidence IDs. Notes, owner, and due date are preserved on
-import/export but are not editable in this baseline (FR-021).
+reports unmatched evidence IDs. Notes, owner, and due date are editable on each
+issue and persist through the same schema.
 
 ## Build and run
 
@@ -56,17 +56,18 @@ On `testdata/case`, that example keeps the two Apache access events (`10:00:03+0
 - Normalizes every record into a common model, assigns HTTP severity from status class, and sorts timestamped events chronologically.
 - Generates stable signatures from normalized first lines and aggregates repeats per instance while retaining first/last occurrence times.
 - Embeds all data, styles, and JavaScript in the report. Timeline filters work offline by text, severity, instance, and source. The issue queue adds combined text, tag, flag, state, owner, severity, instance, and overdue filters.
-- Treat the HTML file as sensitive: it contains a copy of parsed log text (messages, paths, and host identifiers) and should be shared like the original bundle. Exported follow-up JSON contains operator titles, tags, and any imported notes.
+- Treat the HTML file as sensitive: it contains a copy of parsed log text (messages, paths, and host identifiers) and should be shared like the original bundle. Exported follow-up JSON contains operator titles, tags, notes, owners, and due dates.
 
 ## Issue follow-up in the report
 
 1. Open the generated HTML file (no server required).
 2. On a timeline row, choose **Create issue**. The issue id is stable for that evidence group (`issue-v1-…`).
-3. Use **Issue queue** to edit the title, add or remove tags, flag or unflag, and change workflow state.
-4. **Show evidence** returns to the matching timeline row. **Open issue** goes the other way.
-5. **Export follow-up JSON** writes a portable file. **Import follow-up JSON** loads it into this report. **Clear local follow-up data** drops the browser copy after a confirmation.
+3. Use **Issue queue** to edit the title, notes, optional owner, and optional due date; add or remove tags; flag or unflag; and change workflow state.
+4. Unresolved issues whose due date is before today (UTC calendar date of the report clock) show an **Overdue** badge. Filter the queue by owner or **Overdue only**. Resolved and dismissed issues are never overdue.
+5. **Show evidence** returns to the matching timeline row. **Open issue** goes the other way.
+6. **Export follow-up JSON** writes a portable file. **Import follow-up JSON** loads it into this report. **Clear local follow-up data** drops the browser copy after a confirmation.
 
-The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md).
+The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md).
 
 ## Current limits
 

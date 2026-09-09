@@ -81,13 +81,24 @@
 
   function validDue(v) {
     if (v == null || v === '') return true;
-    return /^\d{4}-\d{2}-\d{2}$/.test(String(v));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(v))) return false;
+    var parts = String(v).split('-');
+    var y = Number(parts[0]);
+    var m = Number(parts[1]);
+    var d = Number(parts[2]);
+    var dt = new Date(Date.UTC(y, m - 1, d));
+    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
   }
 
+  function calendarDateUTC(nowIso) {
+    return (nowIso || isoNow()).slice(0, 10);
+  }
+
+  // Overdue = due strictly before the UTC calendar date of the clock, and the
+  // issue is not resolved or dismissed (FR-021 / ADR-0003). Due today is not overdue.
   function isOverdue(issue, nowIso) {
-    if (!issue.due || CLOSED[issue.state]) return false;
-    var today = (nowIso || isoNow()).slice(0, 10);
-    return issue.due < today;
+    if (!issue || !issue.due || CLOSED[issue.state]) return false;
+    return issue.due < calendarDateUTC(nowIso);
   }
 
   function extraFields(raw) {
@@ -300,6 +311,54 @@
       return { issue: issue };
     }
 
+    function setOwner(id, owner) {
+      var issue = get(id);
+      if (!issue) return { error: 'unknown issue' };
+      var value = text(owner).trim();
+      if (value.length > LIMITS.maxOwner) {
+        return { error: 'owner exceeds ' + LIMITS.maxOwner + ' characters' };
+      }
+      issue.owner = value || null;
+      touch(issue);
+      persist();
+      return { issue: issue };
+    }
+
+    function setDue(id, due) {
+      var issue = get(id);
+      if (!issue) return { error: 'unknown issue' };
+      if (due == null || due === '') {
+        issue.due = null;
+        touch(issue);
+        persist();
+        return { issue: issue };
+      }
+      if (!validDue(due)) return { error: 'due must be YYYY-MM-DD or empty' };
+      issue.due = String(due);
+      touch(issue);
+      persist();
+      return { issue: issue };
+    }
+
+    function setNotes(id, notes) {
+      var issue = get(id);
+      if (!issue) return { error: 'unknown issue' };
+      if (notes == null || notes === '') {
+        issue.notes = null;
+        touch(issue);
+        persist();
+        return { issue: issue };
+      }
+      var value = text(notes);
+      if (value.length > LIMITS.maxNotes) {
+        return { error: 'notes exceed ' + LIMITS.maxNotes + ' characters' };
+      }
+      issue.notes = value;
+      touch(issue);
+      persist();
+      return { issue: issue };
+    }
+
     function filter(criteria) {
       criteria = criteria || {};
       var tags = [];
@@ -313,7 +372,8 @@
           var q = String(criteria.text).toLowerCase();
           var hay = [
             issue.title, issue.id, issue.tags.join(' '), issue.owner || '',
-            issue.evidence.file, issue.evidence.signature, issue.evidence.instance
+            issue.notes || '', issue.evidence.file, issue.evidence.signature,
+            issue.evidence.instance
           ].join(' ').toLowerCase();
           if (hay.indexOf(q) === -1) return false;
         }
@@ -422,6 +482,9 @@
       removeTag: removeTag,
       setFlagged: setFlagged,
       setState: setState,
+      setOwner: setOwner,
+      setDue: setDue,
+      setNotes: setNotes,
       get: get,
       list: all,
       filter: filter,
@@ -456,6 +519,8 @@
     defaultTitle: defaultTitle,
     issueIDFromEvidence: issueIDFromEvidence,
     parseExport: parseExport,
-    createStore: createStore
+    createStore: createStore,
+    isOverdue: isOverdue,
+    validDue: validDue
   };
 });

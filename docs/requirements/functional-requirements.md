@@ -244,12 +244,20 @@
 ### FR-021 — Record follow-up details
 
 - **Priority:** Should
-- **Status:** Proposed
+- **Status:** Implemented
+- **Rationale:** Operators need to record who owns follow-up, when it is due, and
+  investigation notes without leaving the offline report.
 - **Acceptance criteria:**
   1. An issue can store notes, an optional owner, and an optional due date.
   2. Notes are treated as untrusted text and rendered safely.
   3. Overdue unresolved issues are visibly identified.
   4. A user can filter by owner and overdue state.
+- **Note:** Due dates are calendar dates (`YYYY-MM-DD`). An issue is overdue when
+  `due` is strictly before the UTC calendar date of the report clock
+  (`Date#toISOString` date prefix, or an injected test clock) and the state is
+  not `resolved` or `dismissed`. A due date of today is not overdue. Empty owner,
+  due, and notes normalize to `null`. Fields persist in `logify-follow-up-v1`
+  (no schema bump; ADR-0002 / ADR-0003). Rendering uses DOM text APIs only.
 
 ### FR-022 — Persist issue tracking data
 
@@ -283,9 +291,9 @@
   6. The UI distinguishes observed log evidence, inferred correlations, and
      operator-authored issue metadata.
 - **Note:** Owner, due date, and notes are displayed when present (including
-  after import). Editors for those fields are FR-021 and are not in this
-  baseline. Observed-record counts are the sum of group `occurrences`.
-  Correlations are labeled as not available (FR-012 remains Proposed).
+  after import). Editors for those fields are FR-021. Observed-record counts are
+  the sum of group `occurrences`. Correlations are labeled as not available
+  (FR-012 remains Proposed).
 
 ### FR-024 — Merge recurring evidence into an existing issue
 

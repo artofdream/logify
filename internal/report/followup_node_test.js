@@ -214,6 +214,86 @@ function store(events, extra) {
   assert.strictEqual(round.issueCount(), 2);
 })();
 
+// FR-021: edit notes/owner/due, export/import round-trip, overdue rule, safe text.
+(function followUpDetails() {
+  var storage = memoryStorage();
+  var s = store([event()], { storage: storage, storageKey: 'details-key' });
+  var id = s.createFromEvent(event()).issue.id;
+  var xss = '</script><img src=x onerror=alert(1)>';
+
+  assert.strictEqual(s.setOwner(id, '  Ada  ').issue.owner, 'Ada');
+  assert.strictEqual(s.setOwner('missing', 'x').error, 'unknown issue');
+  assert.strictEqual(s.setOwner(id, new Array(follow.LIMITS.maxOwner + 2).join('a')).error.indexOf('owner exceeds') !== -1, true);
+  assert.strictEqual(s.get(id).owner, 'Ada');
+  assert.strictEqual(s.setOwner(id, '   ').issue.owner, null);
+
+  assert.strictEqual(s.setDue(id, '2020-01-01').issue.due, '2020-01-01');
+  assert.strictEqual(s.setDue(id, '2026-02-30').error, 'due must be YYYY-MM-DD or empty');
+  assert.strictEqual(s.get(id).due, '2020-01-01');
+  assert.strictEqual(s.setDue(id, '').issue.due, null);
+  assert.strictEqual(s.setDue(id, '2026-09-03').issue.due, '2026-09-03');
+
+  assert.strictEqual(s.setNotes(id, xss).issue.notes, xss);
+  assert.strictEqual(s.setNotes(id, new Array(follow.LIMITS.maxNotes + 2).join('n')).error.indexOf('notes exceed') !== -1, true);
+  assert.strictEqual(s.get(id).notes, xss);
+  assert.strictEqual(s.setNotes(id, '').issue.notes, null);
+  s.setNotes(id, xss);
+  s.setOwner(id, xss);
+
+  var raw = s.exportJSON();
+  var parsed = JSON.parse(raw);
+  assert.strictEqual(parsed.schema, follow.SCHEMA);
+  assert.strictEqual(parsed.schemaVersion, 1);
+  assert.strictEqual(parsed.issues[0].owner, xss);
+  assert.strictEqual(parsed.issues[0].due, '2026-09-03');
+  assert.strictEqual(parsed.issues[0].notes, xss);
+
+  var restored = follow.createStore([event()], {
+    now: now, storage: storage, storageKey: 'details-key', reportRoot: '/tmp/case'
+  });
+  assert.strictEqual(restored.loadLocal().loaded, 1);
+  assert.strictEqual(restored.get(id).owner, xss);
+  assert.strictEqual(restored.get(id).due, '2026-09-03');
+  assert.strictEqual(restored.get(id).notes, xss);
+
+  var other = store([event()]);
+  var imported = other.importJSON(raw);
+  assert.strictEqual(imported.loaded, 1);
+  assert.strictEqual(other.get(id).owner, xss);
+  assert.strictEqual(other.get(id).notes, xss);
+  assert.strictEqual(other.get(id).due, '2026-09-03');
+  assert.strictEqual(other.filter({ owner: 'script' }).length, 1);
+  assert.strictEqual(other.filter({ text: 'onerror' }).length, 1);
+
+  // Clock is 2026-09-04 UTC. Due 2026-09-03 is overdue while open.
+  assert.strictEqual(follow.isOverdue({ due: '2026-09-03', state: 'open' }, '2026-09-04T12:00:00.000Z'), true);
+  assert.strictEqual(follow.isOverdue({ due: '2026-09-04', state: 'open' }, '2026-09-04T12:00:00.000Z'), false);
+  assert.strictEqual(follow.isOverdue({ due: '2026-09-05', state: 'open' }, '2026-09-04T12:00:00.000Z'), false);
+  assert.strictEqual(follow.isOverdue({ due: '2026-09-03', state: 'investigating' }, '2026-09-04T12:00:00.000Z'), true);
+  assert.strictEqual(follow.isOverdue({ due: '2026-09-03', state: 'blocked' }, '2026-09-04T12:00:00.000Z'), true);
+  assert.strictEqual(follow.isOverdue({ due: '2026-09-03', state: 'resolved' }, '2026-09-04T12:00:00.000Z'), false);
+  assert.strictEqual(follow.isOverdue({ due: '2026-09-03', state: 'dismissed' }, '2026-09-04T12:00:00.000Z'), false);
+  assert.strictEqual(follow.isOverdue({ due: null, state: 'open' }, '2026-09-04T12:00:00.000Z'), false);
+  assert.strictEqual(s.isOverdue(s.get(id)), true);
+  s.setState(id, 'resolved');
+  assert.strictEqual(s.isOverdue(s.get(id)), false);
+  assert.strictEqual(s.filter({ overdue: true }).length, 0);
+  s.setState(id, 'open');
+  assert.strictEqual(s.filter({ overdue: true }).length, 1);
+  assert.strictEqual(follow.validDue('2026-02-30'), false);
+  assert.strictEqual(follow.validDue('2026-01-31'), true);
+
+  var fs = require('fs');
+  var path = require('path');
+  var page = fs.readFileSync(path.join(__dirname, 'page.js'), 'utf8');
+  assert.strictEqual(page.indexOf('innerHTML'), -1);
+  assert.ok(page.indexOf('setOwner') !== -1);
+  assert.ok(page.indexOf('setDue') !== -1);
+  assert.ok(page.indexOf('setNotes') !== -1);
+  assert.ok(page.indexOf('overdue-badge') !== -1);
+  assert.ok(page.indexOf('textContent') !== -1);
+})();
+
 // Empty events/warnings equivalent: store must not throw.
 (function emptySafe() {
   var s = follow.createStore(null, { now: now });
