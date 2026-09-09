@@ -1,11 +1,11 @@
 ---
 id: WI-20260909-nfr021-issue-workflow-usability
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-09T20:54:28Z
-updated: 2026-09-09T20:54:28Z
-lease_expires: 2026-09-10T08:54:28Z
+updated: 2026-09-09T21:10:00Z
+lease_expires: 2026-09-10T09:10:00Z
 scope:
   - internal/report/page.html
   - internal/report/page.css
@@ -24,6 +24,7 @@ scope:
   - docs/collaboration/work-items/WI-20260909-nfr021-issue-workflow-usability.md
   - docs/collaboration/work-items/WI-20260909-fr021-follow-up-details.md
   - docs/collaboration/dispatches/DSP-20260909-NFR021.md
+  - docs/collaboration/handoffs/HO-20260909-2110-cursor-agent-nfr021.md
 requirements: [NFR-021]
 depends_on: [WI-20260909-fr021-follow-up-details]
 supersedes: []
@@ -69,14 +70,29 @@ item takes the report UI paths for NFR-021 usability only.
 
 ## Validation
 
-Pending official `AGENTS.md` commands after implementation.
+- `gofmt -l cmd internal` — clean
+- `go test ./... -count=1` — pass (`analyzer`, `report`)
+- `go vet ./...` — pass
+- `go build -o logify.exe ./cmd/logify` — pass
+- `./logify.exe -output sample-report.html testdata/case` — 6 events from 3
+  files, 0 warnings; NFR-021 chrome present; no `http://` / `https://`
+- `git diff --check` — pass
+- `node internal/report/nfr021_filter_probe.js` — 10k issues; worst median
+  3.8 ms on the probe host; CI guard passed
+- Browser `file:///workspace/sample-report.html`: create, flag, Enter-to-tag,
+  state change, Showing N of M, Tab order, arrow-key tabs, 375px readable
+- Draft PR: https://github.com/artofdream/logify/pull/11
 
 ## Activity log
 
 - `2026-09-09T20:54:28Z` — cursor-agent — claimed NFR-021 after inspecting
   work items and dispatches. No active dispatch owns NFR-021. FR-021 report
   paths are in review on a merged PR; recorded transfer for NFR-021 usability.
+- `2026-09-09T21:10:00Z` — cursor-agent — AC1–AC3 UI fixes, source-contract
+  tests, 10k filter probe, ADR-0004, research note. Official validation and
+  in-browser walk passed. NFR-021 remains Partial. Draft PR #11. Do not merge.
 
 ## Handoff or completion
 
-In progress.
+In review on draft PR #11. Do not mark done until reviewed. Do not merge.
+Do not mark NFR-021 Implemented.
