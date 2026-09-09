@@ -4,7 +4,7 @@ type: work-item
 status: review
 owner: cursor-agent
 created: 2026-09-09T19:21:31Z
-updated: 2026-09-09T19:45:00Z
+updated: 2026-09-09T19:51:00Z
 lease_expires: 2026-09-10T07:21:31Z
 scope:
   - internal/report/followup.js
@@ -80,7 +80,10 @@ this work item takes the report UI paths for FR-021 only.
   (Ada Lovelace), due 2020-01-15, notes `<script>alert(1)</script>` as text
   (no execution); Overdue badge while open; owner and Overdue-only filters;
   resolved hides overdue; Clear due date; ~375px fields readable
-- PR: https://github.com/artofdream/logify/pull/4 (draft vs `main`)
+- PR: https://github.com/artofdream/logify/pull/4 (ready vs `main`)
+- GitHub Actions `CI / validate` on `a3cdece` — success
+  (https://github.com/artofdream/logify/actions/runs/34397401215/job/102620391567).
+  Auto-merge job skipped (do not merge from this task).
 
 ## Activity log
 
@@ -93,6 +96,8 @@ this work item takes the report UI paths for FR-021 only.
 - `2026-09-09T19:49:00Z` — cursor-agent — Go/Node validation, fixture report,
   and in-browser editor/overdue/filter/XSS probes passed. Fixed a missing
   `</label>` that broke `html/template`. FR-021 marked Implemented. Draft PR #4.
+- `2026-09-09T19:51:00Z` — cursor-agent — GitHub `CI / validate` succeeded on
+  `a3cdece`. PR #4 marked ready for review. Do not merge.
 
 ## Handoff or completion
 
