@@ -4,7 +4,7 @@ type: work-item
 status: review
 owner: cursor-agent
 created: 2026-09-09T20:24:00Z
-updated: 2026-09-09T20:25:00Z
+updated: 2026-09-09T20:26:00Z
 lease_expires: 2026-09-10T08:24:00Z
 scope:
   - docs/collaboration/work-items/WI-20260909-close-stale-collab-items.md
@@ -70,6 +70,7 @@ items.
   #5 open draft.
 - `git fetch origin main`; `origin/main` tip `01ae8bf` is the PR #4 squash.
 - `git diff --check` after the docs edit.
+- PR: https://github.com/artofdream/logify/pull/6 (draft vs `main`)
 
 ## Activity log
 
@@ -79,6 +80,8 @@ items.
   those files untouched.
 - `2026-09-09T20:25:00Z` — cursor-agent — stale merged items marked done with
   PR/SHA/date evidence. Docs PR opening for review.
+- `2026-09-09T20:26:00Z` — cursor-agent — draft PR #6 opened vs `main`. Do not
+  merge.
 
 ## Handoff or completion
 
