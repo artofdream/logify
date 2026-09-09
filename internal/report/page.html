@@ -13,6 +13,11 @@
 </header>
 <main>
   <div id="stats" class="stats" aria-label="Analysis summary"></div>
+  <section id="warnings" class="warnings" hidden aria-labelledby="warnings-heading">
+    <h2 id="warnings-heading">Scan warnings</h2>
+    <p class="muted">Recoverable problems. Events from readable files and from lines before a mid-file failure are kept.</p>
+    <div id="warning-list"></div>
+  </section>
   <p class="legend" role="note">
     <span><strong>Observed evidence</strong> — parsed log records in the timeline</span>
     <span><strong>Operator metadata</strong> — issues, tags, flags, workflow, owner, due date, and notes you add</span>

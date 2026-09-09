@@ -173,10 +173,28 @@
   4. Each warning identifies the affected file, failure category, and line or
      range where available.
   5. Summary counts reconcile processed, skipped, and failed inputs.
-- **Gap:** Warnings are plain `path: error` strings with no failure category or
-  line/range. Mid-file scanner overflow now keeps events parsed before the
-  failure, but skipped/failed input counts are not reconciled separately from
-  `filesScanned` and the warning list.
+- **Warning model:** Each warning is a structured record with `file`,
+  `category`, optional `line` / `lineEnd`, and `message`. Categories are
+  deterministic and limited to the code paths that can emit them:
+  - `walk-error`: directory walk could not visit a path (file or directory).
+  - `open-error`: a supported file could not be opened.
+  - `scan-overflow`: a line exceeded the 4 MiB incremental scanner limit
+    (NFR-008). `line` is the overflowing line (last successfully read line + 1).
+  - `scan-error`: any other incremental read failure after open. `line` is the
+    last successfully read line when known.
+- **Input counts:**
+  - `filesScanned`: supported files the scanner attempted to parse.
+  - `filesProcessed`: supported files that were opened (including files whose
+    mid-file overflow or scan error kept earlier events).
+  - `filesFailed`: supported files that could not be opened.
+  - `filesSkipped`: walk paths that could not be visited. Children inside an
+    unreadable directory are unknown and are not invented.
+  - Identity: `filesScanned = filesProcessed + filesFailed`.
+    `filesScanned + filesSkipped = filesProcessed + filesFailed + filesSkipped`.
+  Unsupported filenames are a discovery filter, not skipped inputs.
+- **Gap:** Warnings are still being migrated from plain `path: error` strings;
+  skipped/failed counts are being added. Status stays Partial until every
+  acceptance criterion has a passing probe.
 
 ### FR-016 — Support compressed and rotated logs
 

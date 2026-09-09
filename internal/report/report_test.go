@@ -69,7 +69,7 @@ func TestWriteFixtureReportArraysAndEvidence(t *testing.T) {
 			Line        int    `json:"line"`
 			Occurrences int    `json:"occurrences"`
 		} `json:"events"`
-		Warnings []string `json:"warnings"`
+		Warnings []analyzer.Warning `json:"warnings"`
 	}
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		t.Fatal(err)
@@ -145,6 +145,54 @@ func TestFollowUpStoreCreateExportImport(t *testing.T) {
 	}
 }
 
+func TestWriteStructuredWarningsAndCounts(t *testing.T) {
+	// FR-015: report embeds structured warnings and reconciled input counts.
+	p := filepath.Join(t.TempDir(), "warn.html")
+	err := Write(p, analyzer.Result{
+		FilesScanned:   2,
+		FilesProcessed: 1,
+		FilesSkipped:   1,
+		FilesFailed:    1,
+		Events:         []analyzer.Event{{Message: "kept"}},
+		Warnings: []analyzer.Warning{{
+			File:     `locked".log`,
+			Category: analyzer.CategoryOpenError,
+			Message:  `<script>alert(1)</script>`,
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw := assertEmbeddedArrays(t, p, 1, 1)
+	var payload struct {
+		FilesScanned   int                `json:"filesScanned"`
+		FilesProcessed int                `json:"filesProcessed"`
+		FilesSkipped   int                `json:"filesSkipped"`
+		FilesFailed    int                `json:"filesFailed"`
+		Warnings       []analyzer.Warning `json:"warnings"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.FilesScanned != 2 || payload.FilesProcessed != 1 || payload.FilesSkipped != 1 || payload.FilesFailed != 1 {
+		t.Fatalf("embedded counts=%+v", payload)
+	}
+	if payload.Warnings[0].Category != analyzer.CategoryOpenError || payload.Warnings[0].File != `locked".log` {
+		t.Fatalf("embedded warning=%+v", payload.Warnings[0])
+	}
+	html, err := os.ReadFile(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(html)
+	if strings.Contains(s, "<script>alert(1)</script>") {
+		t.Fatal("warning message leaked into HTML")
+	}
+	if !strings.Contains(s, "Scan warnings") {
+		t.Fatal("report is missing the scan warnings heading")
+	}
+}
+
 func requireNode(t *testing.T) string {
 	t.Helper()
 	node, err := exec.LookPath("node")
@@ -175,8 +223,8 @@ func assertEmbeddedArrays(t *testing.T, path string, wantEvents, wantWarnings in
 		}
 	}
 	var payload struct {
-		Events   []json.RawMessage `json:"events"`
-		Warnings []string          `json:"warnings"`
+		Events   []json.RawMessage  `json:"events"`
+		Warnings []analyzer.Warning `json:"warnings"`
 	}
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		t.Fatal(err)

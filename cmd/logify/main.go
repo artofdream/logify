@@ -34,7 +34,10 @@ func main() {
 	if e = report.Write(*out, r); e != nil {
 		fatal("write report: %v", e)
 	}
-	fmt.Printf("Wrote %s (%d events from %d files, %d warnings)\n", *out, len(r.Events), r.FilesScanned, len(r.Warnings))
+	fmt.Printf("Wrote %s (%s)\n", *out, r.SummaryLine())
+	for _, w := range r.Warnings {
+		fmt.Printf("  %s\n", w.String())
+	}
 }
 func pt(s string) (*time.Time, error) {
 	if s == "" {
