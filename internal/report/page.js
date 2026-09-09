@@ -187,7 +187,8 @@
   }
 
   function renderIssueCard(issue) {
-    var card = el('article', 'issue' + (issue.flagged ? ' flagged' : ''));
+    var overdue = store.isOverdue(issue);
+    var card = el('article', 'issue' + (issue.flagged ? ' flagged' : '') + (overdue ? ' overdue' : ''));
     card.id = issueAnchor(issue);
     card.tabIndex = -1;
     var heading = el('div', 'issue-heading');
@@ -195,6 +196,7 @@
     left.appendChild(el('div', 'issue-id', issue.id));
     if (issue.flagged) left.appendChild(el('span', 'flag-badge', 'Flagged'));
     left.appendChild(el('span', 'state-badge', issue.state));
+    if (overdue) left.appendChild(el('span', 'overdue-badge', 'Overdue'));
     if (!issue.evidenceMatched) left.appendChild(el('span', 'unmatched', 'Evidence not in this report'));
     heading.appendChild(left);
     var tools = el('div', 'event-actions');
@@ -280,10 +282,76 @@
     add.appendChild(tagInput);
     add.appendChild(addBtn);
     op.appendChild(add);
+
+    var details = el('div', 'follow-up-fields');
+    var ownerLabel = el('label', '', 'Owner');
+    var ownerInput = document.createElement('input');
+    ownerInput.type = 'text';
+    ownerInput.maxLength = LogifyFollowUp.LIMITS.maxOwner;
+    ownerInput.autocomplete = 'off';
+    ownerInput.placeholder = 'Optional owner';
+    ownerInput.value = issue.owner || '';
+    ownerInput.addEventListener('input', function () {
+      var result = store.setOwner(issue.id, ownerInput.value);
+      if (result.error) {
+        showFeedback('issue-feedback', result.error, true);
+        return;
+      }
+      showFeedback('issue-feedback', 'Updated owner for ' + issue.id);
+    });
+    ownerLabel.appendChild(ownerInput);
+    details.appendChild(ownerLabel);
+
+    var dueLabel = el('label', '', 'Due date');
+    var dueRow = el('div', 'due-row');
+    var dueInput = document.createElement('input');
+    dueInput.type = 'date';
+    dueInput.value = issue.due || '';
+    dueInput.addEventListener('change', function () {
+      var result = store.setDue(issue.id, dueInput.value);
+      if (result.error) {
+        showFeedback('issue-feedback', result.error, true);
+        return;
+      }
+      renderAll();
+      showFeedback('issue-feedback', dueInput.value ? ('Due date for ' + issue.id + ' is ' + dueInput.value) : ('Cleared due date for ' + issue.id));
+    });
+    var clearDue = el('button', '', 'Clear due date');
+    clearDue.type = 'button';
+    clearDue.addEventListener('click', function () {
+      var result = store.setDue(issue.id, null);
+      if (result.error) {
+        showFeedback('issue-feedback', result.error, true);
+        return;
+      }
+      renderAll();
+      showFeedback('issue-feedback', 'Cleared due date for ' + issue.id);
+    });
+    dueRow.appendChild(dueInput);
+    dueRow.appendChild(clearDue);
+    dueLabel.appendChild(dueRow);
+    dueLabel.appendChild(el('span', 'hint', 'Overdue when before today (UTC calendar date) and the issue is not resolved or dismissed.'));
+    details.appendChild(dueLabel);
+
+    var notesLabel = el('label', '', 'Notes');
+    var notes = document.createElement('textarea');
+    notes.maxLength = LogifyFollowUp.LIMITS.maxNotes;
+    notes.rows = 5;
+    notes.placeholder = 'Optional investigation notes';
+    notes.value = issue.notes || '';
+    notes.addEventListener('input', function () {
+      var result = store.setNotes(issue.id, notes.value);
+      if (result.error) {
+        showFeedback('issue-feedback', result.error, true);
+        return;
+      }
+      showFeedback('issue-feedback', 'Updated notes for ' + issue.id);
+    });
+    notesLabel.appendChild(notes);
+    details.appendChild(notesLabel);
+    op.appendChild(details);
+
     var meta = el('dl', 'meta-grid');
-    field(meta, 'Owner', issue.owner || '—');
-    field(meta, 'Due', issue.due ? (store.isOverdue(issue) ? issue.due + ' (overdue)' : issue.due) : '—');
-    field(meta, 'Notes', issue.notes || '—');
     field(meta, 'Last modified', formatTime(issue.modifiedAt));
     op.appendChild(meta);
     card.appendChild(op);

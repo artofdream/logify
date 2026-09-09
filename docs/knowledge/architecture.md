@@ -15,7 +15,10 @@ repeats, and orders the timeline; `internal/report` emits one offline HTML file
 from `page.html`, `page.css`, `page.js`, and `followup.js` (embedded at build
 time). The analyzer is not responsible for issue identity: the report package
 derives `evidence-v1-…` IDs from existing event fields and the page script owns
-the follow-up store, local cache, and JSON export/import.
+the follow-up store, local cache, and JSON export/import. Issue notes, owner,
+and due date are operator metadata (FR-021 / ADR-0003): edited in the page
+script, persisted in `logify-follow-up-v1`, and compared for overdue against
+the UTC calendar date of the report clock.
 
 This note describes observed structure. Requirements remain authoritative for
 intended behavior, and tests/compiler output remain evidence of implementation.

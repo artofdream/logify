@@ -36,8 +36,8 @@ Each issue includes `id`, `title`, `state`, `flagged`, `tags`, `owner`, `due`,
 `notes`, `createdAt`, `modifiedAt`, and an `evidence` object with `id`,
 `signature`, `instance`, `file`, `line`, `firstSeen`, `lastSeen`,
 `occurrences`, `severity`, and `sourceType`. `owner`, `due`, and `notes` are
-present so imported FR-021 fields round-trip; this PR does not provide editors
-for them.
+first-class v1 fields. Editors for them are specified in ADR-0003; this schema
+does not change when those editors are added.
 
 Import rules:
 

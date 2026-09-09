@@ -19,3 +19,5 @@ Human-requested takeover of the sequential FR-017…FR-024 cloud reservations.
 This dispatch implements the Must follow-up UI in one PR on top of the PR #2
 crash-fix branch. FR-021 (editable notes/owner/due) and FR-024 (merge recurring
 evidence) remain out of scope.
+
+`2026-09-09` — PR #3 is on `main`. FR-021 is now DSP-20260909-FR021.

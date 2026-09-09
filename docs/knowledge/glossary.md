@@ -12,6 +12,9 @@ updated: 2026-09-03
 - **Inference:** a conclusion derived from evidence and labeled with its rule or
   uncertainty.
 - **Issue:** a follow-up unit linked to one or more evidence groups.
+- **Overdue issue:** an issue whose `due` calendar date is strictly before the
+  UTC calendar date of the report clock and whose state is not `resolved` or
+  `dismissed` (FR-021 / ADR-0003).
 - **Signature:** deterministic normalized identity used to group recurring events.
 - **Work item:** a bounded unit of agent/human work with advisory path ownership.
 - **Lease:** time-limited declaration of edit intent; not a filesystem lock.

@@ -93,8 +93,11 @@ implements the report-layer design cleanly on the crash-fix branch.
 - `2026-09-04T20:20:00Z` — cursor-agent — implementation, Go/Node tests,
   fixture generation, and in-browser create/export/import verification
   complete; draft PR #3 opened for review.
+- `2026-09-09T19:21:31Z` — cursor-agent — PR #3 is on `main` (`64bbc1c`).
+  FR-021 editor work transfers to WI-20260909-fr021-follow-up-details /
+  DSP-20260909-FR021. This item keeps the merged Must UI scope only.
 
 ## Handoff or completion
 
-In review on PR #3. Do not mark done until the PR is reviewed and merged.
-Do not merge from this task.
+Must UI merged in PR #3. FR-021 remains Proposed and is owned by
+WI-20260909-fr021-follow-up-details. Do not merge from this task.
