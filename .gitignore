@@ -1,4 +1,12 @@
+# Local binaries from `go build` (never commit)
 /logify
 /logify.exe
+
+# Generated HTML reports. Keep the glob; also name common files explicitly
+# because `/*-report.html` does not match `report.html`, and a named list is
+# easier to audit on Windows than a leading-glob pattern alone.
 /*-report.html
+/sample-report.html
+/report.html
+
 .obsidian/

@@ -31,7 +31,9 @@ issue and persist through the same schema.
 
 ## Build and run
 
-Requires Go 1.22 or newer.
+Requires Go 1.22 or newer on `PATH`. On Windows, if `go` is not recognized after install, close and reopen the terminal so the updated PATH applies.
+
+Generated `logify.exe` and `*-report.html` files (including `sample-report.html` and `report.html`) are gitignored — do not commit them.
 
 ```powershell
 go test ./...
@@ -46,6 +48,8 @@ Optional RFC3339 bounds filter timestamped events (untimestamped events are excl
 ```
 
 On `testdata/case`, that example keeps the two Apache access events (`10:00:03+02:00` and `10:00:04+02:00`) and drops Tomcat/Apache error lines whose timezone-less `10:00:00,123` / `10:00:05` stamps become `10:00Z` and fall after `12:00+02:00` (`10:00:00.000Z`). `-from` / `-to` require a zone or `Z`; a value such as `2026-09-03T08:00:00` is rejected.
+
+Release: push a `v*` tag to run [`.github/workflows/release.yml`](.github/workflows/release.yml); do not commit the resulting binaries.
 
 ## Behavior
 
