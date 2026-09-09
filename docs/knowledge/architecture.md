@@ -21,7 +21,10 @@ derives `evidence-v1-…` IDs from existing event fields and the page script own
 the follow-up store, local cache, and JSON export/import. Issue notes, owner,
 and due date are operator metadata (FR-021 / ADR-0003): edited in the page
 script, persisted in `logify-follow-up-v1`, and compared for overdue against
-the UTC calendar date of the report clock.
+the UTC calendar date of the report clock. An issue may link additional
+evidence groups (`linkedEvidence`); import surfaces signature matches and new
+occurrence counts for review and does not change workflow state (FR-024 /
+ADR-0007).
 
 Recoverable scan problems are structured warnings (`walk-error`, `open-error`,
 `scan-overflow`, `scan-error`) with file, category, optional line/range, and

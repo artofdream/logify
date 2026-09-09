@@ -110,5 +110,6 @@ this work item takes the report UI paths for FR-021 only.
 ## Handoff or completion
 
 Done. Merged as PR #4 on 2026-09-09T19:52:40Z
-(`01ae8bf57cc57a02ed610acbeb229feda4d44519`). FR-024 is a separate draft
-(PR #5). NFR-021 usability is WI-20260909-nfr021-issue-workflow-usability.
+(`01ae8bf57cc57a02ed610acbeb229feda4d44519`). FR-024 is
+`WI-20260909-fr024-merge-recurring-evidence`. NFR-021 usability is
+WI-20260909-nfr021-issue-workflow-usability.

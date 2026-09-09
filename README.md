@@ -27,7 +27,9 @@ Follow-up data can be **exported and imported** as `logify-follow-up.json`
 the same generated report; it is not the portable copy and is never sent over
 the network. Import validates the schema version, skips invalid records, and
 reports unmatched evidence IDs. Notes, owner, and due date are editable on each
-issue and persist through the same schema.
+issue and persist through the same schema. An issue can link additional event
+groups; import of a later report surfaces matching signatures and newly
+observed occurrence counts for review and does not change workflow state.
 
 ## Sensitive reports
 
@@ -114,14 +116,14 @@ Release: push a `v*` tag to run [`.github/workflows/release.yml`](.github/workfl
 ## Issue follow-up in the report
 
 1. Open the generated HTML file (no server required).
-2. On a timeline row, choose **Create issue**. The issue id is stable for that evidence group (`issue-v1-…`).
+2. On a timeline row, choose **Create issue**. The issue id is stable for that evidence group (`issue-v1-…`). **Link to existing issue** attaches this group to another issue without changing that issue's workflow state.
 3. Use **Issue queue** to edit the title, notes, optional owner, and optional due date; add or remove tags; flag or unflag; and change workflow state.
 4. Unresolved issues whose due date is before today (UTC calendar date of the report clock) show an **Overdue** badge. Filter the queue by owner or **Overdue only**. Resolved and dismissed issues are never overdue.
-5. **Show evidence** returns to the matching timeline row. **Open issue** goes the other way.
+5. **Show evidence** returns to a matching timeline row. **Open issue** goes the other way. Additional linked groups can be unlinked; the originating evidence cannot.
 6. Create, flag, tag, and change state with the keyboard: **Tab** reaches labeled controls, **Enter** adds a tag, and **Left/Right** switches the Timeline and Issue queue tabs. Flag and workflow state are named in text (**Flagged**, **State: Open**), not color alone. The status line confirms each action; the queue shows **Showing N of M issue(s)** when filters change.
-7. **Export follow-up JSON** writes a portable file. **Import follow-up JSON** loads it into this report. **Clear local follow-up data** drops the browser copy after a confirmation.
+7. **Export follow-up JSON** writes a portable file. **Import follow-up JSON** loads it into this report. A later report with the same `signature` + `instance` lists candidate matches and newly observed occurrence counts for review; nothing auto-changes state. **Clear local follow-up data** drops the browser copy after a confirmation.
 
-The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md). Scan warning categories and input-count identity are in [`docs/knowledge/decisions/ADR-0004-scan-warnings.md`](docs/knowledge/decisions/ADR-0004-scan-warnings.md). Redaction rules are in [`docs/knowledge/decisions/ADR-0005-optional-report-redaction.md`](docs/knowledge/decisions/ADR-0005-optional-report-redaction.md). Keyboard, confirmation, and the 10,000-issue filter probe are in [`docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md`](docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md) and [`docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md`](docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md).
+The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md). Scan warning categories and input-count identity are in [`docs/knowledge/decisions/ADR-0004-scan-warnings.md`](docs/knowledge/decisions/ADR-0004-scan-warnings.md). Redaction rules are in [`docs/knowledge/decisions/ADR-0005-optional-report-redaction.md`](docs/knowledge/decisions/ADR-0005-optional-report-redaction.md). Keyboard, confirmation, and the 10,000-issue filter probe are in [`docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md`](docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md) and [`docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md`](docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md). Multi-evidence merge and review rules are in [`docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md`](docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md).
 
 ## Current limits
 

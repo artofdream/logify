@@ -302,4 +302,135 @@ function store(events, extra) {
   assert.strictEqual(s.createFromEvent({}).error, 'event is missing evidenceId');
 })();
 
+// FR-024: link/unlink additional evidence, retain refs, import match review, no silent state change.
+(function mergeRecurringEvidence() {
+  var e1 = event('evidence-v1-aaa');
+  var e2 = {
+    evidenceId: 'evidence-v1-bbb',
+    signature: 'sig1',
+    instance: 'tomcat-a',
+    file: 'tomcat-a/localhost.log',
+    line: 44,
+    message: 'OutOfMemoryError: heap',
+    occurrences: 2,
+    firstSeen: '2026-09-04T11:00:00.000Z',
+    lastSeen: '2026-09-04T11:05:00.000Z',
+    severity: 'ERROR',
+    sourceType: 'tomcat-java'
+  };
+  var e3 = {
+    evidenceId: 'evidence-v1-ccc',
+    signature: 'sig-other',
+    instance: 'tomcat-a',
+    file: 'tomcat-a/other.log',
+    line: 1,
+    message: 'unrelated',
+    occurrences: 1,
+    severity: 'WARN',
+    sourceType: 'tomcat-java'
+  };
+
+  var s = store([e1, e2, e3]);
+  var created = s.createFromEvent(e1);
+  assert.strictEqual(created.created, true);
+  var id = created.issue.id;
+  assert.strictEqual(s.linkEvidence(id, e2).linked, true);
+  assert.strictEqual(s.get(id).evidence.id, 'evidence-v1-aaa');
+  assert.strictEqual(s.get(id).linkedEvidence.length, 1);
+  assert.strictEqual(s.get(id).linkedEvidence[0].id, 'evidence-v1-bbb');
+  assert.strictEqual(s.issueForEvidence('evidence-v1-bbb').id, id);
+  assert.strictEqual(s.linkEvidence(id, e2).linked, false);
+  assert.strictEqual(s.createFromEvent(e2).created, false);
+  assert.strictEqual(s.createFromEvent(e2).issue.id, id);
+  assert.ok(s.unlinkEvidence(id, 'evidence-v1-aaa').error);
+  assert.strictEqual(s.unlinkEvidence(id, 'evidence-v1-bbb').unlinked, true);
+  assert.strictEqual(s.get(id).linkedEvidence.length, 0);
+  s.linkEvidence(id, e2);
+  assert.strictEqual(s.linkEvidence(id, e3).linked, true);
+  assert.strictEqual(s.get(id).linkedEvidence.length, 2);
+  assert.strictEqual(s.filter({ text: 'localhost.log' }).length, 1);
+  assert.strictEqual(s.filter({ instance: 'tomcat-a' }).length, 1);
+  s.unlinkEvidence(id, 'evidence-v1-ccc');
+
+  var parsed = JSON.parse(s.exportJSON());
+  assert.strictEqual(parsed.schema, follow.SCHEMA);
+  assert.strictEqual(parsed.schemaVersion, 1);
+  assert.strictEqual(parsed.issues[0].evidence.id, 'evidence-v1-aaa');
+  assert.strictEqual(parsed.issues[0].linkedEvidence.length, 1);
+  assert.strictEqual(parsed.issues[0].linkedEvidence[0].id, 'evidence-v1-bbb');
+  assert.deepStrictEqual(parsed.issues[0].ignoredEvidence, []);
+
+  var round = store([e1, e2]);
+  assert.strictEqual(round.importJSON(s.exportJSON()).loaded, 1);
+  assert.strictEqual(round.get(id).linkedEvidence[0].id, 'evidence-v1-bbb');
+  assert.strictEqual(round.get(id).evidence.id, 'evidence-v1-aaa');
+  assert.strictEqual(round.evidenceRefs(round.get(id)).length, 2);
+
+  var src = store([e1]);
+  var srcId = src.createFromEvent(e1).issue.id;
+  src.setState(srcId, 'resolved');
+  var exported = src.exportJSON();
+  assert.strictEqual(JSON.parse(exported).issues[0].state, 'resolved');
+  assert.strictEqual(JSON.parse(exported).issues[0].evidence.occurrences, 3);
+
+  var newer = Object.assign({}, e1, {
+    occurrences: 9,
+    lastSeen: '2026-09-05T10:00:00.000Z'
+  });
+  var rotated = Object.assign({}, e2, {
+    evidenceId: 'evidence-v1-ddd',
+    file: 'tomcat-a/catalina.out.1',
+    line: 3,
+    occurrences: 4
+  });
+  var dest = store([newer, rotated]);
+  var imp = dest.importJSON(exported);
+  assert.strictEqual(imp.loaded, 1);
+  assert.strictEqual(dest.get(srcId).state, 'resolved');
+  assert.strictEqual(dest.get(srcId).evidence.occurrences, 3);
+  assert.strictEqual(dest.get(srcId).linkedEvidence.length, 0);
+  assert.ok(imp.occurrenceUpdates.length >= 1);
+  assert.strictEqual(imp.occurrenceUpdates[0].liveOccurrences, 9);
+  assert.strictEqual(imp.occurrenceUpdates[0].previousOccurrences, 3);
+  assert.ok(imp.candidates.some(function (c) { return c.evidenceId === 'evidence-v1-ddd'; }));
+  assert.strictEqual(dest.listReviews().candidates.length, 1);
+
+  dest.acknowledgeOccurrences(srcId, 'evidence-v1-aaa');
+  assert.strictEqual(dest.get(srcId).state, 'resolved');
+  assert.strictEqual(dest.get(srcId).evidence.occurrences, 9);
+  assert.strictEqual(dest.listReviews().occurrenceUpdates.length, 0);
+
+  dest.linkEvidence(srcId, rotated);
+  assert.strictEqual(dest.get(srcId).state, 'resolved');
+  assert.strictEqual(dest.get(srcId).linkedEvidence[0].id, 'evidence-v1-ddd');
+  assert.strictEqual(dest.listReviews().candidates.length, 0);
+
+  var dest2 = store([newer, rotated]);
+  dest2.importJSON(exported);
+  dest2.dismissCandidate(srcId, 'evidence-v1-ddd');
+  assert.strictEqual(dest2.get(srcId).state, 'resolved');
+  assert.strictEqual(dest2.listReviews().candidates.length, 0);
+  assert.ok(dest2.get(srcId).ignoredEvidence.indexOf('evidence-v1-ddd') !== -1);
+  var dismissedExport = JSON.parse(dest2.exportJSON());
+  assert.ok(dismissedExport.issues[0].ignoredEvidence.indexOf('evidence-v1-ddd') !== -1);
+
+  var clash = store([e1, e2]);
+  clash.createFromEvent(e1);
+  clash.createFromEvent(e2);
+  assert.ok(clash.linkEvidence('issue-v1-aaa', e2).error);
+  assert.strictEqual(clash.get('issue-v1-aaa').state, 'open');
+  assert.strictEqual(clash.get('issue-v1-bbb').state, 'open');
+
+  var fs = require('fs');
+  var path = require('path');
+  var page = fs.readFileSync(path.join(__dirname, 'page.js'), 'utf8');
+  var html = fs.readFileSync(path.join(__dirname, 'page.html'), 'utf8');
+  assert.strictEqual(page.indexOf('innerHTML'), -1);
+  assert.ok(page.indexOf('Link to existing issue') !== -1);
+  assert.ok(page.indexOf('listReviews') !== -1);
+  assert.ok(page.indexOf('linkEvidence') !== -1);
+  assert.ok(page.indexOf('unlinkEvidence') !== -1);
+  assert.ok(html.indexOf('Recurring evidence review') !== -1);
+})();
+
 console.log('followup_node_test.js: ok');

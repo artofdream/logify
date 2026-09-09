@@ -11,8 +11,9 @@ const (
 	FollowUpMaxTitle      = 200
 	FollowUpMaxTags       = 50
 	FollowUpMaxTagLength  = 64
-	FollowUpMaxNotes      = 8000
-	FollowUpMaxOwner      = 200
+	FollowUpMaxNotes          = 8000
+	FollowUpMaxOwner          = 200
+	FollowUpMaxLinkedEvidence = 50
 )
 
 // WorkflowState is the FR-020 closed set.

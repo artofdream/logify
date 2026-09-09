@@ -4,8 +4,8 @@ type: decision
 status: accepted
 owner: cursor-agent
 created: 2026-09-04
-updated: 2026-09-04
-requirements: [FR-022, NFR-018, NFR-019, NFR-020]
+updated: 2026-09-09
+requirements: [FR-022, FR-024, NFR-018, NFR-019, NFR-020]
 supersedes: []
 ---
 
@@ -38,6 +38,16 @@ Each issue includes `id`, `title`, `state`, `flagged`, `tags`, `owner`, `due`,
 `occurrences`, `severity`, and `sourceType`. `owner`, `due`, and `notes` are
 first-class v1 fields. Editors for them are specified in ADR-0003; this schema
 does not change when those editors are added.
+
+Optional v1 fields for FR-024 (ADR-0007; still schemaVersion 1):
+
+- `linkedEvidence`: additional evidence snapshots (same shape as `evidence`).
+  Absent or empty means only the originating `evidence` is linked.
+- `ignoredEvidence`: `evidence-v1-…` ids the operator dismissed as automatic
+  signature matches. Absent or empty means no dismissals.
+
+Export writes stored snapshots (last accepted baseline), not unacknowledged
+live occurrence counts. Import never auto-links candidates or changes state.
 
 Import rules:
 

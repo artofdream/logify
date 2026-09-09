@@ -197,7 +197,7 @@
       }
       body.appendChild(el('div', 'detail', details));
       var actions = el('div', 'event-actions');
-      var existing = store.get(LogifyFollowUp.issueIDFromEvidence(event.evidenceId));
+      var existing = store.issueForEvidence(event.evidenceId);
       var btn = el('button', '', existing ? 'Open issue' : 'Create issue');
       btn.type = 'button';
       btn.setAttribute('aria-label', (existing ? 'Open issue for ' : 'Create issue from ') + (event.file || 'event') + ' line ' + event.line);
@@ -216,7 +216,44 @@
         showFeedback('issue-feedback', result.created ? 'Created ' + result.issue.id : 'Issue already exists; selected ' + result.issue.id);
       });
       actions.appendChild(btn);
+      var picker = null;
+      if (!existing && store.issueCount() > 0) {
+        var linkBtn = el('button', '', 'Link to existing issue');
+        linkBtn.type = 'button';
+        linkBtn.setAttribute('aria-label', 'Link ' + (event.file || 'event') + ' line ' + event.line + ' to an existing issue');
+        picker = el('div', 'link-picker');
+        picker.hidden = true;
+        var linkSelect = document.createElement('select');
+        option(linkSelect, '', 'Choose an issue');
+        store.list().forEach(function (issue) {
+          option(linkSelect, issue.id, issue.title + ' (' + issue.id + ')');
+        });
+        var confirmLink = el('button', '', 'Link');
+        confirmLink.type = 'button';
+        confirmLink.disabled = true;
+        linkSelect.addEventListener('change', function () {
+          confirmLink.disabled = !linkSelect.value;
+        });
+        confirmLink.addEventListener('click', function () {
+          if (!linkSelect.value) return;
+          var result = store.linkEvidence(linkSelect.value, event);
+          if (result.error) {
+            showFeedback('issue-feedback', result.error, true);
+            return;
+          }
+          renderAll();
+          showIssue(result.issue);
+          showFeedback('issue-feedback', 'Linked evidence to ' + result.issue.id + '; state remains ' + result.issue.state);
+        });
+        picker.appendChild(linkSelect);
+        picker.appendChild(confirmLink);
+        linkBtn.addEventListener('click', function () {
+          picker.hidden = !picker.hidden;
+        });
+        actions.appendChild(linkBtn);
+      }
       body.appendChild(actions);
+      if (picker) body.appendChild(picker);
       article.appendChild(body);
       root.appendChild(article);
     });
@@ -240,7 +277,7 @@
     list.appendChild(el('dd', '', value));
   }
 
-  function renderIssueCard(issue) {
+  function renderIssueCard(issue, reviewIndex) {
     var overdue = store.isOverdue(issue);
     var card = el('article', 'issue' + (issue.flagged ? ' flagged' : '') + (overdue ? ' overdue' : ''));
     card.id = issueAnchor(issue);
@@ -257,7 +294,10 @@
     stateBadge.setAttribute('aria-label', 'Workflow state: ' + stateLabel(issue.state));
     left.appendChild(stateBadge);
     if (overdue) left.appendChild(el('span', 'overdue-badge', 'Overdue'));
-    if (!issue.evidenceMatched) left.appendChild(el('span', 'unmatched', 'Evidence not in this report'));
+    if (!issue.evidenceMatched) left.appendChild(el('span', 'unmatched', 'No linked evidence in this report'));
+    reviewIndex = reviewIndex || {};
+    if (reviewIndex.newOcc && reviewIndex.newOcc[issue.id]) left.appendChild(el('span', 'new-occ-badge', 'New occurrences'));
+    if (reviewIndex.candidates && reviewIndex.candidates[issue.id]) left.appendChild(el('span', 'candidate-badge', 'Signature match to review'));
     heading.appendChild(left);
     var tools = el('div', 'event-actions');
     var flagBtn = el('button', '', issue.flagged ? 'Unflag' : 'Flag for attention');
@@ -277,7 +317,12 @@
     evBtn.setAttribute('data-control', 'evidence');
     evBtn.disabled = !issue.evidenceMatched;
     evBtn.addEventListener('click', function () {
-      var live = events.filter(function (e) { return e.evidenceId === issue.evidence.id; })[0];
+      var refs = store.evidenceRefs(issue);
+      var live = null;
+      refs.some(function (ref) {
+        live = events.filter(function (e) { return e.evidenceId === ref.id; })[0];
+        return !!live;
+      });
       if (live) showEvidence(live);
     });
     tools.appendChild(flagBtn);
@@ -453,18 +498,142 @@
 
     var ev = el('div', 'box');
     ev.appendChild(el('h3', '', 'Observed evidence'));
-    var dl = el('dl', 'evidence');
-    field(dl, 'Evidence ID', issue.evidence.id);
-    field(dl, 'Signature', issue.evidence.signature);
-    field(dl, 'Instance', issue.evidence.instance);
-    field(dl, 'Source', (issue.evidence.file || '') + ':' + issue.evidence.line);
-    field(dl, 'First seen', formatTime(issue.evidence.firstSeen));
-    field(dl, 'Last seen', formatTime(issue.evidence.lastSeen));
-    field(dl, 'Occurrences', issue.evidence.occurrences);
-    field(dl, 'Severity', issue.evidence.severity || '—');
-    ev.appendChild(dl);
+    store.evidenceRefs(issue).forEach(function (ref, idx) {
+      var live = events.filter(function (e) { return e.evidenceId === ref.id; })[0];
+      var item = el('div', 'evidence-item');
+      var badges = el('div', 'event-actions');
+      if (idx === 0) badges.appendChild(el('span', 'origin-badge', 'Originating'));
+      if (!live) badges.appendChild(el('span', 'unmatched', 'Not in this report'));
+      var delta = LogifyFollowUp.occurrenceDelta(ref, live);
+      if (delta && (delta.newOccurrences > 0 || delta.liveLastSeen !== delta.previousLastSeen)) {
+        var label = delta.newOccurrences > 0
+          ? (delta.newOccurrences + ' new occurrence(s)')
+          : 'Newer last-seen time';
+        badges.appendChild(el('span', 'new-occ-badge', label));
+      }
+      item.appendChild(badges);
+      var dl = el('dl', 'evidence');
+      field(dl, 'Evidence ID', ref.id);
+      field(dl, 'Signature', ref.signature);
+      field(dl, 'Instance', ref.instance);
+      field(dl, 'Source', (ref.file || '') + ':' + ref.line);
+      field(dl, 'First seen', formatTime(live && live.firstSeen ? live.firstSeen : ref.firstSeen));
+      field(dl, 'Last seen', formatTime(live && live.lastSeen ? live.lastSeen : ref.lastSeen));
+      field(dl, 'Stored occurrences', ref.occurrences == null ? '—' : ref.occurrences);
+      if (live) field(dl, 'Occurrences in this report', live.occurrences);
+      field(dl, 'Severity', (live && live.severity) || ref.severity || '—');
+      item.appendChild(dl);
+      var row = el('div', 'event-actions');
+      var show = el('button', '', 'Show evidence');
+      show.type = 'button';
+      show.disabled = !live;
+      show.addEventListener('click', function () {
+        if (live) showEvidence(live);
+      });
+      row.appendChild(show);
+      if (idx > 0) {
+        var unlink = el('button', '', 'Unlink');
+        unlink.type = 'button';
+        unlink.setAttribute('aria-label', 'Unlink evidence ' + ref.id);
+        unlink.addEventListener('click', function () {
+          var result = store.unlinkEvidence(issue.id, ref.id);
+          if (result.error) {
+            showFeedback('issue-feedback', result.error, true);
+            return;
+          }
+          renderAll();
+          showFeedback('issue-feedback', 'Unlinked evidence from ' + issue.id + '; state remains ' + issue.state);
+        });
+        row.appendChild(unlink);
+      }
+      if (delta) {
+        var ack = el('button', '', 'Acknowledge new occurrences');
+        ack.type = 'button';
+        ack.addEventListener('click', function () {
+          var result = store.acknowledgeOccurrences(issue.id, ref.id);
+          if (result.error) {
+            showFeedback('issue-feedback', result.error, true);
+            return;
+          }
+          renderAll();
+          showFeedback('issue-feedback', 'Acknowledged new occurrences on ' + issue.id + '; state remains ' + result.issue.state);
+        });
+        row.appendChild(ack);
+      }
+      item.appendChild(row);
+      ev.appendChild(item);
+    });
     card.appendChild(ev);
     return card;
+  }
+
+  function renderReviews() {
+    var root = $('match-review');
+    var list = $('match-review-list');
+    if (!root || !list) return;
+    clear(list);
+    var reviews = store.listReviews();
+    if (!reviews.occurrenceUpdates.length && !reviews.candidates.length) {
+      root.hidden = true;
+      return;
+    }
+    root.hidden = false;
+    reviews.occurrenceUpdates.forEach(function (u) {
+      var card = el('article', 'review-item');
+      card.appendChild(el('div', 'review-title', 'Newly observed occurrences on ' + u.issueId));
+      var detail = 'Evidence ' + u.evidenceId + ': ' + u.previousOccurrences + ' → ' + u.liveOccurrences +
+        ' stored vs this report. Issue state remains ' + u.state + ' until you change it.';
+      card.appendChild(el('div', 'detail', detail));
+      var ack = el('button', '', 'Acknowledge');
+      ack.type = 'button';
+      ack.addEventListener('click', function () {
+        var result = store.acknowledgeOccurrences(u.issueId, u.evidenceId);
+        if (result.error) {
+          showFeedback('issue-feedback', result.error, true);
+          return;
+        }
+        renderAll();
+        showFeedback('issue-feedback', 'Acknowledged new occurrences on ' + u.issueId + '; state remains ' + result.issue.state);
+      });
+      card.appendChild(ack);
+      list.appendChild(card);
+    });
+    reviews.candidates.forEach(function (c) {
+      var card = el('article', 'review-item');
+      card.appendChild(el('div', 'review-title', 'Signature match for ' + c.issueId));
+      var detail = (c.signature || '') + ' on ' + (c.file || '') + ':' + c.line +
+        ' (' + (c.occurrences || 1) + ' occurrence(s); instance ' + (c.instance || '') +
+        '). Automatic match has not changed issue state (' + c.state + ').';
+      card.appendChild(el('div', 'detail', detail));
+      var actions = el('div', 'event-actions');
+      var link = el('button', '', 'Link to issue');
+      link.type = 'button';
+      link.addEventListener('click', function () {
+        var live = events.filter(function (e) { return e.evidenceId === c.evidenceId; })[0];
+        var result = store.linkEvidence(c.issueId, live);
+        if (result.error) {
+          showFeedback('issue-feedback', result.error, true);
+          return;
+        }
+        renderAll();
+        showFeedback('issue-feedback', 'Linked recurring evidence to ' + c.issueId + '; state remains ' + result.issue.state);
+      });
+      var dismiss = el('button', '', 'Dismiss');
+      dismiss.type = 'button';
+      dismiss.addEventListener('click', function () {
+        var result = store.dismissCandidate(c.issueId, c.evidenceId);
+        if (result.error) {
+          showFeedback('issue-feedback', result.error, true);
+          return;
+        }
+        renderAll();
+        showFeedback('issue-feedback', 'Dismissed signature match for ' + c.issueId + '; state remains ' + result.issue.state);
+      });
+      actions.appendChild(link);
+      actions.appendChild(dismiss);
+      card.appendChild(actions);
+      list.appendChild(card);
+    });
   }
 
   function renderIssues(opts) {
@@ -480,7 +649,7 @@
     } else {
       summaryText = 'Showing ' + visible.length + ' of ' + total + ' issue(s).';
     }
-    summary.textContent = summaryText;
+    if (summary) summary.textContent = summaryText;
     if (!total) {
       root.appendChild(el('div', 'empty', 'No issues yet. Create one from a timeline event or group.'));
       return;
@@ -490,7 +659,11 @@
       if (opts.announceCount) showFeedback('issue-feedback', summaryText);
       return;
     }
-    visible.forEach(function (issue) { root.appendChild(renderIssueCard(issue)); });
+    var reviews = store.listReviews();
+    var reviewIndex = { newOcc: {}, candidates: {} };
+    reviews.occurrenceUpdates.forEach(function (u) { reviewIndex.newOcc[u.issueId] = true; });
+    reviews.candidates.forEach(function (c) { reviewIndex.candidates[c.issueId] = true; });
+    visible.forEach(function (issue) { root.appendChild(renderIssueCard(issue, reviewIndex)); });
     if (opts.announceCount) showFeedback('issue-feedback', summaryText);
     applyPendingFocus();
   }
@@ -519,6 +692,7 @@
     renderWarnings();
     renderStorage();
     renderTimeline();
+    renderReviews();
     renderIssues();
   }
 
@@ -549,6 +723,13 @@
       var parts = ['Imported ' + result.loaded + ' issue(s)'];
       if (result.invalid.length) parts.push(result.invalid.length + ' invalid record(s) skipped');
       if (result.unmatched.length) parts.push(result.unmatched.length + ' unmatched evidence id(s)');
+      if (result.candidates && result.candidates.length) {
+        parts.push(result.candidates.length + ' signature match(es) to review');
+      }
+      if (result.occurrenceUpdates && result.occurrenceUpdates.length) {
+        parts.push(result.occurrenceUpdates.length + ' newly observed occurrence group(s)');
+      }
+      parts.push('Issue states were not changed');
       showFeedback('storage-feedback', parts.join('. '), result.invalid.length > 0);
       switchView('issues');
     };
@@ -613,6 +794,9 @@
   var loaded = store.loadLocal();
   renderAll();
   if (loaded && loaded.loaded) {
-    showFeedback('storage-feedback', 'Restored ' + loaded.loaded + ' issue(s) from local storage');
+    var extra = [];
+    if (loaded.candidates && loaded.candidates.length) extra.push(loaded.candidates.length + ' signature match(es) to review');
+    if (loaded.occurrenceUpdates && loaded.occurrenceUpdates.length) extra.push(loaded.occurrenceUpdates.length + ' newly observed occurrence group(s)');
+    showFeedback('storage-feedback', 'Restored ' + loaded.loaded + ' issue(s) from local storage' + (extra.length ? '. ' + extra.join('. ') : ''));
   }
 })();
