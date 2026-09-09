@@ -52,6 +52,8 @@ Commit: `14a0666` (plus any follow-up docs commit on this branch)
   issue; Flagged + State: Open/Investigating text; Enter adds `db`; status
   line; Showing N of M; Tab reaches flag/state/tag; Right Arrow switches tabs;
   375px readable, no horizontal scroll
+- GitHub Actions `CI` on `d555e51` — success
+  (https://github.com/artofdream/logify/actions/runs/34405651953)
 
 ## Assumptions and confidence
 
