@@ -1,0 +1,10 @@
+# Example Logify redaction rules (NFR-006).
+# One rule per line. Blank lines and # comments are ignored.
+# Forms: named preset, regex:<pattern>, literal:<text>, or a bare regex.
+
+email
+ipv4
+uuid
+bearer
+jwt
+literal:change-me-example-secret

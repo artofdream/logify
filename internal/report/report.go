@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/artofdream/logify/internal/analyzer"
+	"github.com/artofdream/logify/internal/redact"
 )
 
 //go:embed page.html
@@ -31,6 +32,19 @@ type payload struct {
 	FilesFailed    int                `json:"filesFailed"`
 	Events         []event            `json:"events"`
 	Warnings       []analyzer.Warning `json:"warnings"`
+	Redaction      redactionInfo      `json:"redaction"`
+}
+
+type redactionInfo struct {
+	Enabled      bool `json:"enabled"`
+	RuleCount    int  `json:"ruleCount"`
+	Replacements int  `json:"replacements"`
+}
+
+// Options controls report embedding. Zero value preserves historical Write
+// behavior except for the always-on sensitivity banner in the HTML shell.
+type Options struct {
+	Redact *redact.Engine
 }
 
 type event struct {
@@ -57,8 +71,12 @@ type pageView struct {
 	Page     template.JS
 }
 
-func Write(path string, r analyzer.Result) error {
-	raw, err := json.Marshal(buildPayload(r))
+func Write(path string, r analyzer.Result, opt ...Options) error {
+	var o Options
+	if len(opt) > 0 {
+		o = opt[0]
+	}
+	raw, err := json.Marshal(buildPayload(r, o))
 	if err != nil {
 		return err
 	}
@@ -76,17 +94,37 @@ func Write(path string, r analyzer.Result) error {
 	})
 }
 
-func buildPayload(r analyzer.Result) payload {
+func buildPayload(r analyzer.Result, opt Options) payload {
 	events := r.Events
 	if events == nil {
 		events = []analyzer.Event{}
 	}
-	warnings := r.Warnings
+	ids := make([]string, len(events))
+	for i, src := range events {
+		ids[i] = EvidenceID(src)
+	}
+	redacted, replacements := redact.ApplyResult(analyzer.Result{
+		Root:           r.Root,
+		GeneratedAt:    r.GeneratedAt,
+		FilesScanned:   r.FilesScanned,
+		FilesProcessed: r.FilesProcessed,
+		FilesSkipped:   r.FilesSkipped,
+		FilesFailed:    r.FilesFailed,
+		Events:         events,
+		Warnings:       r.Warnings,
+	}, opt.Redact)
+	events = redacted.Events
+	warnings := redacted.Warnings
 	if warnings == nil {
 		warnings = []analyzer.Warning{}
 	}
+	info := redactionInfo{
+		Enabled:      opt.Redact != nil && opt.Redact.RuleCount() > 0,
+		RuleCount:    opt.Redact.RuleCount(),
+		Replacements: replacements,
+	}
 	out := make([]event, 0, len(events))
-	for _, src := range events {
+	for i, src := range events {
 		item := event{
 			Timestamp:    src.Timestamp,
 			HasTimestamp: src.HasTimestamp,
@@ -97,7 +135,7 @@ func buildPayload(r analyzer.Result) payload {
 			Line:         src.Line,
 			Message:      src.Message,
 			Signature:    src.Signature,
-			EvidenceID:   EvidenceID(src),
+			EvidenceID:   ids[i],
 			Occurrences:  src.Occurrences,
 			StatusCode:   src.StatusCode,
 		}
@@ -110,7 +148,7 @@ func buildPayload(r analyzer.Result) payload {
 		out = append(out, item)
 	}
 	return payload{
-		Root:           r.Root,
+		Root:           redacted.Root,
 		GeneratedAt:    r.GeneratedAt,
 		FilesScanned:   r.FilesScanned,
 		FilesProcessed: r.FilesProcessed,
@@ -118,5 +156,6 @@ func buildPayload(r analyzer.Result) payload {
 		FilesFailed:    r.FilesFailed,
 		Events:         out,
 		Warnings:       warnings,
+		Redaction:      info,
 	}
 }

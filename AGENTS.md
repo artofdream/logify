@@ -29,8 +29,10 @@ requirement implemented until every acceptance criterion is verified.
 - `cmd/logify/`: CLI entry point and flag handling.
 - `internal/analyzer/`: discovery, parsing, normalization, signatures,
   deduplication, filtering, and timeline ordering.
+- `internal/redact/`: optional operator-supplied report-time redaction rules.
 - `internal/report/`: embedded HTML/CSS/JavaScript report generation.
 - `testdata/case/`: representative Tomcat and HTTPD fixtures.
+- `testdata/redact/`: example optional redaction rule file.
 - `README.md`: user-facing behavior, build instructions, and known limits.
 - `docs/requirements/`: canonical functional and non-functional requirements.
 - `docs/principles.md`: non-negotiable decision and delivery principles.
