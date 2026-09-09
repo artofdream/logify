@@ -1,10 +1,10 @@
 ---
 id: WI-20260909-nfr006-redaction
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-09T20:40:00Z
-updated: 2026-09-09T20:55:00Z
+updated: 2026-09-09T20:48:00Z
 lease_expires: 2026-09-10T08:00:00Z
 scope:
   - cmd/logify/
@@ -53,7 +53,8 @@ See `scope`. Owner: `cursor-agent`.
 
 ## Evidence and assumptions
 
-- NFR-006 is Partial; AC3 (configurable redaction) is the documented gap.
+- NFR-006 was Partial; AC3 and the weak warning were the documented gaps.
+  Status is now Implemented with observed validation on this branch.
 - WI-20260904-report-crash-quick-wins listed redaction as a non-goal and is in
   `review` with an expired lease.
 - No active/queued dispatch claims NFR-006.
@@ -69,5 +70,8 @@ fixture report run.
 
 - `2026-09-09T20:40:00Z` — cursor-agent — claimed NFR-006 redaction/warning work.
 - `2026-09-09T20:55:00Z` — cursor-agent — implemented opt-in redaction, banner, and docs; validation pending.
+- `2026-09-09T20:48:00Z` — cursor-agent — `go test ./...`, `go vet`, fixture CLI runs passed; PR #10.
 
 ## Handoff or completion
+
+See `docs/collaboration/handoffs/HO-20260909-2048-cursor-agent-nfr006.md`.
