@@ -1,10 +1,10 @@
 ---
 id: WI-20260909-fr021-follow-up-details
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-09T19:21:31Z
-updated: 2026-09-09T19:21:31Z
+updated: 2026-09-09T19:45:00Z
 lease_expires: 2026-09-10T07:21:31Z
 scope:
   - internal/report/followup.js
@@ -24,6 +24,7 @@ scope:
   - docs/collaboration/dispatches/DSP-20260909-FR021.md
   - docs/collaboration/dispatches/DSP-20260904-FR020-FR021.md
   - docs/collaboration/dispatches/DSP-20260904-MUST-ISSUE-UI.md
+  - docs/collaboration/handoffs/HO-20260909-1949-cursor-agent-fr021.md
 requirements: [FR-021]
 depends_on: [WI-20260904-must-issue-ui]
 supersedes: [DSP-20260904-FR020-FR021]
@@ -66,8 +67,20 @@ this work item takes the report UI paths for FR-021 only.
 
 ## Validation
 
-Pending official `gofmt` / `go test` / `go vet` / build / fixture report after
-implementation.
+- `gofmt -l cmd internal` — clean
+- `go test ./... -count=1` — pass (`analyzer`, `report`, including
+  `followup_node_test.js` FR-021 block and `node --check` on page scripts)
+- `go vet ./...` — pass
+- `go build -o logify.exe ./cmd/logify` — pass
+- `./logify.exe -output sample-report.html testdata/case` — 6 events from 3
+  files, 0 warnings; report contains Issue queue, Clear due date, Overdue only,
+  `logify-follow-up-v1`; no `http://` / `https://`
+- `git diff --check` — pass
+- Browser `file:///workspace/sample-report.html`: create issue; edit owner
+  (Ada Lovelace), due 2020-01-15, notes `<script>alert(1)</script>` as text
+  (no execution); Overdue badge while open; owner and Overdue-only filters;
+  resolved hides overdue; Clear due date; ~375px fields readable
+- PR: https://github.com/artofdream/logify/pull/4 (draft vs `main`)
 
 ## Activity log
 
@@ -77,7 +90,11 @@ implementation.
 - `2026-09-09T19:26:00Z` — cursor-agent — added store editors, overdue badge,
   owner/overdue filters (existing chrome), ADR-0003, and Node tests. Official
   validation still pending; FR-021 status remains Proposed until probes pass.
+- `2026-09-09T19:49:00Z` — cursor-agent — Go/Node validation, fixture report,
+  and in-browser editor/overdue/filter/XSS probes passed. Fixed a missing
+  `</label>` that broke `html/template`. FR-021 marked Implemented. Draft PR #4.
 
 ## Handoff or completion
 
-In progress. Do not merge from this task.
+In review on PR #4. Do not mark done until the PR is reviewed. Do not merge
+from this task.

@@ -244,7 +244,7 @@
 ### FR-021 — Record follow-up details
 
 - **Priority:** Should
-- **Status:** Proposed
+- **Status:** Implemented
 - **Rationale:** Operators need to record who owns follow-up, when it is due, and
   investigation notes without leaving the offline report.
 - **Acceptance criteria:**
