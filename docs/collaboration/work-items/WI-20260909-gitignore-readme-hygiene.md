@@ -4,7 +4,7 @@ type: work-item
 status: review
 owner: cursor-agent
 created: 2026-09-09T20:26:00Z
-updated: 2026-09-09T20:30:00Z
+updated: 2026-09-09T20:32:00Z
 lease_expires: 2026-09-10T02:00:00Z
 scope:
   - .gitignore
@@ -38,7 +38,8 @@ draft PR against `main`. Do not merge, tag, or cut a GitHub Release.
 2. README Build notes Go 1.22+ on PATH (Windows tip) and that generated
    `logify.exe` / `*-report.html` are gitignored.
 3. README or docs has a one-line release stub (`v*` tag → existing workflow).
-4. Draft PR is open; this task does not merge it.
+4. Draft PR [#7](https://github.com/artofdream/logify/pull/7) is open; this
+   task does not merge it.
 
 ## Planned files and ownership
 
@@ -77,7 +78,9 @@ Go compiler checks were not run: no `cmd/` or `internal/` changes.
 - `2026-09-09T20:30:00Z` — cursor-agent — added explicit report names, README
   PATH/ignore note, and release stub. `git check-ignore` and `git diff --check`
   observed as above.
+- `2026-09-09T20:32:00Z` — cursor-agent — opened draft PR #7.
 
 ## Handoff or completion
 
-Draft PR against `main`. Do not merge (CI auto-merges ready PRs).
+Draft PR: https://github.com/artofdream/logify/pull/7
+Do not merge (CI auto-merges ready PRs). No tag or GitHub Release created.
