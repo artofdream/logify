@@ -20,6 +20,7 @@ scope:
   - docs/knowledge/architecture.md
   - docs/knowledge/decisions/ADR-0005-optional-report-redaction.md
   - docs/collaboration/work-items/WI-20260909-nfr006-redaction.md
+  - docs/collaboration/handoffs/HO-20260909-2048-cursor-agent-nfr006.md
 requirements: [NFR-006]
 depends_on: []
 supersedes: []
