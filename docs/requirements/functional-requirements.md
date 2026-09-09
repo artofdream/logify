@@ -322,7 +322,7 @@
 ### FR-024 — Merge recurring evidence into an existing issue
 
 - **Priority:** Should
-- **Status:** Proposed
+- **Status:** Implemented
 - **Rationale:** The same failure often reappears as another event group or in a
   later bundle. Operators need to attach that evidence to the existing issue
   without minting a duplicate or silently changing workflow state.

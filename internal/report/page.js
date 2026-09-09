@@ -731,6 +731,7 @@
       }
       parts.push('Issue states were not changed');
       showFeedback('storage-feedback', parts.join('. '), result.invalid.length > 0);
+      showFeedback('issue-feedback', '');
       switchView('issues');
     };
     reader.readAsText(file);

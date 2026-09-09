@@ -1,10 +1,10 @@
 ---
 id: WI-20260909-fr024-merge-recurring-evidence
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-09T19:53:28Z
-updated: 2026-09-09T19:53:28Z
+updated: 2026-09-09T20:17:00Z
 lease_expires: 2026-09-10T07:53:28Z
 scope:
   - internal/report/followup.js
@@ -24,6 +24,7 @@ scope:
   - docs/collaboration/dispatches/DSP-20260909-FR024.md
   - docs/collaboration/dispatches/DSP-20260904-FR023-FR024.md
   - docs/collaboration/handoffs/HO-20260909-cursor-agent-fr024.md
+  - docs/collaboration/work-items/WI-20260909-fr021-follow-up-details.md
 requirements: [FR-024]
 depends_on: [WI-20260909-fr021-follow-up-details]
 supersedes: [DSP-20260904-FR023-FR024]
@@ -67,14 +68,26 @@ follow-up paths for FR-024 only.
 
 ## Validation
 
-Pending official `AGENTS.md` commands.
+- `gofmt -l cmd internal` — clean after alignment of `followup.go`
+- `go test ./... -count=1` — pass
+- `go vet ./...` — pass
+- `go build -o logify.exe ./cmd/logify` — pass
+- `./logify.exe -output sample-report.html testdata/case` — 6 events, 3 files, 0 warnings
+- `git diff --check` — pass
+- Browser probes on `file:///workspace/sample-report.html` for link/unlink and
+  import review without state change
+- PR: https://github.com/artofdream/logify/pull/5 (draft vs `main`)
 
 ## Activity log
 
 - `2026-09-09T19:53:28Z` — cursor-agent — claimed FR-024. Fetched `origin/main`
   (`01ae8bf`, PR #4 squash-merged FR-021). No other active/queued/review dispatch
   owns FR-024. Branch `cursor/fr024-merge-recurring-evidence-c99d`.
+- `2026-09-09T20:17:00Z` — cursor-agent — Go/Node validation, fixture report,
+  and in-browser link/import/review/XSS probes passed. FR-024 marked
+  Implemented. Draft PR #5.
 
 ## Handoff or completion
 
-In progress.
+In review on PR #5. Do not mark done until the PR is reviewed. Do not merge
+from this task.
