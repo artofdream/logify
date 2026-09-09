@@ -1,10 +1,10 @@
 ---
 id: WI-20260909-nfr002-ci-matrix
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-09T20:40:00Z
-updated: 2026-09-09T20:42:00Z
+updated: 2026-09-09T20:46:30Z
 lease_expires: 2026-09-10T08:40:00Z
 scope:
   - .github/workflows/ci.yml
@@ -12,6 +12,7 @@ scope:
   - docs/framework-adoption.md
   - AGENTS.md
   - docs/collaboration/work-items/WI-20260909-nfr002-ci-matrix.md
+  - docs/collaboration/handoffs/HO-20260909-2046-cursor-agent-nfr002.md
 requirements: [NFR-002]
 depends_on: []
 supersedes: []
@@ -53,8 +54,12 @@ Owned by `cursor-agent`. Disjoint from open PRs #5–#8. WI-20260904 listed
 
 ## Validation
 
-Local: `gofmt`, `go test ./...`, `go build`, `go vet`, `git diff --check`,
-fixture smoke. Remote: PR CI matrix legs.
+Local (Linux): `gofmt`, `go test ./...`, `go build`, `go vet`,
+`git diff --check`, fixture smoke — passed.
+
+Remote: https://github.com/artofdream/logify/actions/runs/34402392739
+green on ubuntu/windows/macos `test` plus `validate`. Auto-merge skipped
+(draft).
 
 ## Activity log
 
@@ -62,7 +67,9 @@ fixture smoke. Remote: PR CI matrix legs.
 - `2026-09-09T20:42:00Z` — cursor-agent — matrix + docs pushed; local Linux
   validation passed; NFR-002 remains Partial pending green Win/macOS CI.
   PR: https://github.com/artofdream/logify/pull/9
+- `2026-09-09T20:46:30Z` — cursor-agent — run 34402392739 green; NFR-002
+  marked Implemented; work item → review.
 
 ## Handoff or completion
 
-Pending remote `test` matrix on ubuntu/windows/macos.
+HO-20260909-2046-cursor-agent-nfr002. PR #9 remains draft; do not merge.
