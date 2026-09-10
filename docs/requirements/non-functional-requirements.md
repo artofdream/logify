@@ -227,9 +227,28 @@
   3. Common issue actions provide immediate visible confirmation.
   4. Filtering remains responsive with at least 10,000 tracked issues on documented
      reference hardware.
-- **Gap:** Controls are native buttons/inputs with text labels for flag and
-  state, and actions update a live status region. There is no measured 10,000-issue
-  filter probe or automated accessibility audit.
+- **Evidence:**
+  1. Create, flag, tag, and state use native labeled buttons/fields. Tab order
+     reaches them. Enter adds a tag. Arrow keys move between Timeline / Issue
+     queue tabs. After a card rebuild, focus returns to the control that was
+     used (`rememberFocus` / `applyPendingFocus`). Source-contract tests:
+     `internal/report/nfr021_a11y_test.js`.
+  2. Flag shows a **Flagged** badge and a **Flag for attention** / **Unflag**
+     button with `aria-pressed`. State shows a **State: …** badge and a labeled
+     select. Color on the card border is supplementary.
+  3. `#issue-feedback` is a polite atomic live region. Create, flag, tag, and
+     state write an immediate status line. Filter changes update **Showing N of
+     M issue(s)** and announce that count.
+  4. `internal/report/nfr021_filter_probe.js` builds 10,000 synthetic issues and
+     times `store.filter`. Interactive target is 100 ms median; CI fails only if
+     any timed filter exceeds 500 ms. A 2026-09-09 run on the cloud-agent host
+     (Linux 6.12.94+, 4× Intel Xeon KVM, 15 GiB RAM, Node v22.14.0) measured a
+     worst median of 3.8 ms. Re-run: `node internal/report/nfr021_filter_probe.js`.
+     Details: [RES-20260909-nfr021-issue-filter-probe](../knowledge/research/RES-20260909-nfr021-issue-filter-probe.md).
+- **Gap:** AC4 is not Implemented. The probe host is not a published operator
+  reference workstation, and the probe does not render 10,000 issue cards.
+  Unfiltered DOM render remains unwindowed. The a11y tests are source contracts,
+  not a WCAG engine or assistive-technology run (see also NFR-013).
 
 ## Engineering principles
 

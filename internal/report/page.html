@@ -34,13 +34,13 @@
       <button type="button" id="btn-export">Export follow-up JSON</button>
       <button type="button" id="btn-import">Import follow-up JSON</button>
       <button type="button" id="btn-clear">Clear local follow-up data</button>
-      <input id="import-file" type="file" accept=".json,application/json" hidden>
+      <input id="import-file" type="file" accept=".json,application/json" hidden aria-label="Follow-up JSON file">
     </div>
-    <p id="storage-feedback" class="feedback" role="status" aria-live="polite"></p>
+    <p id="storage-feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true"></p>
   </section>
-  <div class="tabs" role="tablist" aria-label="Report views">
-    <button type="button" role="tab" id="tab-timeline" aria-controls="view-timeline" aria-selected="true">Timeline</button>
-    <button type="button" role="tab" id="tab-issues" aria-controls="view-issues" aria-selected="false">Issue queue</button>
+  <div class="tabs" role="tablist" aria-label="Report views" aria-orientation="horizontal">
+    <button type="button" role="tab" id="tab-timeline" aria-controls="view-timeline" aria-selected="true" tabindex="0">Timeline</button>
+    <button type="button" role="tab" id="tab-issues" aria-controls="view-issues" aria-selected="false" tabindex="-1">Issue queue</button>
   </div>
   <section id="view-timeline" class="view" role="tabpanel" aria-labelledby="tab-timeline">
     <div class="controls">
@@ -52,6 +52,7 @@
     <div id="timeline"></div>
   </section>
   <section id="view-issues" class="view" role="tabpanel" aria-labelledby="tab-issues" hidden>
+    <p class="hint" id="issue-workflow-hint">Create, flag, tag, and change state with the keyboard: Tab moves between labeled controls, Enter adds a tag, and Left/Right arrows switch the Timeline and Issue queue tabs. Flag and workflow state are named in text. Action results appear in the status line.</p>
     <div class="controls issue-controls">
       <label>Search issues<input id="iq" type="search" placeholder="Title, tags, evidence, owner, notes"></label>
       <label>State<select id="istate"><option value="">All states</option></select></label>
@@ -65,7 +66,8 @@
       <label>Instance<select id="iinst"><option value="">All instances</option></select></label>
       <label class="check" title="Due before today (UTC calendar date) and not resolved or dismissed">Overdue only<input id="ioverdue" type="checkbox"></label>
     </div>
-    <div id="issue-feedback" class="feedback" role="status" aria-live="polite"></div>
+    <div id="issue-feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true"></div>
+    <p id="issue-summary" class="issue-summary">No issues yet.</p>
     <div id="issues"></div>
   </section>
 </main>

@@ -3,7 +3,7 @@ id: logify-open-questions
 type: question-ledger
 status: active
 owner: human
-updated: 2026-09-03
+updated: 2026-09-09
 ---
 
 # Open questions
@@ -12,4 +12,25 @@ Record material unknowns as `Q-NNN` with owner, date, evidence needed, and links
 affected requirements or work items. Resolve in place with the answer, evidence,
 date, and any promoted ADR/requirement.
 
-No open questions are recorded yet.
+## Q-001 — Published reference hardware
+
+- **Status:** Open
+- **Owner:** human
+- **Opened:** 2026-09-09
+- **Requirements:** NFR-009, NFR-021
+- **Evidence needed:** An agreed workstation or CI class (CPU, RAM, OS) that
+  requirement text can call "documented reference hardware."
+- **Notes:** NFR-021 AC4 currently records probe-host timings with a disclaimer
+  ([RES-20260909-nfr021-issue-filter-probe](research/RES-20260909-nfr021-issue-filter-probe.md)).
+  That host is not a product reference.
+
+## Q-002 — Issue-queue card windowing at 10k matches
+
+- **Status:** Open
+- **Owner:** human
+- **Opened:** 2026-09-09
+- **Requirements:** NFR-021
+- **Evidence needed:** Operator decision on whether the queue should window,
+  paginate, or virtualize when many issues match. ADR-0006 deferred this.
+- **Notes:** `store.filter` at n=10,000 is a few milliseconds on the probe
+  host. Rendering every matching card is unmeasured and expected to dominate.
