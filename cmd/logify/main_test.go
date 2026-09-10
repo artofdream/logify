@@ -19,6 +19,20 @@ func TestRunUsageWhenDirectoryMissing(t *testing.T) {
 	}
 }
 
+func TestRunHelpExitsZero(t *testing.T) {
+	for _, name := range []string{"-h", "-help"} {
+		t.Run(name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			if code := run([]string{name}, &stdout, &stderr); code != 0 {
+				t.Fatalf("exit=%d want 0 stderr=%q", code, stderr.String())
+			}
+			if !strings.Contains(stderr.String(), "Usage:") {
+				t.Fatalf("stderr=%q", stderr.String())
+			}
+		})
+	}
+}
+
 func TestRunMissingRedactFile(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := run([]string{"-redact-file", filepath.Join(t.TempDir(), "missing.txt"), t.TempDir()}, &stdout, &stderr)
