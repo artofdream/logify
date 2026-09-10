@@ -71,6 +71,31 @@ contains(js, "result.added ? 'Tagged ' + issue.id", 'tag confirmation');
 contains(js, "result.created ? 'Created ' + result.issue.id", 'create confirmation');
 contains(html, 'role="status"', 'status role');
 
+function extractFunction(src, name) {
+  var start = src.indexOf('function ' + name + '(');
+  assert.ok(start !== -1, name + ' missing');
+  var depth = 0;
+  var brace = src.indexOf('{', start);
+  for (var i = brace; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') {
+      depth--;
+      if (depth === 0) return src.slice(start, i + 1);
+    }
+  }
+  throw new Error('unclosed ' + name);
+}
+
+// Confirmations must cancel the delayed detail write so it cannot overwrite them.
+var showFb = extractFunction(js, 'showFeedback');
+assert.ok(showFb.indexOf('detailFeedbackTimer') !== -1, 'showFeedback cancels detailFeedbackTimer');
+assert.ok(showFb.indexOf('clearTimeout') !== -1, 'showFeedback clearTimeout');
+
+// Empty-list early returns must apply/clear pendingFocus (do not steal focus later).
+var renderIss = extractFunction(js, 'renderIssues');
+assert.ok((renderIss.match(/applyPendingFocus\(\)/g) || []).length >= 3,
+  'renderIssues applies pendingFocus on empty early returns and the populated path');
+
 // XSS / offline discipline kept while hardening the workflow.
 assert.strictEqual(js.indexOf('innerHTML'), -1, 'page.js must not assign innerHTML');
 assert.ok(!/https?:\/\//.test(html.replace(/\{\{\.Data\}\}/g, '')), 'page.html has no network URL');

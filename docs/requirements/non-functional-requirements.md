@@ -123,6 +123,8 @@
 - **Status:** Implemented
 - **Acceptance criteria:** Invalid arguments and unrecoverable failures write a
   concise explanation to standard error and return a non-zero exit code.
+- **Notes:** `-h` / `-help` print usage to stderr and exit 0 (`flag.ErrHelp`).
+  Missing directory and unknown flags still exit 2.
 
 ### NFR-012 — Responsive report
 
@@ -231,14 +233,18 @@
   1. Create, flag, tag, and state use native labeled buttons/fields. Tab order
      reaches them. Enter adds a tag. Arrow keys move between Timeline / Issue
      queue tabs. After a card rebuild, focus returns to the control that was
-     used (`rememberFocus` / `applyPendingFocus`). Source-contract tests:
+     used (`rememberFocus` / `applyPendingFocus`). Empty `renderIssues` early
+     returns also apply/clear `pendingFocus` so a later render cannot steal
+     focus from the filter. Source-contract tests:
      `internal/report/nfr021_a11y_test.js`.
   2. Flag shows a **Flagged** badge and a **Flag for attention** / **Unflag**
      button with `aria-pressed`. State shows a **State: …** badge and a labeled
      select. Color on the card border is supplementary.
   3. `#issue-feedback` is a polite atomic live region. Create, flag, tag, and
      state write an immediate status line. Filter changes update **Showing N of
-     M issue(s)** and announce that count.
+     M issue(s)** and announce that count. `showFeedback` cancels
+     `detailFeedbackTimer` so a delayed title/owner/notes write cannot
+     overwrite those confirmations.
   4. `internal/report/nfr021_filter_probe.js` builds 10,000 synthetic issues and
      times `store.filter`. Interactive target is 100 ms median; CI fails only if
      any timed filter exceeds 500 ms. A 2026-09-09 run on the cloud-agent host

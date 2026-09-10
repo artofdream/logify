@@ -51,6 +51,16 @@ change workflow state without an operator decision.
 7. Treat linked file paths, signatures, and titles as untrusted text. The page
    script assigns them with DOM `textContent` / `value` APIs only.
 
+8. An evidence id has one owning issue. `importJSON` skips a record whose
+   originating or linked evidence is already owned by a different issue, using
+   the same reason as `linkEvidence` / `createFromEvent`
+   (`evidence already linked to <id>`). Re-importing the same issue id may
+   replace that issue's refs. First accepted record in a file wins when two
+   imported issues claim the same id.
+9. The recurring review panel must show the newer `lastSeen` when the row is
+   lastSeen-only (equal occurrence counts). Issue cards already branch on this
+   case.
+
 Limits: at most 50 linked evidence snapshots per issue (originating + additional).
 
 ## Alternatives considered

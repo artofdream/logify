@@ -421,6 +421,92 @@ function store(events, extra) {
   assert.strictEqual(clash.get('issue-v1-aaa').state, 'open');
   assert.strictEqual(clash.get('issue-v1-bbb').state, 'open');
 
+  // FR-024 / FR-022: importJSON must not attach one evidence id to two issues.
+  var dupPayload = {
+    schema: follow.SCHEMA,
+    schemaVersion: follow.SCHEMA_VERSION,
+    issues: [
+      {
+        id: 'issue-v1-import-a',
+        title: 'first owner',
+        state: 'open',
+        flagged: false,
+        tags: [],
+        evidence: { id: 'evidence-v1-aaa', signature: 'sig1', instance: 'tomcat-a', file: 'f', line: 1 }
+      },
+      {
+        id: 'issue-v1-import-b',
+        title: 'second owner',
+        state: 'open',
+        flagged: false,
+        tags: [],
+        evidence: { id: 'evidence-v1-aaa', signature: 'sig1', instance: 'tomcat-a', file: 'f', line: 1 }
+      }
+    ]
+  };
+  var dupStore = store([e1, e2]);
+  var dup = dupStore.importJSON(JSON.stringify(dupPayload));
+  assert.strictEqual(dup.loaded, 1);
+  assert.strictEqual(dup.invalid.length, 1);
+  assert.strictEqual(dupStore.issueForEvidence('evidence-v1-aaa').id, 'issue-v1-import-a');
+  assert.ok(!dupStore.get('issue-v1-import-b'));
+  assert.ok(dup.invalid[0].reason.indexOf('evidence already linked to issue-v1-import-a') !== -1);
+
+  var localOwner = store([e1, e2]);
+  localOwner.createFromEvent(e1);
+  var steal = {
+    schema: follow.SCHEMA,
+    schemaVersion: follow.SCHEMA_VERSION,
+    issues: [{
+      id: 'issue-v1-import-c',
+      title: 'steals aaa',
+      state: 'investigating',
+      flagged: false,
+      tags: [],
+      evidence: { id: 'evidence-v1-bbb', signature: 'sig1', instance: 'tomcat-a', file: 'f', line: 2 },
+      linkedEvidence: [{ id: 'evidence-v1-aaa', signature: 'sig1', instance: 'tomcat-a', file: 'f', line: 1 }]
+    }]
+  };
+  var stolen = localOwner.importJSON(JSON.stringify(steal));
+  assert.strictEqual(stolen.loaded, 0);
+  assert.strictEqual(stolen.invalid.length, 1);
+  assert.strictEqual(localOwner.issueForEvidence('evidence-v1-aaa').id, 'issue-v1-aaa');
+  assert.ok(!localOwner.get('issue-v1-import-c'));
+  assert.ok(stolen.invalid[0].reason.indexOf('evidence already linked to issue-v1-aaa') !== -1);
+
+  var sameAgain = store([e1]);
+  sameAgain.createFromEvent(e1);
+  var reload = sameAgain.importJSON(sameAgain.exportJSON());
+  assert.strictEqual(reload.loaded, 1);
+  assert.strictEqual(reload.invalid.length, 0);
+  assert.strictEqual(sameAgain.issueForEvidence('evidence-v1-aaa').id, 'issue-v1-aaa');
+
+  // lastSeen-only delta (equal counts, newer lastSeen) is a reviewable update.
+  var storedSnap = { id: 'evidence-v1-aaa', occurrences: 3, lastSeen: '2026-09-04T10:05:00.000Z' };
+  var liveSameCount = { occurrences: 3, lastSeen: '2026-09-06T10:00:00.000Z' };
+  var lastSeenDelta = follow.occurrenceDelta(storedSnap, liveSameCount);
+  assert.ok(lastSeenDelta);
+  assert.strictEqual(lastSeenDelta.newOccurrences, 0);
+  assert.strictEqual(lastSeenDelta.liveLastSeen, '2026-09-06T10:00:00.000Z');
+  assert.strictEqual(follow.occurrenceDelta(storedSnap, {
+    occurrences: 3,
+    lastSeen: '2026-09-04T10:05:00.000Z'
+  }), null);
+
+  var lastSeenLive = Object.assign({}, e1, {
+    occurrences: 3,
+    lastSeen: '2026-09-06T10:00:00.000Z'
+  });
+  var lastSeenDest = store([lastSeenLive]);
+  var lastSeenImp = lastSeenDest.importJSON(exported);
+  assert.strictEqual(lastSeenImp.loaded, 1);
+  assert.strictEqual(lastSeenImp.occurrenceUpdates.length, 1);
+  assert.strictEqual(lastSeenImp.occurrenceUpdates[0].newOccurrences, 0);
+  assert.strictEqual(lastSeenImp.occurrenceUpdates[0].previousOccurrences, 3);
+  assert.strictEqual(lastSeenImp.occurrenceUpdates[0].liveOccurrences, 3);
+  assert.strictEqual(lastSeenImp.occurrenceUpdates[0].liveLastSeen, '2026-09-06T10:00:00.000Z');
+  assert.ok(lastSeenImp.occurrenceUpdates[0].previousLastSeen);
+
   var fs = require('fs');
   var path = require('path');
   var page = fs.readFileSync(path.join(__dirname, 'page.js'), 'utf8');
@@ -430,6 +516,8 @@ function store(events, extra) {
   assert.ok(page.indexOf('listReviews') !== -1);
   assert.ok(page.indexOf('linkEvidence') !== -1);
   assert.ok(page.indexOf('unlinkEvidence') !== -1);
+  assert.ok(page.indexOf('Newer last-seen time on ') !== -1);
+  assert.ok(page.indexOf('Occurrence count is unchanged') !== -1);
   assert.ok(html.indexOf('Recurring evidence review') !== -1);
 })();
 

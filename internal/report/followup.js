@@ -712,6 +712,12 @@
       var invalid = [];
       var unmatched = [];
       var loaded = 0;
+      var claimed = {};
+      all().forEach(function (issue) {
+        allEvidence(issue).forEach(function (ev) {
+          if (ev && ev.id) claimed[ev.id] = issue.id;
+        });
+      });
       parsed.data.issues.forEach(function (raw, index) {
         var checked = validateIssue(raw, index);
         if (checked.error) {
@@ -719,7 +725,36 @@
           return;
         }
         var issue = hydrate(checked.issue);
+        var previous = issues[issue.id];
+        if (previous) {
+          allEvidence(previous).forEach(function (ev) {
+            if (ev && ev.id && claimed[ev.id] === previous.id) delete claimed[ev.id];
+          });
+        }
+        var owner = null;
+        allEvidence(issue).some(function (ev) {
+          if (ev && ev.id && claimed[ev.id] && claimed[ev.id] !== issue.id) {
+            owner = claimed[ev.id];
+            return true;
+          }
+          return false;
+        });
+        if (owner) {
+          if (previous) {
+            allEvidence(previous).forEach(function (ev) {
+              if (ev && ev.id) claimed[ev.id] = previous.id;
+            });
+          }
+          invalid.push({
+            index: index,
+            id: issue.id,
+            reason: 'evidence already linked to ' + owner
+          });
+          return;
+        }
         allEvidence(issue).forEach(function (ev) {
+          if (!ev || !ev.id) return;
+          claimed[ev.id] = issue.id;
           if (!byEvidence[ev.id]) unmatched.push({ id: issue.id, evidenceId: ev.id });
         });
         remember(issue);

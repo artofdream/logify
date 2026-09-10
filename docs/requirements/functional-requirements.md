@@ -299,6 +299,10 @@
   5. Export and import require no network or server.
   6. Browser-local persistence may improve convenience but is not the only way to
      preserve or transfer follow-up data.
+- **Note:** An evidence id has one owning issue. Import skips a record whose
+  originating or linked evidence is already owned by a different issue, with
+  the same reason as `linkEvidence` (`evidence already linked to <id>`).
+  Re-importing the same issue id may replace that issue's refs.
 
 ### FR-023 — Present an issue work queue
 
@@ -338,4 +342,5 @@
   occurrences are a higher live occurrence count or newer `lastSeen` on a
   linked evidence id. Import, link, dismiss, and acknowledge do not change
   workflow state. The originating snapshot cannot be unlinked. Rendering uses
-  DOM text APIs only.
+  DOM text APIs only. The recurring review panel titles lastSeen-only rows
+  (equal occurrence counts, newer `lastSeen`) as a newer last-seen time.

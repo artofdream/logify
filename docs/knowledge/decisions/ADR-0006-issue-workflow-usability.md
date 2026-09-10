@@ -32,7 +32,9 @@ visible match count. AC4 had no measured probe.
    **State: Open**) plus labeled buttons/selects. Color remains decorative.
 3. Confirm create/flag/tag/state in `#issue-feedback` (`role="status"`,
    `aria-live="polite"`, `aria-atomic="true"`). Confirm filters with a persistent
-   **Showing N of M issue(s)** summary.
+   **Showing N of M issue(s)** summary. Immediate `showFeedback` writes cancel
+   `detailFeedbackTimer` so a delayed title/owner/notes status cannot overwrite
+   the confirmation. Empty `renderIssues` paths apply/clear `pendingFocus`.
 4. Measure AC4 with a Node harness that imports 10,000 synthetic issues and
    times `store.filter` only. Document an interactive target of 100 ms median
    and a CI guard of 500 ms. Do not treat the probe host as published reference
@@ -61,6 +63,8 @@ alone.
 
 ## Verification
 
-`nfr021_a11y_test.js` asserts the AC1–AC3 source contracts. `nfr021_filter_probe.js`
+`nfr021_a11y_test.js` asserts the AC1–AC3 source contracts, including that
+`showFeedback` cancels `detailFeedbackTimer` and that empty `renderIssues`
+paths call `applyPendingFocus`. `nfr021_filter_probe.js`
 builds 10,000 issues, checks filter counts, prints host + timings, and exits
 non-zero only if a timed filter exceeds 500 ms.
