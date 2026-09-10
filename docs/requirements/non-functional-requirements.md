@@ -63,14 +63,20 @@
 ### NFR-006 — Minimize data exposure
 
 - **Priority:** Should
-- **Status:** Partial
+- **Status:** Implemented
 - **Acceptance criteria:**
   1. No telemetry or automatic uploads occur.
   2. Documentation warns that reports contain copied log data.
   3. Optional redaction can remove configurable secrets and personal identifiers
      before report generation.
-- **Gap:** Configurable redaction is not implemented, and report sensitivity needs
-  a more prominent user-facing warning.
+- **Notes:** Default runs do not redact. `-redact` (repeatable) and
+  `-redact-file` apply operator-supplied presets, regexes, or literals to
+  report-embedded `root`, warnings, and each event `message`, `file`, and
+  `instance` after evidence IDs are computed. Source bundles are never modified.
+  Redaction is best-effort string replacement; it does not scan for unknown
+  secret types, does not cover operator-typed follow-up fields, and does not
+  make a report safe to publish. User-facing warnings are the README section,
+  a CLI stderr line on every successful write, and a report banner.
 
 ## Reliability and scale
 

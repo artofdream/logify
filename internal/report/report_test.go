@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/artofdream/logify/internal/analyzer"
+	"github.com/artofdream/logify/internal/redact"
 )
 
 func TestWriteSelfContained(t *testing.T) {
@@ -35,6 +36,9 @@ func TestWriteSelfContained(t *testing.T) {
 	}
 	if !strings.Contains(s, "Clear due date") || !strings.Contains(s, "Overdue only") {
 		t.Fatal("report is missing FR-021 follow-up detail editors")
+	}
+	if !strings.Contains(s, "Sensitive copy.") || !strings.Contains(s, "embeds parsed log text") {
+		t.Fatal("report is missing the NFR-006 sensitivity banner")
 	}
 }
 
@@ -90,6 +94,103 @@ func TestWriteFixtureReportArraysAndEvidence(t *testing.T) {
 		if ev.EvidenceID != want {
 			t.Fatalf("event %d evidenceId=%q want %q", i, ev.EvidenceID, want)
 		}
+	}
+}
+
+func TestWriteRedactsAfterEvidenceID(t *testing.T) {
+	// NFR-006: optional redaction is applied to operator-visible fields before
+	// HTML embedding; evidence IDs stay bound to the original provenance.
+	rule, err := redact.ParseRule("literal:secret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := analyzer.Event{
+		Message:   "token secret",
+		File:      "secret.log",
+		Instance:  "secret-node",
+		Signature: "deadbeef",
+		Line:      4,
+	}
+	wantID := EvidenceID(src)
+	p := filepath.Join(t.TempDir(), "redacted.html")
+	err = Write(p, analyzer.Result{
+		Root:   "/tmp/secret",
+		Events: []analyzer.Event{src},
+		Warnings: []analyzer.Warning{{
+			File:     "other.log",
+			Category: analyzer.CategoryScanOverflow,
+			Message:  "secret overflow",
+		}},
+	}, Options{Redact: redact.New([]redact.Rule{rule})})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := embeddedJSON(mustRead(t, p))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload struct {
+		Root   string `json:"root"`
+		Events []struct {
+			Message    string `json:"message"`
+			File       string `json:"file"`
+			Instance   string `json:"instance"`
+			EvidenceID string `json:"evidenceId"`
+		} `json:"events"`
+		Warnings  []analyzer.Warning `json:"warnings"`
+		Redaction struct {
+			Enabled      bool `json:"enabled"`
+			RuleCount    int  `json:"ruleCount"`
+			Replacements int  `json:"replacements"`
+		} `json:"redaction"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.Root != "/tmp/"+redact.Replacement {
+		t.Fatalf("root=%q", payload.Root)
+	}
+	if payload.Warnings[0].Message != redact.Replacement+" overflow" {
+		t.Fatalf("warning=%+v", payload.Warnings[0])
+	}
+	ev := payload.Events[0]
+	if ev.Message != "token "+redact.Replacement || ev.File != redact.Replacement+".log" || ev.Instance != redact.Replacement+"-node" {
+		t.Fatalf("event %#v", ev)
+	}
+	if ev.EvidenceID != wantID {
+		t.Fatalf("evidenceId=%q want %q", ev.EvidenceID, wantID)
+	}
+	if !payload.Redaction.Enabled || payload.Redaction.RuleCount != 1 || payload.Redaction.Replacements != 5 {
+		t.Fatalf("redaction %#v", payload.Redaction)
+	}
+	html := string(mustRead(t, p))
+	if strings.Contains(html, "token secret") {
+		t.Fatal("unredacted secret leaked into HTML")
+	}
+}
+
+func TestWriteDefaultDoesNotRedact(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "plain.html")
+	if err := Write(p, analyzer.Result{Events: []analyzer.Event{{Message: "ops@example.com"}}}); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := embeddedJSON(mustRead(t, p))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(raw, []byte("ops@example.com")) {
+		t.Fatal("default Write applied redaction")
+	}
+	var payload struct {
+		Redaction struct {
+			Enabled bool `json:"enabled"`
+		} `json:"redaction"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.Redaction.Enabled {
+		t.Fatal("redaction.enabled true by default")
 	}
 }
 
@@ -191,6 +292,15 @@ func TestWriteStructuredWarningsAndCounts(t *testing.T) {
 	if !strings.Contains(s, "Scan warnings") {
 		t.Fatal("report is missing the scan warnings heading")
 	}
+}
+
+func mustRead(t *testing.T, path string) []byte {
+	t.Helper()
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
 }
 
 func requireNode(t *testing.T) string {

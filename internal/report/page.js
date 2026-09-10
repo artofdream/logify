@@ -470,6 +470,13 @@
   LogifyFollowUp.STATES.forEach(function (s) { option($('istate'), s, s); });
 
   $('meta').textContent = (REPORT.root || '.') + ' • generated ' + formatTime(REPORT.generatedAt);
+  var redaction = REPORT.redaction || {};
+  if (redaction.enabled) {
+    $('redaction-status').textContent = ' This report applied ' + (redaction.ruleCount || 0) +
+      ' rule(s) (' + (redaction.replacements || 0) + ' replacement(s)).';
+  } else {
+    $('redaction-status').textContent = ' No redaction rules were applied.';
+  }
   ['q', 'sev', 'inst', 'src'].forEach(function (id) {
     $(id).addEventListener('input', renderTimeline);
   });

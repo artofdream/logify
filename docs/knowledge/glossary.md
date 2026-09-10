@@ -21,6 +21,9 @@ updated: 2026-09-09
 - **Processed / skipped / failed inputs:** supported files that were opened,
   walk paths that could not be visited, and supported files that could not be
   opened. `filesScanned = filesProcessed + filesFailed`.
+- **Redaction:** optional, operator-supplied string replacement applied to
+  report-embedded log-derived text before HTML write (NFR-006 / ADR-0005). Off
+  by default; not secret detection.
 - **Signature:** deterministic normalized identity used to group recurring events.
 - **Work item:** a bounded unit of agent/human work with advisory path ownership.
 - **Lease:** time-limited declaration of edit intent; not a filesystem lock.
