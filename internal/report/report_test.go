@@ -46,6 +46,9 @@ func TestWriteSelfContained(t *testing.T) {
 	if !strings.Contains(s, `aria-live="polite"`) || !strings.Contains(s, `aria-atomic="true"`) {
 		t.Fatal("report is missing live status semantics")
 	}
+	if !strings.Contains(s, "Link to existing issue") || !strings.Contains(s, "Recurring evidence review") {
+		t.Fatal("report is missing FR-024 merge/review chrome")
+	}
 }
 
 func TestWriteEmptySlicesAreJSONArrays(t *testing.T) {

@@ -4,15 +4,16 @@ package report
 // runtime implementation; these constants document the contract for tests.
 
 const (
-	FollowUpSchema        = "logify-follow-up-v1"
-	FollowUpSchemaVersion = 1
-	FollowUpMaxBytes      = 5 << 20
-	FollowUpMaxIssues     = 10000
-	FollowUpMaxTitle      = 200
-	FollowUpMaxTags       = 50
-	FollowUpMaxTagLength  = 64
-	FollowUpMaxNotes      = 8000
-	FollowUpMaxOwner      = 200
+	FollowUpSchema            = "logify-follow-up-v1"
+	FollowUpSchemaVersion     = 1
+	FollowUpMaxBytes          = 5 << 20
+	FollowUpMaxIssues         = 10000
+	FollowUpMaxTitle          = 200
+	FollowUpMaxTags           = 50
+	FollowUpMaxTagLength      = 64
+	FollowUpMaxNotes          = 8000
+	FollowUpMaxOwner          = 200
+	FollowUpMaxLinkedEvidence = 50
 )
 
 // WorkflowState is the FR-020 closed set.

@@ -12,6 +12,10 @@ updated: 2026-09-09
 - **Inference:** a conclusion derived from evidence and labeled with its rule or
   uncertainty.
 - **Issue:** a follow-up unit linked to one or more evidence groups.
+- **Linked evidence:** additional event-group snapshots attached to an issue
+  besides the originating `evidence` (`linkedEvidence` in `logify-follow-up-v1`).
+- **Signature match:** a timeline group with the same `signature` and `instance`
+  as linked evidence, offered for review rather than auto-linked (FR-024).
 - **Overdue issue:** an issue whose `due` calendar date is strictly before the
   UTC calendar date of the report clock and whose state is not `resolved` or
   `dismissed` (FR-021 / ADR-0003).

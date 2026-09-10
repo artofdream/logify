@@ -322,10 +322,20 @@
 ### FR-024 — Merge recurring evidence into an existing issue
 
 - **Priority:** Should
-- **Status:** Proposed
+- **Status:** Implemented
+- **Rationale:** The same failure often reappears as another event group or in a
+  later bundle. Operators need to attach that evidence to the existing issue
+  without minting a duplicate or silently changing workflow state.
 - **Acceptance criteria:**
   1. A user can link additional event groups to an existing issue.
   2. The issue retains every linked evidence reference.
   3. A newly generated report can match recurring signatures to imported issue
      records and clearly identify newly observed occurrences.
   4. Automatic matches are reviewable before changing issue state.
+- **Note:** Originating evidence stays in `evidence`; additional refs are
+  `linkedEvidence` on `logify-follow-up-v1` (no schema bump; ADR-0002 /
+  ADR-0007). Automatic matches use `signature` + `instance`. Newly observed
+  occurrences are a higher live occurrence count or newer `lastSeen` on a
+  linked evidence id. Import, link, dismiss, and acknowledge do not change
+  workflow state. The originating snapshot cannot be unlinked. Rendering uses
+  DOM text APIs only.

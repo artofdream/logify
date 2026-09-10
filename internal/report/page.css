@@ -136,7 +136,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .issue-heading { justify-content: space-between; margin-bottom: 10px; }
 .issue-id { font: 12px ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--muted); overflow-wrap: anywhere; }
 .issue.overdue { border-left-color: var(--danger); }
-.flag-badge, .state-badge, .unmatched, .overdue-badge {
+.flag-badge, .state-badge, .unmatched, .overdue-badge, .new-occ-badge, .candidate-badge, .origin-badge {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 999px;
@@ -155,6 +155,30 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   color: var(--danger);
 }
 .unmatched { border: 1px solid var(--danger); color: var(--danger); }
+.new-occ-badge, .candidate-badge {
+  background: #3a2a10;
+  border: 1px solid var(--flag);
+  color: var(--flag);
+}
+.origin-badge { border: 1px solid var(--line); color: var(--muted); }
+.link-picker, .evidence-item, .review-item {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+}
+.link-picker { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.link-picker select { flex: 1; min-width: 12rem; }
+.review-panel {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--flag);
+  border-radius: 9px;
+  background: var(--panel);
+}
+.review-panel h2 { margin-bottom: 4px; }
+.review-title { font-weight: 700; }
+.review-item button { margin-top: 8px; }
 .follow-up-fields { display: grid; gap: 10px; margin-top: 10px; }
 .due-row { display: flex; gap: 8px; align-items: center; }
 .due-row input { flex: 1; }

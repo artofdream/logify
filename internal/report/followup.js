@@ -18,12 +18,13 @@
     maxTags: 50,
     maxTagLength: 64,
     maxNotes: 8000,
-    maxOwner: 200
+    maxOwner: 200,
+    maxLinkedEvidence: 50
   };
   var ISSUE_FIELDS = {
     id: true, title: true, state: true, flagged: true, tags: true,
     owner: true, due: true, notes: true, createdAt: true, modifiedAt: true,
-    evidence: true
+    evidence: true, linkedEvidence: true, ignoredEvidence: true
   };
 
   function isArray(v) { return Array.isArray(v); }
@@ -63,6 +64,55 @@
       occurrences: event.occurrences,
       severity: event.severity,
       sourceType: event.sourceType
+    };
+  }
+
+  function allEvidence(issue) {
+    if (!issue || !issue.evidence) return [];
+    var extra = isArray(issue.linkedEvidence) ? issue.linkedEvidence : [];
+    return [issue.evidence].concat(extra);
+  }
+
+  function signatureKey(ref) {
+    if (!ref) return '';
+    return text(ref.signature) + '\0' + text(ref.instance);
+  }
+
+  function validEvidenceID(id) {
+    return typeof id === 'string' && id.indexOf('evidence-v1-') === 0;
+  }
+
+  function normalizeEvidenceRef(raw) {
+    if (!isObject(raw) || !validEvidenceID(raw.id)) return null;
+    return {
+      id: raw.id,
+      signature: raw.signature,
+      instance: raw.instance,
+      file: raw.file,
+      line: raw.line,
+      firstSeen: raw.firstSeen || null,
+      lastSeen: raw.lastSeen || null,
+      occurrences: raw.occurrences,
+      severity: raw.severity,
+      sourceType: raw.sourceType
+    };
+  }
+
+  function occurrenceDelta(stored, live) {
+    if (!stored || !live) return null;
+    var prevOcc = Number(stored.occurrences) || 0;
+    var liveOcc = Number(live.occurrences) || 0;
+    var prevLast = stored.lastSeen || '';
+    var liveLast = live.lastSeen || '';
+    var newerLast = !!(liveLast && (!prevLast || liveLast > prevLast));
+    if (liveOcc <= prevOcc && !newerLast) return null;
+    return {
+      evidenceId: stored.id,
+      previousOccurrences: prevOcc,
+      liveOccurrences: liveOcc,
+      newOccurrences: Math.max(0, liveOcc - prevOcc),
+      previousLastSeen: stored.lastSeen || null,
+      liveLastSeen: live.lastSeen || null
     };
   }
 
@@ -139,8 +189,17 @@
       return { error: loc + ' has invalid notes' };
     }
     if (!validDue(raw.due)) return { error: loc + ' due must be YYYY-MM-DD or null' };
-    if (!isObject(raw.evidence) || typeof raw.evidence.id !== 'string' || raw.evidence.id.indexOf('evidence-v1-') !== 0) {
+    if (!isObject(raw.evidence) || !validEvidenceID(raw.evidence.id)) {
       return { error: loc + ' evidence.id is missing or unversioned' };
+    }
+    if (raw.linkedEvidence != null && !isArray(raw.linkedEvidence)) {
+      return { error: loc + ' linkedEvidence must be an array' };
+    }
+    if (raw.ignoredEvidence != null && !isArray(raw.ignoredEvidence)) {
+      return { error: loc + ' ignoredEvidence must be an array' };
+    }
+    if (isArray(raw.linkedEvidence) && raw.linkedEvidence.length >= LIMITS.maxLinkedEvidence) {
+      return { error: loc + ' has too many linked evidence refs' };
     }
     return { issue: raw };
   }
@@ -227,8 +286,33 @@
       }
     }
 
+    function issueForEvidence(evidenceId) {
+      var want = text(evidenceId);
+      if (!want) return null;
+      var found = null;
+      all().some(function (issue) {
+        return allEvidence(issue).some(function (ev) {
+          if (ev && ev.id === want) {
+            found = issue;
+            return true;
+          }
+          return false;
+        });
+      });
+      return found;
+    }
+
+    function refreshMatch(issue) {
+      issue.evidenceMatched = allEvidence(issue).some(function (ev) {
+        return !!(ev && byEvidence[ev.id]);
+      });
+      return issue;
+    }
+
     function createFromEvent(event) {
       if (!event || !event.evidenceId) return { error: 'event is missing evidenceId' };
+      var linked = issueForEvidence(event.evidenceId);
+      if (linked) return { issue: linked, created: false };
       var id = issueIDFromEvidence(event.evidenceId);
       var existing = get(id);
       if (existing) return { issue: existing, created: false };
@@ -245,6 +329,8 @@
         createdAt: now(),
         modifiedAt: now(),
         evidence: evidenceSnapshot(event),
+        linkedEvidence: [],
+        ignoredEvidence: [],
         evidenceMatched: true,
         extra: {}
       };
@@ -252,6 +338,146 @@
       dirtySinceExport = true;
       persist();
       return { issue: issue, created: true };
+    }
+
+    function linkEvidence(id, event) {
+      var issue = get(id);
+      if (!issue) return { error: 'unknown issue' };
+      if (!event || !validEvidenceID(event.evidenceId)) return { error: 'event is missing evidenceId' };
+      var owner = issueForEvidence(event.evidenceId);
+      if (owner && owner.id === issue.id) return { issue: issue, linked: false };
+      if (owner) return { error: 'evidence already linked to ' + owner.id };
+      if (allEvidence(issue).length >= LIMITS.maxLinkedEvidence) {
+        return { error: 'linked evidence limit reached' };
+      }
+      if (!isArray(issue.linkedEvidence)) issue.linkedEvidence = [];
+      issue.linkedEvidence.push(evidenceSnapshot(event));
+      issue.ignoredEvidence = (issue.ignoredEvidence || []).filter(function (eid) {
+        return eid !== event.evidenceId;
+      });
+      refreshMatch(issue);
+      touch(issue);
+      persist();
+      return { issue: issue, linked: true };
+    }
+
+    function unlinkEvidence(id, evidenceId) {
+      var issue = get(id);
+      if (!issue) return { error: 'unknown issue' };
+      if (issue.evidence && issue.evidence.id === evidenceId) {
+        return { error: 'cannot unlink originating evidence' };
+      }
+      if (!isArray(issue.linkedEvidence)) issue.linkedEvidence = [];
+      var before = issue.linkedEvidence.length;
+      issue.linkedEvidence = issue.linkedEvidence.filter(function (ev) {
+        return ev.id !== evidenceId;
+      });
+      if (issue.linkedEvidence.length === before) {
+        return { error: 'evidence is not linked to this issue' };
+      }
+      refreshMatch(issue);
+      touch(issue);
+      persist();
+      return { issue: issue, unlinked: true };
+    }
+
+    function dismissCandidate(id, evidenceId) {
+      var issue = get(id);
+      if (!issue) return { error: 'unknown issue' };
+      if (!validEvidenceID(evidenceId)) return { error: 'evidenceId is missing or unversioned' };
+      var owner = issueForEvidence(evidenceId);
+      if (owner && owner.id === issue.id) {
+        return { error: 'cannot dismiss already linked evidence' };
+      }
+      if (!isArray(issue.ignoredEvidence)) issue.ignoredEvidence = [];
+      if (issue.ignoredEvidence.indexOf(evidenceId) === -1) {
+        issue.ignoredEvidence.push(evidenceId);
+        touch(issue);
+        persist();
+      }
+      return { issue: issue, dismissed: true };
+    }
+
+    function acknowledgeOccurrences(id, evidenceId) {
+      var issue = get(id);
+      if (!issue) return { error: 'unknown issue' };
+      var updated = 0;
+      function apply(ev) {
+        if (!ev) return;
+        if (evidenceId && ev.id !== evidenceId) return;
+        var live = byEvidence[ev.id];
+        if (!live) return;
+        ev.occurrences = live.occurrences;
+        ev.firstSeen = live.firstSeen || ev.firstSeen || null;
+        ev.lastSeen = live.lastSeen || ev.lastSeen || null;
+        ev.severity = live.severity;
+        ev.sourceType = live.sourceType;
+        updated += 1;
+      }
+      apply(issue.evidence);
+      (issue.linkedEvidence || []).forEach(apply);
+      if (!updated) {
+        return { error: evidenceId ? 'evidence is not in this report' : 'no matching evidence in this report' };
+      }
+      touch(issue);
+      persist();
+      return { issue: issue, acknowledged: updated };
+    }
+
+    function listReviews() {
+      var occurrenceUpdates = [];
+      var candidates = [];
+      var linkedIds = {};
+      all().forEach(function (issue) {
+        allEvidence(issue).forEach(function (ev) {
+          if (ev && ev.id) linkedIds[ev.id] = issue.id;
+        });
+      });
+      all().forEach(function (issue) {
+        allEvidence(issue).forEach(function (ev) {
+          var upd = occurrenceDelta(ev, byEvidence[ev.id]);
+          if (upd) {
+            occurrenceUpdates.push({
+              issueId: issue.id,
+              title: issue.title,
+              state: issue.state,
+              evidenceId: upd.evidenceId,
+              previousOccurrences: upd.previousOccurrences,
+              liveOccurrences: upd.liveOccurrences,
+              newOccurrences: upd.newOccurrences,
+              previousLastSeen: upd.previousLastSeen,
+              liveLastSeen: upd.liveLastSeen
+            });
+          }
+        });
+        var keys = {};
+        allEvidence(issue).forEach(function (ev) {
+          var key = signatureKey(ev);
+          if (key !== '\0') keys[key] = true;
+        });
+        var ignored = {};
+        (issue.ignoredEvidence || []).forEach(function (eid) { ignored[eid] = true; });
+        list.forEach(function (event) {
+          if (!event || !validEvidenceID(event.evidenceId)) return;
+          if (linkedIds[event.evidenceId]) return;
+          if (ignored[event.evidenceId]) return;
+          if (!keys[signatureKey(event)]) return;
+          candidates.push({
+            issueId: issue.id,
+            title: issue.title,
+            state: issue.state,
+            evidenceId: event.evidenceId,
+            signature: event.signature,
+            instance: event.instance,
+            file: event.file,
+            line: event.line,
+            occurrences: event.occurrences,
+            lastSeen: event.lastSeen || null,
+            severity: event.severity
+          });
+        });
+      });
+      return { occurrenceUpdates: occurrenceUpdates, candidates: candidates };
     }
 
     function updateTitle(id, title) {
@@ -368,14 +594,17 @@
         tags = criteria.tags.filter(Boolean);
       }
       return all().filter(function (issue) {
+        var refs = allEvidence(issue);
         if (criteria.text) {
           var q = String(criteria.text).toLowerCase();
           var hay = [
             issue.title, issue.id, issue.tags.join(' '), issue.owner || '',
-            issue.notes || '', issue.evidence.file, issue.evidence.signature,
-            issue.evidence.instance
-          ].join(' ').toLowerCase();
-          if (hay.indexOf(q) === -1) return false;
+            issue.notes || ''
+          ];
+          refs.forEach(function (ev) {
+            hay.push(ev.file, ev.signature, ev.instance, ev.id);
+          });
+          if (hay.join(' ').toLowerCase().indexOf(q) === -1) return false;
         }
         for (var i = 0; i < tags.length; i++) {
           var want = tagKey(tags[i]);
@@ -386,8 +615,20 @@
         if (criteria.owner) {
           if (text(issue.owner).toLowerCase().indexOf(String(criteria.owner).toLowerCase()) === -1) return false;
         }
-        if (criteria.severity && issue.evidence.severity !== criteria.severity) return false;
-        if (criteria.instance && issue.evidence.instance !== criteria.instance) return false;
+        if (criteria.severity) {
+          var sevOk = refs.some(function (ev) {
+            var live = byEvidence[ev.id];
+            return (live ? live.severity : ev.severity) === criteria.severity;
+          });
+          if (!sevOk) return false;
+        }
+        if (criteria.instance) {
+          var instOk = refs.some(function (ev) {
+            var liveInst = byEvidence[ev.id];
+            return (liveInst ? liveInst.instance : ev.instance) === criteria.instance;
+          });
+          if (!instOk) return false;
+        }
         if (criteria.overdue === true && !isOverdue(issue, now())) return false;
         return true;
       });
@@ -411,7 +652,9 @@
             notes: issue.notes,
             createdAt: issue.createdAt,
             modifiedAt: issue.modifiedAt,
-            evidence: clone(issue.evidence)
+            evidence: clone(issue.evidence),
+            linkedEvidence: clone(issue.linkedEvidence || []),
+            ignoredEvidence: (issue.ignoredEvidence || []).slice()
           });
           return row;
         })
@@ -422,18 +665,28 @@
       return JSON.stringify(exportObject(), null, 2);
     }
 
-    function hydrate(raw, liveEvent) {
+    function hydrate(raw) {
       var tags = raw.tags.map(function (t) { return normalizeTag(t).value; });
-      var evidence = Object.assign({}, raw.evidence);
-      var matched = !!(liveEvent && liveEvent.evidenceId === evidence.id);
-      if (matched) {
-        evidence.occurrences = liveEvent.occurrences;
-        evidence.firstSeen = liveEvent.firstSeen || evidence.firstSeen || null;
-        evidence.lastSeen = liveEvent.lastSeen || evidence.lastSeen || null;
-        evidence.severity = liveEvent.severity;
-        evidence.sourceType = liveEvent.sourceType;
+      var evidence = normalizeEvidenceRef(raw.evidence) || Object.assign({}, raw.evidence);
+      var linked = [];
+      var seen = {};
+      seen[evidence.id] = true;
+      if (isArray(raw.linkedEvidence)) {
+        raw.linkedEvidence.forEach(function (item) {
+          var ref = normalizeEvidenceRef(item);
+          if (!ref || seen[ref.id]) return;
+          seen[ref.id] = true;
+          linked.push(ref);
+        });
       }
-      return {
+      var ignored = [];
+      if (isArray(raw.ignoredEvidence)) {
+        raw.ignoredEvidence.forEach(function (eid) {
+          if (!validEvidenceID(eid) || ignored.indexOf(eid) !== -1) return;
+          ignored.push(eid);
+        });
+      }
+      var issue = {
         id: raw.id,
         title: raw.title,
         state: raw.state,
@@ -445,9 +698,12 @@
         createdAt: raw.createdAt || now(),
         modifiedAt: raw.modifiedAt || now(),
         evidence: evidence,
-        evidenceMatched: matched,
+        linkedEvidence: linked,
+        ignoredEvidence: ignored,
+        evidenceMatched: false,
         extra: extraFields(raw)
       };
+      return refreshMatch(issue);
     }
 
     function importJSON(text, meta) {
@@ -462,21 +718,34 @@
           invalid.push({ index: index, id: raw && raw.id, reason: checked.error });
           return;
         }
-        var live = byEvidence[checked.issue.evidence.id];
-        var issue = hydrate(checked.issue, live);
-        if (!issue.evidenceMatched) {
-          unmatched.push({ id: issue.id, evidenceId: issue.evidence.id });
-        }
+        var issue = hydrate(checked.issue);
+        allEvidence(issue).forEach(function (ev) {
+          if (!byEvidence[ev.id]) unmatched.push({ id: issue.id, evidenceId: ev.id });
+        });
         remember(issue);
         loaded += 1;
       });
       if (!meta || !meta.fromLocal) dirtySinceExport = true;
       persist();
-      return { loaded: loaded, invalid: invalid, unmatched: unmatched };
+      var reviews = listReviews();
+      return {
+        loaded: loaded,
+        invalid: invalid,
+        unmatched: unmatched,
+        candidates: reviews.candidates,
+        occurrenceUpdates: reviews.occurrenceUpdates
+      };
     }
 
     return {
       createFromEvent: createFromEvent,
+      linkEvidence: linkEvidence,
+      unlinkEvidence: unlinkEvidence,
+      dismissCandidate: dismissCandidate,
+      acknowledgeOccurrences: acknowledgeOccurrences,
+      issueForEvidence: issueForEvidence,
+      listReviews: listReviews,
+      evidenceRefs: allEvidence,
       updateTitle: updateTitle,
       addTag: addTag,
       removeTag: removeTag,
@@ -518,6 +787,8 @@
     LIMITS: LIMITS,
     defaultTitle: defaultTitle,
     issueIDFromEvidence: issueIDFromEvidence,
+    allEvidence: allEvidence,
+    occurrenceDelta: occurrenceDelta,
     parseExport: parseExport,
     createStore: createStore,
     isOverdue: isOverdue,
