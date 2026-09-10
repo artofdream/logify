@@ -1,10 +1,10 @@
 ---
 id: WI-20260910-bugbot-followups
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-10T16:30:00Z
-updated: 2026-09-10T16:30:00Z
+updated: 2026-09-10T16:45:00Z
 lease_expires: 2026-09-10T22:00:00Z
 scope:
   - cmd/logify/main.go
@@ -63,5 +63,10 @@ Bugbot threads on merged PRs #5, #10, and #11. Local `main` is `7a96fb1`
 
 - `2026-09-10T16:30:00Z` — cursor-agent — claimed paths; implementing on
   `cursor/bugbot-followups-7ba8`.
+- `2026-09-10T16:45:00Z` — cursor-agent — validation passed; PR #12 opened;
+  handoff `HO-20260910-cursor-agent-bugbot-followups`.
 
 ## Handoff or completion
+
+See `docs/collaboration/handoffs/HO-20260910-cursor-agent-bugbot-followups.md`.
+Do not merge from this agent.
