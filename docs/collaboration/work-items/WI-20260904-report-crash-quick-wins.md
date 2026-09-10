@@ -1,11 +1,11 @@
 ---
 id: WI-20260904-report-crash-quick-wins
 type: work-item
-status: review
+status: done
 owner: cursor-agent
 created: 2026-09-04T19:40:00Z
-updated: 2026-09-04T19:50:00Z
-lease_expires: 2026-09-05T00:00:00Z
+updated: 2026-09-09T20:24:00Z
+lease_expires: null
 scope:
   - cmd/logify/
   - internal/analyzer/analyzer.go
@@ -62,6 +62,10 @@ license. FR-017 dispatch is active on other files and is not in this scope.
 - Node parse of embedded JSON: `events` and `warnings` are arrays; `warnings.length` is 0 (no throw)
 - `git diff --check` — pass
 - PR: https://github.com/artofdream/logify/pull/2
+- Merge (verified 2026-09-09, GitHub API + `origin/main`): squash
+  `de887178fd0c800cdb5ecda11ad43b8d9acd44ab` at 2026-09-04T20:27:11Z.
+  This close-out checked merge evidence only; it did not re-run the Go/Node
+  probes above.
 
 ## Activity log
 
@@ -69,7 +73,11 @@ license. FR-017 dispatch is active on other files and is not in this scope.
   confirming no overlapping active work item on these files.
 - `2026-09-04T19:50:00Z` — cursor-agent — implementation and local validation
   complete; PR #2 opened for review.
+- `2026-09-09T20:24:00Z` — cursor-agent — PR #2 is on `main` (`de88717`,
+  2026-09-04T20:27:11Z). Close-out verifies merge, not a re-run of product
+  probes. Lease released.
 
 ## Handoff or completion
 
-In review on PR #2. Do not mark done until the PR is reviewed and merged.
+Done. Merged as PR #2 on 2026-09-04T20:27:11Z
+(`de887178fd0c800cdb5ecda11ad43b8d9acd44ab`).

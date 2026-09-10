@@ -1,11 +1,11 @@
 ---
 id: WI-20260909-fr021-follow-up-details
 type: work-item
-status: review
+status: done
 owner: cursor-agent
 created: 2026-09-09T19:21:31Z
-updated: 2026-09-09T19:51:00Z
-lease_expires: 2026-09-10T07:21:31Z
+updated: 2026-09-09T20:24:00Z
+lease_expires: null
 scope:
   - internal/report/followup.js
   - internal/report/page.js
@@ -80,10 +80,13 @@ this work item takes the report UI paths for FR-021 only.
   (Ada Lovelace), due 2020-01-15, notes `<script>alert(1)</script>` as text
   (no execution); Overdue badge while open; owner and Overdue-only filters;
   resolved hides overdue; Clear due date; ~375px fields readable
-- PR: https://github.com/artofdream/logify/pull/4 (ready vs `main`)
+- PR: https://github.com/artofdream/logify/pull/4 (merged vs `main`)
 - GitHub Actions `CI / validate` on `a3cdece` — success
   (https://github.com/artofdream/logify/actions/runs/34397401215/job/102620391567).
-  Auto-merge job skipped (do not merge from this task).
+- Merge (verified 2026-09-09, GitHub API + `origin/main`): squash
+  `01ae8bf57cc57a02ed610acbeb229feda4d44519` at 2026-09-09T19:52:40Z.
+  This close-out checked merge evidence only; it did not re-run the Go/Node
+  or in-browser probes above.
 
 ## Activity log
 
@@ -98,8 +101,12 @@ this work item takes the report UI paths for FR-021 only.
   `</label>` that broke `html/template`. FR-021 marked Implemented. Draft PR #4.
 - `2026-09-09T19:51:00Z` — cursor-agent — GitHub `CI / validate` succeeded on
   `a3cdece`. PR #4 marked ready for review. Do not merge.
+- `2026-09-09T20:24:00Z` — cursor-agent — PR #4 squash-merged to `main` as
+  `01ae8bf` at 2026-09-09T19:52:40Z. Close-out verifies merge, not a re-run
+  of product probes. FR-024 is draft PR #5 (not this item). Lease released.
 
 ## Handoff or completion
 
-In review on PR #4. Do not mark done until the PR is reviewed. Do not merge
-from this task.
+Done. Merged as PR #4 on 2026-09-09T19:52:40Z
+(`01ae8bf57cc57a02ed610acbeb229feda4d44519`). FR-024 is a separate draft
+(PR #5) and is not marked done here.
