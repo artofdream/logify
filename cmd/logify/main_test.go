@@ -9,6 +9,24 @@ import (
 	"testing"
 )
 
+func TestRunHelpExitsZero(t *testing.T) {
+	// NFR-011: -h / -help print usage and are not a failure.
+	for _, arg := range []string{"-h", "-help"} {
+		t.Run(arg, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			if code := run([]string{arg}, &stdout, &stderr); code != 0 {
+				t.Fatalf("exit=%d want 0 stderr=%q", code, stderr.String())
+			}
+			if stdout.Len() != 0 {
+				t.Fatalf("stdout=%q", stdout.String())
+			}
+			if !strings.Contains(stderr.String(), "Usage:") {
+				t.Fatalf("stderr=%q", stderr.String())
+			}
+		})
+	}
+}
+
 func TestRunUsageWhenDirectoryMissing(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	if code := run(nil, &stdout, &stderr); code != 2 {

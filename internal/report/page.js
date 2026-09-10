@@ -75,6 +75,10 @@
   }
 
   function showFeedback(id, message, isError) {
+    if (detailFeedbackTimer) {
+      clearTimeout(detailFeedbackTimer);
+      detailFeedbackTimer = null;
+    }
     var node = $(id);
     node.textContent = message || '';
     node.className = isError ? 'feedback error' : 'feedback';
@@ -83,6 +87,7 @@
   function showDetailFeedback(message, isError) {
     if (detailFeedbackTimer) clearTimeout(detailFeedbackTimer);
     detailFeedbackTimer = setTimeout(function () {
+      detailFeedbackTimer = null;
       showFeedback('issue-feedback', message, isError);
     }, 400);
   }
@@ -580,9 +585,17 @@
     root.hidden = false;
     reviews.occurrenceUpdates.forEach(function (u) {
       var card = el('article', 'review-item');
-      card.appendChild(el('div', 'review-title', 'Newly observed occurrences on ' + u.issueId));
-      var detail = 'Evidence ' + u.evidenceId + ': ' + u.previousOccurrences + ' → ' + u.liveOccurrences +
-        ' stored vs this report. Issue state remains ' + u.state + ' until you change it.';
+      var lastSeenOnly = (u.newOccurrences || 0) === 0;
+      var title = lastSeenOnly
+        ? 'Newer last-seen time on ' + u.issueId
+        : 'Newly observed occurrences on ' + u.issueId;
+      card.appendChild(el('div', 'review-title', title));
+      var detail = lastSeenOnly
+        ? ('Evidence ' + u.evidenceId + ': last seen ' + formatTime(u.previousLastSeen) +
+          ' → ' + formatTime(u.liveLastSeen) + '. Occurrence count is unchanged (' +
+          u.liveOccurrences + '). Issue state remains ' + u.state + ' until you change it.')
+        : ('Evidence ' + u.evidenceId + ': ' + u.previousOccurrences + ' → ' + u.liveOccurrences +
+          ' stored vs this report. Issue state remains ' + u.state + ' until you change it.');
       card.appendChild(el('div', 'detail', detail));
       var ack = el('button', '', 'Acknowledge');
       ack.type = 'button';
@@ -652,11 +665,13 @@
     if (summary) summary.textContent = summaryText;
     if (!total) {
       root.appendChild(el('div', 'empty', 'No issues yet. Create one from a timeline event or group.'));
+      applyPendingFocus();
       return;
     }
     if (!visible.length) {
       root.appendChild(el('div', 'empty', 'No issues match the current filters.'));
       if (opts.announceCount) showFeedback('issue-feedback', summaryText);
+      applyPendingFocus();
       return;
     }
     var reviews = store.listReviews();

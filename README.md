@@ -25,11 +25,13 @@ bundle.
 Follow-up data can be **exported and imported** as `logify-follow-up.json`
 (schema `logify-follow-up-v1`). Browser local storage is a convenience cache for
 the same generated report; it is not the portable copy and is never sent over
-the network. Import validates the schema version, skips invalid records, and
-reports unmatched evidence IDs. Notes, owner, and due date are editable on each
+the network. Import validates the schema version, skips invalid records
+(including an evidence id already owned by a different issue), and reports
+unmatched evidence IDs. Notes, owner, and due date are editable on each
 issue and persist through the same schema. An issue can link additional event
 groups; import of a later report surfaces matching signatures and newly
-observed occurrence counts for review and does not change workflow state.
+observed occurrence counts (or a newer last-seen time with the same count)
+for review and does not change workflow state.
 
 ## Sensitive reports
 
@@ -48,7 +50,13 @@ Optional redaction is **off by default**. When you opt in, Logify replaces
 matches in the embedded root, warnings, and each event message, file, and
 instance **before** those strings are written into the HTML file. Source logs
 are never modified. Evidence IDs stay bound to the original provenance so
-follow-up JSON still matches.
+Import validates the schema version, skips invalid records (including an
+evidence id already owned by a different issue), and reports unmatched
+evidence IDs. Notes, owner, and due date are editable on each
+issue and persist through the same schema. An issue can link additional event
+groups; import of a later report surfaces matching signatures and newly
+observed occurrence counts (or a newer last-seen time with the same count)
+for review and does not change workflow state.
 
 ```powershell
 .\logify.exe -redact email -redact ipv4 -redact "literal:change-me" -output report.html C:\logs
@@ -88,8 +96,11 @@ Generated `logify.exe` and `*-report.html` files (including `sample-report.html`
 ```powershell
 go test ./...
 go build -o logify.exe ./cmd/logify
+.\logify.exe -h
 .\logify.exe -output report.html C:\path\to\support-bundle
 ```
+
+`-h` / `-help` print flags to stderr and exit 0.
 
 Optional RFC3339 bounds filter timestamped events (untimestamped events are excluded when a bound is active). Bounds are compared as absolute instants. Java and Apache error timestamps without an offset are parsed as UTC, so they will not stay in a `+02:00` "morning" window unless that window still covers the UTC instant. Apache access stamps that include an offset are compared using that offset.
 
@@ -121,7 +132,7 @@ Release: push a `v*` tag to run [`.github/workflows/release.yml`](.github/workfl
 4. Unresolved issues whose due date is before today (UTC calendar date of the report clock) show an **Overdue** badge. Filter the queue by owner or **Overdue only**. Resolved and dismissed issues are never overdue.
 5. **Show evidence** returns to a matching timeline row. **Open issue** goes the other way. Additional linked groups can be unlinked; the originating evidence cannot.
 6. Create, flag, tag, and change state with the keyboard: **Tab** reaches labeled controls, **Enter** adds a tag, and **Left/Right** switches the Timeline and Issue queue tabs. Flag and workflow state are named in text (**Flagged**, **State: Open**), not color alone. The status line confirms each action; the queue shows **Showing N of M issue(s)** when filters change.
-7. **Export follow-up JSON** writes a portable file. **Import follow-up JSON** loads it into this report. A later report with the same `signature` + `instance` lists candidate matches and newly observed occurrence counts for review; nothing auto-changes state. **Clear local follow-up data** drops the browser copy after a confirmation.
+7. **Export follow-up JSON** writes a portable file. **Import follow-up JSON** loads it into this report. A later report with the same `signature` + `instance` lists candidate matches and newly observed occurrence counts (or a newer last-seen time) for review; nothing auto-changes state. Duplicate evidence ownership is skipped. **Clear local follow-up data** drops the browser copy after a confirmation.
 
 The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md). Scan warning categories and input-count identity are in [`docs/knowledge/decisions/ADR-0004-scan-warnings.md`](docs/knowledge/decisions/ADR-0004-scan-warnings.md). Redaction rules are in [`docs/knowledge/decisions/ADR-0005-optional-report-redaction.md`](docs/knowledge/decisions/ADR-0005-optional-report-redaction.md). Keyboard, confirmation, and the 10,000-issue filter probe are in [`docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md`](docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md) and [`docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md`](docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md). Multi-evidence merge and review rules are in [`docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md`](docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md).
 
