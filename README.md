@@ -59,6 +59,7 @@ Release: push a `v*` tag to run [`.github/workflows/release.yml`](.github/workfl
 - Joins Java stack frames, `Caused by`, and elided-frame lines to their leading event.
 - Normalizes every record into a common model, assigns HTTP severity from status class, and sorts timestamped events chronologically.
 - Generates stable signatures from normalized first lines and aggregates repeats per instance while retaining first/last occurrence times.
+- Surfaces recoverable scan problems as structured warnings (`walk-error`, `open-error`, `scan-overflow`, `scan-error`) with file, category, optional line or range, and message. The CLI and report show the warning count plus processed / skipped / failed input counts (`filesScanned = filesProcessed + filesFailed`). Mid-file overflow keeps events already parsed from that file. Unreadable directories are skipped; children inside them are not invented.
 - Embeds all data, styles, and JavaScript in the report. Timeline filters work offline by text, severity, instance, and source. The issue queue adds combined text, tag, flag, state, owner, severity, instance, and overdue filters.
 - Treat the HTML file as sensitive: it contains a copy of parsed log text (messages, paths, and host identifiers) and should be shared like the original bundle. Exported follow-up JSON contains operator titles, tags, notes, owners, and due dates.
 
@@ -71,7 +72,7 @@ Release: push a `v*` tag to run [`.github/workflows/release.yml`](.github/workfl
 5. **Show evidence** returns to the matching timeline row. **Open issue** goes the other way.
 6. **Export follow-up JSON** writes a portable file. **Import follow-up JSON** loads it into this report. **Clear local follow-up data** drops the browser copy after a confirmation.
 
-The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md).
+The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md). Scan warning categories and input-count identity are in [`docs/knowledge/decisions/ADR-0004-scan-warnings.md`](docs/knowledge/decisions/ADR-0004-scan-warnings.md).
 
 ## Current limits
 

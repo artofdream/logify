@@ -3,7 +3,7 @@ id: logify-knowledge-index
 type: index
 status: active
 owner: human
-updated: 2026-09-03
+updated: 2026-09-09
 tags: [knowledge, second-brain, obsidian]
 ---
 

@@ -2,7 +2,19 @@
   'use strict';
 
   var events = Array.isArray(REPORT.events) ? REPORT.events : [];
-  var warnings = Array.isArray(REPORT.warnings) ? REPORT.warnings : [];
+  var warnings = Array.isArray(REPORT.warnings) ? REPORT.warnings.map(normalizeWarning) : [];
+  function normalizeWarning(w) {
+    if (!w || typeof w === 'string') {
+      return { file: '', category: '', line: 0, lineEnd: 0, message: String(w || '') };
+    }
+    return w;
+  }
+  function warningLocation(w) {
+    var file = w.file || '';
+    if (w.line > 0 && w.lineEnd > w.line) return file + ':' + w.line + '-' + w.lineEnd;
+    if (w.line > 0) return (file ? file + ':' : '') + w.line;
+    return file || '(unknown path)';
+  }
   var storageKey = 'logify-follow-up-v1:' + String(REPORT.root || '') + ':' + String(REPORT.generatedAt || '');
   var localStore = null;
   try { localStore = window.localStorage; } catch (err) { localStore = null; }
@@ -66,7 +78,10 @@
       [store.observedRecords(), 'observed records'],
       [store.eventGroupCount(), 'event groups'],
       [store.issueCount(), 'tracked issues'],
-      [REPORT.filesScanned || 0, 'files'],
+      [REPORT.filesScanned || 0, 'files scanned'],
+      [REPORT.filesProcessed || 0, 'processed'],
+      [REPORT.filesSkipped || 0, 'skipped'],
+      [REPORT.filesFailed || 0, 'failed'],
       [warnings.length, 'warnings']
     ];
     var root = $('stats');
@@ -387,8 +402,28 @@
     visible.forEach(function (issue) { root.appendChild(renderIssueCard(issue)); });
   }
 
+  function renderWarnings() {
+    var section = $('warnings');
+    var list = $('warning-list');
+    if (!section || !list) return;
+    clear(list);
+    if (!warnings.length) {
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+    warnings.forEach(function (w) {
+      var item = el('article', 'warning');
+      item.appendChild(el('div', 'warn-cat', w.category || 'unknown'));
+      item.appendChild(el('div', 'warn-loc', warningLocation(w)));
+      item.appendChild(el('div', 'warn-msg', w.message || ''));
+      list.appendChild(item);
+    });
+  }
+
   function renderAll() {
     renderStats();
+    renderWarnings();
     renderStorage();
     renderTimeline();
     renderIssues();

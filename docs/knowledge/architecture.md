@@ -3,7 +3,7 @@ id: logify-architecture
 type: architecture
 status: active
 owner: human
-updated: 2026-09-04
+updated: 2026-09-09
 sources: [../../README.md, ../../cmd/logify/main.go, ../../internal/analyzer, ../../internal/report]
 ---
 
@@ -19,6 +19,11 @@ the follow-up store, local cache, and JSON export/import. Issue notes, owner,
 and due date are operator metadata (FR-021 / ADR-0003): edited in the page
 script, persisted in `logify-follow-up-v1`, and compared for overdue against
 the UTC calendar date of the report clock.
+
+Recoverable scan problems are structured warnings (`walk-error`, `open-error`,
+`scan-overflow`, `scan-error`) with file, category, optional line/range, and
+message. `filesScanned` equals `filesProcessed + filesFailed`; `filesSkipped`
+counts walk paths that could not be visited (FR-015 / ADR-0004).
 
 This note describes observed structure. Requirements remain authoritative for
 intended behavior, and tests/compiler output remain evidence of implementation.

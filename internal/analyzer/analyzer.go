@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -32,19 +33,27 @@ func Analyze(root string, o Options) (Result, error) {
 	if !i.IsDir() {
 		return Result{}, fmt.Errorf("%s is not a directory", abs)
 	}
-	r := Result{Root: abs, GeneratedAt: time.Now(), Events: []Event{}, Warnings: []string{}}
+	r := Result{Root: abs, GeneratedAt: time.Now(), Events: []Event{}, Warnings: []Warning{}}
 	e = filepath.WalkDir(abs, func(p string, d os.DirEntry, we error) error {
 		if we != nil {
-			r.Warnings = append(r.Warnings, we.Error())
+			r.FilesSkipped++
+			r.Warnings = append(r.Warnings, newWarning(relPath(abs, p), CategoryWalkError, 0, 0, we.Error()))
 			return nil
 		}
 		if d.IsDir() || !looks(d.Name()) {
 			return nil
 		}
 		r.FilesScanned++
-		es, x := parseFile(abs, p)
-		if x != nil {
-			r.Warnings = append(r.Warnings, fmt.Sprintf("%s: %v", p, x))
+		es, w := parseFile(abs, p)
+		if w != nil {
+			r.Warnings = append(r.Warnings, *w)
+			if w.Category == CategoryOpenError {
+				r.FilesFailed++
+			} else {
+				r.FilesProcessed++
+			}
+		} else {
+			r.FilesProcessed++
 		}
 		for _, v := range es {
 			if o.From != nil && (!v.HasTimestamp || v.Timestamp.Before(*o.From)) {
@@ -73,13 +82,14 @@ func looks(n string) bool {
 	n = strings.ToLower(n)
 	return strings.HasSuffix(n, ".log") || strings.HasSuffix(n, ".out") || strings.Contains(n, "access_log") || strings.Contains(n, "error_log")
 }
-func parseFile(root, path string) ([]Event, error) {
+func parseFile(root, path string) ([]Event, *Warning) {
+	rel := relPath(root, path)
 	f, e := os.Open(path)
 	if e != nil {
-		return nil, e
+		w := newWarning(rel, CategoryOpenError, 0, 0, e.Error())
+		return nil, &w
 	}
 	defer f.Close()
-	rel, _ := filepath.Rel(root, path)
 	src := detect(path)
 	inst := instance(rel)
 	s := bufio.NewScanner(f)
@@ -132,7 +142,31 @@ func parseFile(root, path string) ([]Event, error) {
 		}
 	}
 	flush()
-	return out, s.Err()
+	return out, warningFromScan(rel, line, s.Err())
+}
+
+func relPath(root, path string) string {
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		rel = path
+	}
+	return filepath.ToSlash(rel)
+}
+
+func newWarning(file string, cat WarningCategory, line, lineEnd int, msg string) Warning {
+	return Warning{File: file, Category: cat, Line: line, LineEnd: lineEnd, Message: msg}
+}
+
+func warningFromScan(file string, lastLine int, err error) *Warning {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, bufio.ErrTooLong) {
+		w := newWarning(file, CategoryScanOverflow, lastLine+1, 0, err.Error())
+		return &w
+	}
+	w := newWarning(file, CategoryScanError, lastLine, 0, err.Error())
+	return &w
 }
 func detect(p string) string {
 	n := strings.ToLower(filepath.Base(p))

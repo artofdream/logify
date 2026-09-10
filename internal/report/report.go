@@ -23,11 +23,14 @@ var followUpJS string
 var pageJS string
 
 type payload struct {
-	Root         string    `json:"root"`
-	GeneratedAt  time.Time `json:"generatedAt"`
-	FilesScanned int       `json:"filesScanned"`
-	Events       []event   `json:"events"`
-	Warnings     []string  `json:"warnings"`
+	Root           string             `json:"root"`
+	GeneratedAt    time.Time          `json:"generatedAt"`
+	FilesScanned   int                `json:"filesScanned"`
+	FilesProcessed int                `json:"filesProcessed"`
+	FilesSkipped   int                `json:"filesSkipped"`
+	FilesFailed    int                `json:"filesFailed"`
+	Events         []event            `json:"events"`
+	Warnings       []analyzer.Warning `json:"warnings"`
 }
 
 type event struct {
@@ -80,7 +83,7 @@ func buildPayload(r analyzer.Result) payload {
 	}
 	warnings := r.Warnings
 	if warnings == nil {
-		warnings = []string{}
+		warnings = []analyzer.Warning{}
 	}
 	out := make([]event, 0, len(events))
 	for _, src := range events {
@@ -107,10 +110,13 @@ func buildPayload(r analyzer.Result) payload {
 		out = append(out, item)
 	}
 	return payload{
-		Root:         r.Root,
-		GeneratedAt:  r.GeneratedAt,
-		FilesScanned: r.FilesScanned,
-		Events:       out,
-		Warnings:     warnings,
+		Root:           r.Root,
+		GeneratedAt:    r.GeneratedAt,
+		FilesScanned:   r.FilesScanned,
+		FilesProcessed: r.FilesProcessed,
+		FilesSkipped:   r.FilesSkipped,
+		FilesFailed:    r.FilesFailed,
+		Events:         out,
+		Warnings:       warnings,
 	}
 }
