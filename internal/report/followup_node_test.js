@@ -400,6 +400,17 @@ function store(events, extra) {
   assert.strictEqual(dest.get(srcId).evidence.occurrences, 9);
   assert.strictEqual(dest.listReviews().occurrenceUpdates.length, 0);
 
+  var laterSeen = Object.assign({}, e1, {
+    occurrences: 3,
+    lastSeen: '2026-09-06T10:00:00.000Z'
+  });
+  var destLastSeen = store([laterSeen]);
+  destLastSeen.importJSON(exported);
+  var lastSeenOnly = destLastSeen.listReviews().occurrenceUpdates[0];
+  assert.strictEqual(lastSeenOnly.newOccurrences, 0);
+  assert.strictEqual(lastSeenOnly.previousOccurrences, lastSeenOnly.liveOccurrences);
+  assert.ok(lastSeenOnly.liveLastSeen > lastSeenOnly.previousLastSeen);
+
   dest.linkEvidence(srcId, rotated);
   assert.strictEqual(dest.get(srcId).state, 'resolved');
   assert.strictEqual(dest.get(srcId).linkedEvidence[0].id, 'evidence-v1-ddd');
@@ -430,6 +441,8 @@ function store(events, extra) {
   assert.ok(page.indexOf('listReviews') !== -1);
   assert.ok(page.indexOf('linkEvidence') !== -1);
   assert.ok(page.indexOf('unlinkEvidence') !== -1);
+  assert.ok(page.indexOf('previousLastSeen') !== -1);
+  assert.ok(page.indexOf('Newer last-seen time on ') !== -1);
   assert.ok(html.indexOf('Recurring evidence review') !== -1);
 })();
 

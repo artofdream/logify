@@ -580,8 +580,14 @@
     root.hidden = false;
     reviews.occurrenceUpdates.forEach(function (u) {
       var card = el('article', 'review-item');
-      card.appendChild(el('div', 'review-title', 'Newly observed occurrences on ' + u.issueId));
-      var detail = 'Evidence ' + u.evidenceId + ': ' + u.previousOccurrences + ' → ' + u.liveOccurrences +
+      var lastSeenOnly = !(u.newOccurrences > 0);
+      card.appendChild(el('div', 'review-title', lastSeenOnly
+        ? 'Newer last-seen time on ' + u.issueId
+        : 'Newly observed occurrences on ' + u.issueId));
+      var change = lastSeenOnly
+        ? formatTime(u.previousLastSeen) + ' → ' + formatTime(u.liveLastSeen)
+        : u.previousOccurrences + ' → ' + u.liveOccurrences;
+      var detail = 'Evidence ' + u.evidenceId + ': ' + change +
         ' stored vs this report. Issue state remains ' + u.state + ' until you change it.';
       card.appendChild(el('div', 'detail', detail));
       var ack = el('button', '', 'Acknowledge');
