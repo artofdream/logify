@@ -32,6 +32,7 @@ requirement implemented until every acceptance criterion is verified.
 - `internal/redact/`: optional operator-supplied report-time redaction rules.
 - `internal/report/`: embedded HTML/CSS/JavaScript report generation.
 - `testdata/case/`: representative Tomcat and HTTPD fixtures.
+- `testdata/rotated/`: numeric/date rotation and gzip fixtures (FR-016).
 - `testdata/redact/`: example optional redaction rule file.
 - `README.md`: user-facing behavior, build instructions, and known limits.
 - `docs/requirements/`: canonical functional and non-functional requirements.

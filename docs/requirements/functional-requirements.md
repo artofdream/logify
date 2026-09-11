@@ -25,6 +25,9 @@
   3. Unsupported files are ignored without failing the analysis.
   4. A non-empty line in a discovered access log that does not match the supported
      format is retained as an untimestamped event rather than silently discarded.
+- **Note:** Numeric/date rotation suffixes and `.gz` on these same name
+  conventions are specified by FR-016. They do not expand FR-002 to arbitrary
+  archives or unrecognized decorations.
 
 ### FR-003 — Identify source instance and type
 
@@ -219,11 +222,43 @@
 ### FR-016 — Support compressed and rotated logs
 
 - **Priority:** Should
-- **Status:** Proposed
+- **Status:** Implemented
+- **Rationale:** Support bundles often include logrotate and Tomcat dated files,
+  including `.gz` copies. Operators should not have to unpack those by hand
+  before analysis.
 - **Acceptance criteria:**
   1. Common numeric/date rotated suffixes are discovered.
   2. Gzip-compressed supported logs can be streamed without manual extraction.
   3. Rotation does not create duplicate events beyond normal signature grouping.
+- **Discovery:** After lowercasing the basename, Logify strips one trailing
+  `.gz` and then one rotation suffix before applying the FR-002 / FR-003
+  `looks()` / `detect()` conventions. Recognized rotation suffixes are `.N`,
+  `.YYYY-MM-DD` with an optional time fragment, `.YYYYMMDD` with optional
+  hour/minute/second digits, optional trailing `.txt` (Tomcat AccessLogValve),
+  and logrotate `dateext` `-YYYYMMDD`. Unsupported names (`notes.gz`,
+  `archive.tar.gz`, `.zip`, `.bz2`) remain a discovery filter.
+- **Gzip:** A discovered `*.gz` file is decoded with `compress/gzip` as a
+  single stream over the opened file. Contents are never written to disk.
+  There is no tar/zip extraction and no magic-byte detection on names that
+  lack `.gz`. An invalid gzip header after a successful `os.Open` is a
+  `scan-error`; the file counts as processed. Mid-stream gzip failures keep
+  events already parsed (NFR-007 / NFR-008).
+- **Dedup:** Rotation copies use the existing FR-010 instance+signature
+  grouping. Distinct messages stay separate. The same signature on two
+  instances is not merged.
+- **Verification:** `TestLooksRotatedAndGzipNames`,
+  `TestCanonicalLogNameStripsOneDecoration`, `TestDetectAccessNames` rotated
+  cases, `TestAnalyzeRotatedGzipFixtures` (9 grouped events from 6 files;
+  `tomcat-a` shared ERROR occurrences=2; `tomcat-b` not merged),
+  `TestGzipStreamParsesWithoutExtraction`,
+  `TestInvalidGzipIsScanErrorAndKeepsSiblings`,
+  `TestTruncatedGzipKeepsEarlierEvents`. Repository validation:
+  `gofmt -l cmd internal` clean; `go test ./...` pass; `go build -o logify.exe
+  ./cmd/logify` pass; `go vet ./...` pass; `git diff --check` clean.
+  `./logify.exe -output sample-report.html testdata/case` →
+  `6 events from 3 files; processed=3 skipped=0 failed=0; 0 warnings`.
+  `./logify.exe -output rotated-report.html testdata/rotated` →
+  `9 events from 6 files; processed=6 skipped=0 failed=0; 0 warnings`.
 
 ## Issue follow-up
 

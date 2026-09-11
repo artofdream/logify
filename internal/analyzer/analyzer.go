@@ -2,10 +2,12 @@ package analyzer
 
 import (
 	"bufio"
+	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"path/filepath"
@@ -82,9 +84,10 @@ func Analyze(root string, o Options) (Result, error) {
 	return r, nil
 }
 func looks(n string) bool {
-	n = strings.ToLower(n)
+	n = canonicalLogName(n)
 	return strings.HasSuffix(n, ".log") || strings.HasSuffix(n, ".out") || strings.Contains(n, "access_log") || strings.Contains(n, "error_log")
 }
+
 func parseFile(root, path string) ([]Event, *Warning) {
 	rel := relPath(root, path)
 	f, e := os.Open(path)
@@ -93,9 +96,14 @@ func parseFile(root, path string) ([]Event, *Warning) {
 		return nil, &w
 	}
 	defer f.Close()
+	in, closer, e := openLogStream(f, path)
+	if e != nil {
+		w := newWarning(rel, CategoryScanError, 0, 0, e.Error())
+		return nil, &w
+	}
 	src := detect(path)
 	inst := instance(rel)
-	s := bufio.NewScanner(f)
+	s := bufio.NewScanner(in)
 	s.Buffer(make([]byte, 65536), 4*1024*1024)
 	var out []Event
 	var cur *Event
@@ -145,7 +153,13 @@ func parseFile(root, path string) ([]Event, *Warning) {
 		}
 	}
 	flush()
-	return out, warningFromScan(rel, line, s.Err())
+	scanErr := s.Err()
+	if closer != nil {
+		if ce := closer(); ce != nil && scanErr == nil {
+			scanErr = ce
+		}
+	}
+	return out, warningFromScan(rel, line, scanErr)
 }
 
 func relPath(root, path string) string {
@@ -172,11 +186,11 @@ func warningFromScan(file string, lastLine int, err error) *Warning {
 	return &w
 }
 func detect(p string) string {
-	n := strings.ToLower(filepath.Base(p))
+	n := canonicalLogName(filepath.Base(p))
 	if isApacheAccessName(n) {
 		return "apache-access"
 	}
-	if n == "error.log" || n == "error_log" || n == "ssl_error.log" || n == "ssl_error_log" {
+	if isApacheErrorName(n) {
 		return "apache-error"
 	}
 	return "tomcat-java"
@@ -195,6 +209,39 @@ func isApacheAccessName(n string) bool {
 		return true
 	}
 	return strings.HasSuffix(n, "_access.log") || strings.HasSuffix(n, "-access.log")
+}
+
+func isApacheErrorName(n string) bool {
+	return n == "error.log" || n == "error_log" || n == "ssl_error.log" || n == "ssl_error_log"
+}
+
+// rotationSuffix is one trailing logrotate/Tomcat-style decoration after the
+// supported basename: .N, .YYYY-MM-DD[T| -HH[:MM[:SS]]], .YYYYMMDD[HH[MM[SS]]],
+// optional .txt (AccessLogValve), or logrotate dateext -YYYYMMDD.
+var rotationSuffix = regexp.MustCompile(`(?i)(?:\.(?:\d{4}-\d{2}-\d{2}(?:[T-]\d{2}(?:[:.]?\d{2}(?::\d{2})?)?)?|\d{8}(?:\d{2,6})?|\d+)(?:\.txt)?|-\d{8})$`)
+
+func canonicalLogName(n string) string {
+	n = strings.ToLower(n)
+	n = strings.TrimSuffix(n, ".gz")
+	return rotationSuffix.ReplaceAllString(n, "")
+}
+
+func isGzipName(path string) bool {
+	return strings.HasSuffix(strings.ToLower(filepath.Base(path)), ".gz")
+}
+
+// openLogStream returns a streaming reader for path. Gzip is decoded only when
+// the basename ends in .gz; the file is never extracted to disk. closer is
+// gzip.Reader.Close (checksum) or nil for plaintext.
+func openLogStream(f *os.File, path string) (io.Reader, func() error, error) {
+	if !isGzipName(path) {
+		return f, nil, nil
+	}
+	zr, err := gzip.NewReader(f)
+	if err != nil {
+		return nil, nil, err
+	}
+	return zr, zr.Close, nil
 }
 func instance(rel string) string {
 	p := strings.Split(filepath.ToSlash(rel), "/")

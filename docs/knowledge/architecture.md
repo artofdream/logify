@@ -10,7 +10,8 @@ sources: [../../README.md, ../../cmd/logify/main.go, ../../internal/analyzer, ..
 # Current architecture
 
 Logify is a dependency-free Go CLI. `cmd/logify` accepts a directory and options;
-`internal/analyzer` discovers and normalizes logs, builds signatures, groups
+`internal/analyzer` discovers and normalizes logs (including common rotated
+and `.gz` names streamed via `compress/gzip`, ADR-0009 / FR-016), builds signatures, groups
 repeats, orders the timeline, and applies documented correlation rules
 (ADR-0008 / FR-012); `internal/redact` compiles optional
 operator-supplied replacement rules; `internal/report` emits one offline HTML file
