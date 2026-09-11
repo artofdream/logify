@@ -1,10 +1,10 @@
 ---
 id: WI-20260911-fr012-event-correlation
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-11T19:25:43Z
-updated: 2026-09-11T20:20:00Z
+updated: 2026-09-11T20:28:00Z
 lease_expires: 2026-09-12T04:20:00Z
 scope:
   - internal/analyzer/model.go
@@ -89,8 +89,14 @@ read-only.
   branch: keep collapsed-occurrence identifiers for correlation (FR-010
   still one row) and emit pairwise `client-ip-window` groups only.
   macOS LC_UUID CI fix already on this branch (`940f6f1`). Do not merge.
+- `2026-09-11T20:28:00Z` — cursor-agent — PR #13 squash-merged to `main` as
+  `76cae98` before `02bd242`. Follow-up port moved to
+  `WI-20260911-fr012-bugbot-followups` on
+  `cursor/fr012-bugbot-followups-134f`. This item stays review for the
+  merged feature only.
 
 ## Handoff or completion
 
-Active bugfix follow-up on PR #13 / `cursor/fr012-event-correlation-1995`.
-Do not open a duplicate PR. Do not merge.
+PR #13 is on `main` (`76cae98`) without the Bugbot analyzer follow-ups.
+Port ownership is `WI-20260911-fr012-bugbot-followups`. Do not merge from
+this item.
