@@ -1,10 +1,10 @@
 ---
 id: WI-20260911-fr012-bugbot-followups
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-11T20:26:00Z
-updated: 2026-09-11T20:26:00Z
+updated: 2026-09-11T20:30:00Z
 lease_expires: 2026-09-12T04:26:00Z
 scope:
   - internal/analyzer/model.go
@@ -64,7 +64,17 @@ Listed in `scope`. Owner: `cursor-agent`.
 
 ## Validation
 
-`gofmt`, `go test ./...`, `go vet`, `go build`, fixture smoke, `git diff --check`.
+- `gofmt -w cmd internal` — no extra diff
+- `go test ./... -count=1` — pass
+- Targeted: `TestCorrelateUsesCollapsedDuplicateIdentifiers`,
+  `TestHeuristicDoesNotChainBeyondWindow`,
+  `TestHeuristicDoesNotUnionDistinctIPs` — pass
+- `go build -o logify.exe ./cmd/logify` — pass
+- `go vet ./...` — pass
+- `git diff --check` — pass
+- `testdata/case` — 6 events, 0 groups
+- `testdata/correlate` — 14 events, exact + heuristic groups
+- PR: https://github.com/artofdream/logify/pull/14. Do not merge.
 
 ## Activity log
 
@@ -77,4 +87,5 @@ Listed in `scope`. Owner: `cursor-agent`.
 
 ## Handoff or completion
 
-Pending validation and PR.
+See `docs/collaboration/handoffs/HO-20260911-cursor-agent-fr012-bugbot-followups.md`.
+Do not merge from this agent.
