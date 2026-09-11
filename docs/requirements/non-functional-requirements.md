@@ -32,7 +32,9 @@
      still gates draft-skipping auto-merge. First green matrix:
      [actions/runs/34402392739](https://github.com/artofdream/logify/actions/runs/34402392739)
      (`test` on ubuntu/windows/macos plus `validate`; `enable-auto-merge`
-     skipped because the PR is a draft).
+     skipped because the PR is a draft). On `macos-latest` (macOS 26) the
+     Go 1.22 linker needs `-ldflags=-B=gobuildid` so dyld accepts test
+     binaries ([INC-20260911-macos-go122-lc-uuid](../knowledge/incidents/INC-20260911-macos-go122-lc-uuid.md)).
 
 
 ### NFR-003 — Offline operation

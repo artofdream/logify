@@ -4,7 +4,7 @@ type: work-item
 status: review
 owner: cursor-agent
 created: 2026-09-11T19:25:43Z
-updated: 2026-09-11T19:40:00Z
+updated: 2026-09-11T19:42:00Z
 lease_expires: 2026-09-12T03:25:43Z
 scope:
   - internal/analyzer/model.go
@@ -28,7 +28,9 @@ scope:
   - docs/knowledge/decisions/ADR-0005-optional-report-redaction.md
   - docs/knowledge/decisions/ADR-0008-event-correlation.md
   - docs/collaboration/work-items/WI-20260911-fr012-event-correlation.md
-requirements: [FR-012, FR-023]
+  - .github/workflows/ci.yml
+  - docs/knowledge/incidents/INC-20260911-macos-go122-lc-uuid.md
+requirements: [FR-012, FR-023, NFR-002]
 depends_on: []
 supersedes: []
 ---
