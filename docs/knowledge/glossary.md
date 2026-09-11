@@ -14,7 +14,8 @@ updated: 2026-09-11
 - **Correlation group:** an inferred set of timeline events that share a
   documented identifier or a labeled heuristic (FR-012 / ADR-0008). Kind is
   `exact` or `heuristic`; confidence is `high` or `low`. Events stay
-  individually inspectable.
+  individually inspectable. Heuristic `client-ip-window` groups are one
+  in-window access/Tomcat pair and are not transitively unioned.
 - **Issue:** a follow-up unit linked to one or more evidence groups.
 - **Linked evidence:** additional event-group snapshots attached to an issue
   besides the originating `evidence` (`linkedEvidence` in `logify-follow-up-v1`).
