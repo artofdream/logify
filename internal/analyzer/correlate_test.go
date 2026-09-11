@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -140,6 +141,131 @@ func TestCorrelateTraceparentAndRequestID(t *testing.T) {
 	}
 	if len(got[0].Members) != 2 {
 		t.Fatalf("members=%v", got[0].Members)
+	}
+}
+
+func TestCorrelateUsesCollapsedDuplicateIdentifiers(t *testing.T) {
+	// FR-012: signatures treat numeric tokens as volatile, so later request IDs
+	// and client addresses on the same instance must still participate.
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "httpd"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "tomcat"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	access := "" +
+		"10.9.8.7 - - [03/Sep/2026:10:00:00 +0000] \"GET /x?requestId=abc-req-001 HTTP/1.1\" 500 18\n" +
+		"10.9.8.8 - - [03/Sep/2026:10:00:02 +0000] \"GET /x?requestId=abc-req-002 HTTP/1.1\" 500 18\n"
+	tomcat := "2026-09-03 10:00:02,000 ERROR requestId=abc-req-002 failed client 10.9.8.8\n"
+	if err := os.WriteFile(filepath.Join(dir, "httpd", "access.log"), []byte(access), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "tomcat", "catalina.out"), []byte(tomcat), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	r, err := Analyze(dir, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(r.Events) != 2 {
+		t.Fatalf("events=%d want 2 after dedup: %+v", len(r.Events), r.Events)
+	}
+	var exact, heuristic int
+	for _, c := range r.Correlations {
+		switch c.Rule {
+		case RuleSharedRequestID:
+			exact++
+			if !strings.Contains(c.Evidence, "abc-req-002") {
+				t.Fatalf("exact evidence=%q", c.Evidence)
+			}
+			if len(c.Members) != 2 {
+				t.Fatalf("exact members=%v", c.Members)
+			}
+		case RuleClientIPWindow:
+			heuristic++
+			if !strings.Contains(c.Evidence, "10.9.8.8") {
+				t.Fatalf("heuristic evidence=%q", c.Evidence)
+			}
+			if len(c.Members) != 2 {
+				t.Fatalf("heuristic members=%v", c.Members)
+			}
+		default:
+			t.Fatalf("unexpected rule %q", c.Rule)
+		}
+	}
+	if exact != 1 || heuristic != 1 {
+		t.Fatalf("exact=%d heuristic=%d groups=%+v", exact, heuristic, r.Correlations)
+	}
+}
+
+func TestHeuristicDoesNotChainBeyondWindow(t *testing.T) {
+	now := time.Date(2026, 9, 3, 10, 0, 0, 0, time.UTC)
+	events := []Event{
+		{HasTimestamp: true, Timestamp: now, SourceType: "apache-access", Message: "GET /a -> 500", ClientAddr: "10.4.5.6", Signature: "a1", Instance: "h", File: "a.log", Line: 1},
+		{HasTimestamp: true, Timestamp: now.Add(4 * time.Second), SourceType: "tomcat-java", Message: "err 10.4.5.6 first", Signature: "t1", Instance: "t", File: "c.out", Line: 1},
+		{HasTimestamp: true, Timestamp: now.Add(8 * time.Second), SourceType: "apache-access", Message: "GET /b -> 500", ClientAddr: "10.4.5.6", Signature: "a2", Instance: "h", File: "a.log", Line: 2},
+		{HasTimestamp: true, Timestamp: now.Add(12 * time.Second), SourceType: "tomcat-java", Message: "err 10.4.5.6 second", Signature: "t2", Instance: "t", File: "c.out", Line: 2},
+	}
+	got := Correlate(events)
+	if len(got) != 3 {
+		t.Fatalf("groups=%d want 3 pairs: %+v", len(got), got)
+	}
+	for _, c := range got {
+		if c.Rule != RuleClientIPWindow || len(c.Members) != 2 {
+			t.Fatalf("expected pairwise heuristic, got %+v", c)
+		}
+		if !withinWindow(events[c.Members[0]], events[c.Members[1]], clientIPWindow) {
+			t.Fatalf("pair outside 5s: %+v", c)
+		}
+		hasT0, hasT12 := false, false
+		for _, m := range c.Members {
+			if m == 0 {
+				hasT0 = true
+			}
+			if m == 3 {
+				hasT12 = true
+			}
+		}
+		if hasT0 && hasT12 {
+			t.Fatalf("chained T0 access with T12 tomcat: %+v", c)
+		}
+	}
+}
+
+func TestHeuristicDoesNotUnionDistinctIPs(t *testing.T) {
+	now := time.Date(2026, 9, 3, 10, 0, 0, 0, time.UTC)
+	events := []Event{
+		{HasTimestamp: true, Timestamp: now, SourceType: "apache-access", Message: "GET /a -> 200", ClientAddr: "10.1.1.1", Signature: "a", Instance: "h", File: "a.log", Line: 1},
+		{HasTimestamp: true, Timestamp: now, SourceType: "apache-access", Message: "GET /b -> 200", ClientAddr: "10.2.2.2", Signature: "b", Instance: "h", File: "a.log", Line: 2},
+		{HasTimestamp: true, Timestamp: now.Add(time.Second), SourceType: "tomcat-java", Message: "proxy 10.1.1.1 to backend 10.2.2.2", Signature: "t", Instance: "t", File: "c.out", Line: 1},
+	}
+	got := Correlate(events)
+	if len(got) != 2 {
+		t.Fatalf("groups=%d want 2: %+v", len(got), got)
+	}
+	seen := map[string]bool{}
+	for _, c := range got {
+		if c.Rule != RuleClientIPWindow || len(c.Members) != 2 {
+			t.Fatalf("unexpected %+v", c)
+		}
+		var access, tomcat int
+		for _, m := range c.Members {
+			switch events[m].SourceType {
+			case "apache-access":
+				access++
+			case "tomcat-java":
+				tomcat++
+			}
+		}
+		if access != 1 || tomcat != 1 {
+			t.Fatalf("members should be one access + one tomcat: %+v", c)
+		}
+		seen[c.Evidence] = true
+	}
+	if !seen["heuristic client 10.1.1.1 within 5s across apache-access and tomcat-java"] ||
+		!seen["heuristic client 10.2.2.2 within 5s across apache-access and tomcat-java"] {
+		t.Fatalf("evidence set=%v", seen)
 	}
 }
 

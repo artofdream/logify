@@ -73,5 +73,8 @@ Pending `gofmt`, `go test ./...`, `go vet`, build, fixture smoke.
 
 - `2026-09-11T19:25:43Z` — cursor-agent — claimed FR-012 on branch
   `cursor/fr012-event-correlation-1995` from `main` (`4c8da68`).
+- `2026-09-11T19:34:00Z` — cursor-agent — analyzer correlation files also
+  leased by `WI-20260911-correlation-dedup-window` (same owner) for the
+  dedup-identifier and heuristic-window bugfixes.
 
 ## Handoff or completion

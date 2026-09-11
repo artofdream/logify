@@ -32,7 +32,8 @@ retained it.
 
 1. Correlation runs after discovery, parsing, time filtering, instance-local
    deduplication, and chronological sort. It never merges, hides, or reorders
-   timeline events.
+   timeline events. Labeled identifiers and client addresses from occurrences
+   collapsed by dedup still participate; groups point at the surviving rows.
 2. Only two rules are implemented. Both are deterministic: same input events
    produce the same groups, rule names, confidence labels, evidence strings,
    member order, and correlation IDs.
@@ -40,7 +41,7 @@ retained it.
    | Rule ID | Kind | Confidence | Members | Evidence required |
    |---|---|---|---|---|
    | `shared-request-id` | `exact` | `high` | 2+ events | Same labeled identifier value |
-   | `client-ip-window` | `heuristic` | `low` | 2+ events | Same non-loopback client address on at least one `apache-access` event and one `tomcat-java` event whose timestamps differ by at most 5s |
+   | `client-ip-window` | `heuristic` | `low` | one access + one Tomcat | Same non-loopback client address on an `apache-access` event and a `tomcat-java` event whose timestamps differ by at most 5s. Each pair is its own group; pairs are not unioned across time or across distinct IPs. |
 
 3. **Exact identifiers** are taken only from labeled forms in the event
    message: `request-id` / `requestId` / `reqId` / `x-request-id`,
@@ -57,9 +58,10 @@ retained it.
    `[client …]` is retained for provenance and may appear in exact groups when
    a labeled ID is also present; it does not satisfy the HTTPD side of this
    heuristic by itself. IPv6 literals in free-text Tomcat lines are not mined.
-5. An event may belong to more than one group when different rules fire. A
-   single matching event never creates a group. Two access events that share
-   only a client address, with no in-window Tomcat counterpart, stay ungrouped.
+5. An event may belong to more than one group when different rules fire or
+   when distinct heuristic pairs share a member. A single matching event never
+   creates a group. Two access events that share only a client address, with
+   no in-window Tomcat counterpart, stay ungrouped.
 6. Each group has a stable `corr-v1-…` id derived from rule, normalized key,
    and member identity (`signature`, `instance`, slash-normalized file, line) —
    the same provenance tuple as evidence IDs, not display order.

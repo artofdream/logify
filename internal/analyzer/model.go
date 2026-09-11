@@ -33,6 +33,17 @@ type Event struct {
 	// ClientAddr is the parsed HTTPD remote address when known. It is used by
 	// correlation (FR-012) and is not part of signature or evidence identity.
 	ClientAddr string `json:"clientAddr,omitempty"`
+	// occHints are this row plus collapsed duplicates so correlation can
+	// still see later identifiers and addresses (FR-012).
+	occHints []occHint
+}
+
+// occHint is one pre-dedup occurrence used only by correlation.
+type occHint struct {
+	ts   time.Time
+	has  bool
+	msg  string
+	addr string
 }
 
 type CorrelationKind string
