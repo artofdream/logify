@@ -38,17 +38,19 @@ for review and does not change workflow state.
 Logify does not phone home: there is no telemetry and no automatic upload.
 
 The HTML report is a **sensitive copy of parsed log text**. It embeds messages,
-relative file paths, instance directory names, and the analysis root. Share it
-only as you would the original support bundle. Do not publish the file or attach
-it to an unrestricted ticket. Exported follow-up JSON is also sensitive: it
-contains operator titles, tags, notes, owners, and due dates.
+relative file paths, instance directory names, correlation evidence, and the
+analysis root. Share it only as you would the original support bundle. Do not
+publish the file or attach it to an unrestricted ticket. Exported follow-up JSON
+is also sensitive: it contains operator titles, tags, notes, owners, and due
+dates.
 
 Every successful run prints a one-line reminder on stderr. The report itself
 opens with a **Sensitive copy** banner.
 
 Optional redaction is **off by default**. When you opt in, Logify replaces
-matches in the embedded root, warnings, and each event message, file, and
-instance **before** those strings are written into the HTML file. Source logs
+matches in the embedded root, warnings, each event message, file, instance, and
+client address, and each correlation evidence string **before** those strings are
+written into the HTML file. Source logs
 are never modified. Evidence IDs stay bound to the original provenance so
 Import validates the schema version, skips invalid records (including an
 evidence id already owned by a different issue), and reports unmatched
@@ -80,7 +82,7 @@ detection. It does **not** cover:
 - Values split across lines or encoded (base64, hex dumps) unless your rule matches that form
 - IPv6, phone numbers, or other identifiers unless you add a rule
 - Operator-typed follow-up titles, notes, owners, tags, or due dates
-- Signatures, evidence IDs, timestamps, severity, status codes, or source type
+- Signatures, evidence IDs, timestamps, severity, status codes, source type, or correlation IDs / rule / kind / confidence labels
 - The original log bundle (only the HTML copy is rewritten)
 
 Presets are incomplete on purpose. `ipv4` also matches dotted numbers that are
@@ -121,6 +123,7 @@ Release: push a `v*` tag to run [`.github/workflows/release.yml`](.github/workfl
 - Normalizes every record into a common model, assigns HTTP severity from status class, and sorts timestamped events chronologically.
 - Generates stable signatures from normalized first lines and aggregates repeats per instance while retaining first/last occurrence times.
 - Surfaces recoverable scan problems as structured warnings (`walk-error`, `open-error`, `scan-overflow`, `scan-error`) with file, category, optional line or range, and message. The CLI and report show the warning count plus processed / skipped / failed input counts (`filesScanned = filesProcessed + filesFailed`). Mid-file overflow keeps events already parsed from that file. Unreadable directories are skipped; children inside them are not invented.
+- Groups related events when a documented rule finds shared evidence (FR-012). Exact labeled request/correlation/trace IDs are high confidence. A client-IP + 5s window across Apache access and Tomcat is labeled heuristic/low and skips loopback. Events stay on the timeline; groups appear in **Correlation groups** with the rule, confidence, and supporting evidence. No group is invented when evidence is weak.
 - Embeds all data, styles, and JavaScript in the report. Timeline filters work offline by text, severity, instance, and source. The issue queue adds combined text, tag, flag, state, owner, severity, instance, and overdue filters.
 - Treat the HTML file as sensitive. See [Sensitive reports](#sensitive-reports).
 
@@ -134,11 +137,11 @@ Release: push a `v*` tag to run [`.github/workflows/release.yml`](.github/workfl
 6. Create, flag, tag, and change state with the keyboard: **Tab** reaches labeled controls, **Enter** adds a tag, and **Left/Right** switches the Timeline and Issue queue tabs. Flag and workflow state are named in text (**Flagged**, **State: Open**), not color alone. The status line confirms each action; the queue shows **Showing N of M issue(s)** when filters change.
 7. **Export follow-up JSON** writes a portable file. **Import follow-up JSON** loads it into this report. A later report with the same `signature` + `instance` lists candidate matches and newly observed occurrence counts (or a newer last-seen time) for review; nothing auto-changes state. Duplicate evidence ownership is skipped. **Clear local follow-up data** drops the browser copy after a confirmation.
 
-The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md). Scan warning categories and input-count identity are in [`docs/knowledge/decisions/ADR-0004-scan-warnings.md`](docs/knowledge/decisions/ADR-0004-scan-warnings.md). Redaction rules are in [`docs/knowledge/decisions/ADR-0005-optional-report-redaction.md`](docs/knowledge/decisions/ADR-0005-optional-report-redaction.md). Keyboard, confirmation, and the 10,000-issue filter probe are in [`docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md`](docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md) and [`docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md`](docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md). Multi-evidence merge and review rules are in [`docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md`](docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md).
+The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md). Scan warning categories and input-count identity are in [`docs/knowledge/decisions/ADR-0004-scan-warnings.md`](docs/knowledge/decisions/ADR-0004-scan-warnings.md). Redaction rules are in [`docs/knowledge/decisions/ADR-0005-optional-report-redaction.md`](docs/knowledge/decisions/ADR-0005-optional-report-redaction.md). Keyboard, confirmation, and the 10,000-issue filter probe are in [`docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md`](docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md) and [`docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md`](docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md). Multi-evidence merge and review rules are in [`docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md`](docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md). Correlation rules are in [`docs/knowledge/decisions/ADR-0008-event-correlation.md`](docs/knowledge/decisions/ADR-0008-event-correlation.md).
 
 ## Current limits
 
-Format detection is filename/path based and intentionally conservative. Logs with custom date formats, multi-line messages that do not resemble Java stack traces, compressed/rotated logs without a recognized suffix, and timezone-less timestamps may need additional parser profiles. Timezone-less Java and Apache error timestamps are treated as UTC by Go's parser. Optional `-redact` rules are best-effort substring/regex replacement and do not detect unknown secrets.
+Format detection is filename/path based and intentionally conservative. Logs with custom date formats, multi-line messages that do not resemble Java stack traces, compressed/rotated logs without a recognized suffix, and timezone-less timestamps may need additional parser profiles. Timezone-less Java and Apache error timestamps are treated as UTC by Go's parser. Optional `-redact` rules are best-effort substring/regex replacement and do not detect unknown secrets. Correlation does not use unlabeled numbers, bare UUIDs, exception class names, or loopback client addresses; the IP-window heuristic is IPv4, 5 seconds, and access+Tomcat only.
 
 The issue queue renders every matching card. `store.filter` at 10,000 issues is
 measured in milliseconds on the documented probe host; painting 10,000 full

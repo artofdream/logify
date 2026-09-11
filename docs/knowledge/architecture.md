@@ -3,7 +3,7 @@ id: logify-architecture
 type: architecture
 status: active
 owner: human
-updated: 2026-09-09
+updated: 2026-09-11
 sources: [../../README.md, ../../cmd/logify/main.go, ../../internal/analyzer, ../../internal/redact, ../../internal/report]
 ---
 
@@ -11,7 +11,8 @@ sources: [../../README.md, ../../cmd/logify/main.go, ../../internal/analyzer, ..
 
 Logify is a dependency-free Go CLI. `cmd/logify` accepts a directory and options;
 `internal/analyzer` discovers and normalizes logs, builds signatures, groups
-repeats, and orders the timeline; `internal/redact` compiles optional
+repeats, orders the timeline, and applies documented correlation rules
+(ADR-0008 / FR-012); `internal/redact` compiles optional
 operator-supplied replacement rules; `internal/report` emits one offline HTML file
 from `page.html`, `page.css`, `page.js`, and `followup.js` (embedded at build
 time). Optional `-redact` / `-redact-file` rules run after evidence IDs are
@@ -24,7 +25,9 @@ script, persisted in `logify-follow-up-v1`, and compared for overdue against
 the UTC calendar date of the report clock. An issue may link additional
 evidence groups (`linkedEvidence`); import surfaces signature matches and new
 occurrence counts for review and does not change workflow state (FR-024 /
-ADR-0007).
+ADR-0007). Correlation groups are inferences (`exact` vs `heuristic`) with a
+named rule, confidence, and evidence string; they do not merge timeline rows
+or mint issues.
 
 Recoverable scan problems are structured warnings (`walk-error`, `open-error`,
 `scan-overflow`, `scan-error`) with file, category, optional line/range, and

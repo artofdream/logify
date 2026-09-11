@@ -3,7 +3,7 @@ id: logify-glossary
 type: glossary
 status: active
 owner: human
-updated: 2026-09-09
+updated: 2026-09-11
 ---
 
 # Glossary
@@ -11,6 +11,10 @@ updated: 2026-09-09
 - **Evidence:** an observed log record or verifiable artifact with provenance.
 - **Inference:** a conclusion derived from evidence and labeled with its rule or
   uncertainty.
+- **Correlation group:** an inferred set of timeline events that share a
+  documented identifier or a labeled heuristic (FR-012 / ADR-0008). Kind is
+  `exact` or `heuristic`; confidence is `high` or `low`. Events stay
+  individually inspectable.
 - **Issue:** a follow-up unit linked to one or more evidence groups.
 - **Linked evidence:** additional event-group snapshots attached to an issue
   besides the originating `evidence` (`linkedEvidence` in `logify-follow-up-v1`).

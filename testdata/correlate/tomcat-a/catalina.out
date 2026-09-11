@@ -1,0 +1,11 @@
+2026-09-03 10:00:01,000 ERROR requestId=abc-req-001 checkout failed
+java.lang.IllegalStateException: bad state
+	at com.example.App.run(App.java:42)
+Caused by: java.io.IOException: downstream
+2026-09-03 10:00:02,000 INFO requestId=abc-req-001 retry scheduled
+2026-09-03 10:00:08,000 ERROR client 10.2.3.4 inventory timeout
+2026-09-03 10:00:08,500 ERROR client 127.0.0.1 local only
+2026-09-03 10:00:20,000 ERROR requestId=zzz-alone unmatched id
+2026-09-03 10:00:30,000 INFO heartbeat
+2026-09-03 11:00:00,000 ERROR client 10.2.3.4 stale after window
+2026-09-03 10:00:01,100 ERROR Request 99999999 unlabeled number

@@ -22,10 +22,15 @@
     <p class="muted">Recoverable problems. Events from readable files and from lines before a mid-file failure are kept.</p>
     <div id="warning-list"></div>
   </section>
+  <section id="correlations" class="correlations" aria-labelledby="correlations-heading">
+    <h2 id="correlations-heading">Correlation groups</h2>
+    <p class="muted">Inferred from documented rules. Timeline events stay individually inspectable. No group is created when evidence is weak.</p>
+    <div id="correlation-list"></div>
+  </section>
   <p class="legend" role="note">
     <span><strong>Observed evidence</strong> — parsed log records in the timeline</span>
     <span><strong>Operator metadata</strong> — issues, tags, flags, workflow, owner, due date, and notes you add</span>
-    <span><strong>Inferred correlations</strong> — not available in this report</span>
+    <span><strong>Inferred correlations</strong> — documented groups with a named rule and confidence; exact identifiers and heuristics are labeled separately</span>
   </p>
   <section class="storage" aria-labelledby="storage-heading">
     <h2 id="storage-heading" class="visually-hidden">Follow-up storage</h2>

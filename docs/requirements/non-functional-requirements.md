@@ -32,7 +32,9 @@
      still gates draft-skipping auto-merge. First green matrix:
      [actions/runs/34402392739](https://github.com/artofdream/logify/actions/runs/34402392739)
      (`test` on ubuntu/windows/macos plus `validate`; `enable-auto-merge`
-     skipped because the PR is a draft).
+     skipped because the PR is a draft). On `macos-latest` (macOS 26) the
+     Go 1.22 linker needs `-ldflags=-B=gobuildid` so dyld accepts test
+     binaries ([INC-20260911-macos-go122-lc-uuid](../knowledge/incidents/INC-20260911-macos-go122-lc-uuid.md)).
 
 
 ### NFR-003 — Offline operation
@@ -71,8 +73,9 @@
      before report generation.
 - **Notes:** Default runs do not redact. `-redact` (repeatable) and
   `-redact-file` apply operator-supplied presets, regexes, or literals to
-  report-embedded `root`, warnings, and each event `message`, `file`, and
-  `instance` after evidence IDs are computed. Source bundles are never modified.
+  report-embedded `root`, warnings, each event `message`, `file`, `instance`,
+  and `clientAddr`, and each correlation `evidence` string after evidence IDs
+  are computed. Source bundles are never modified.
   Redaction is best-effort string replacement; it does not scan for unknown
   secret types, does not cover operator-typed follow-up fields, and does not
   make a report safe to publish. User-facing warnings are the README section,

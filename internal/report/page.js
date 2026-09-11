@@ -3,6 +3,7 @@
 
   var events = Array.isArray(REPORT.events) ? REPORT.events : [];
   var warnings = Array.isArray(REPORT.warnings) ? REPORT.warnings.map(normalizeWarning) : [];
+  var correlations = Array.isArray(REPORT.correlations) ? REPORT.correlations : [];
   function normalizeWarning(w) {
     if (!w || typeof w === 'string') {
       return { file: '', category: '', line: 0, lineEnd: 0, message: String(w || '') };
@@ -126,7 +127,8 @@
       [REPORT.filesProcessed || 0, 'processed'],
       [REPORT.filesSkipped || 0, 'skipped'],
       [REPORT.filesFailed || 0, 'failed'],
-      [warnings.length, 'warnings']
+      [warnings.length, 'warnings'],
+      [correlations.length, 'correlation groups']
     ];
     var root = $('stats');
     clear(root);
@@ -150,6 +152,37 @@
     if ($('inst').value && event.instance !== $('inst').value) return false;
     if ($('src').value && event.sourceType !== $('src').value) return false;
     return true;
+  }
+
+  function eventById(id) {
+    for (var i = 0; i < events.length; i++) {
+      if (events[i].evidenceId === id) return events[i];
+    }
+    return null;
+  }
+
+  function groupsForEvent(event) {
+    var id = event.evidenceId;
+    var out = [];
+    correlations.forEach(function (c) {
+      var members = c.members || [];
+      if (members.indexOf(id) !== -1) out.push(c);
+    });
+    return out;
+  }
+
+  function kindLabel(kind, confidence) {
+    if (kind === 'exact') return 'Exact identifier (confidence: ' + (confidence || 'high') + ')';
+    if (kind === 'heuristic') return 'Heuristic (confidence: ' + (confidence || 'low') + ')';
+    return 'Inferred (confidence: ' + (confidence || 'unknown') + ')';
+  }
+
+  function showCorrelation(group) {
+    var target = document.getElementById('corr-' + String(group.id || '').replace(/^corr-v1-/, ''));
+    if (target) {
+      target.focus();
+      target.scrollIntoView({ block: 'center' });
+    }
   }
 
   function showEvidence(event) {
@@ -201,7 +234,23 @@
         details += ' • ' + event.occurrences + ' occurrences; first ' + formatTime(event.firstSeen) + '; last ' + formatTime(event.lastSeen);
       }
       body.appendChild(el('div', 'detail', details));
+      var groups = groupsForEvent(event);
+      if (groups.length) {
+        var chips = el('div', 'corr-chips');
+        groups.forEach(function (g) {
+          var chip = el('span', 'corr-kind ' + (g.kind || ''), kindLabel(g.kind, g.confidence) + ' · ' + (g.rule || ''));
+          chips.appendChild(chip);
+        });
+        body.appendChild(chips);
+      }
       var actions = el('div', 'event-actions');
+      groups.forEach(function (g) {
+        var corrBtn = el('button', '', 'Show correlation');
+        corrBtn.type = 'button';
+        corrBtn.setAttribute('aria-label', 'Show correlation ' + (g.rule || '') + ' for ' + (event.file || 'event') + ' line ' + event.line);
+        corrBtn.addEventListener('click', function () { showCorrelation(g); });
+        actions.appendChild(corrBtn);
+      });
       var existing = store.issueForEvidence(event.evidenceId);
       var btn = el('button', '', existing ? 'Open issue' : 'Create issue');
       btn.type = 'button';
@@ -683,6 +732,60 @@
     applyPendingFocus();
   }
 
+  function renderCorrelations() {
+    var section = $('correlations');
+    var list = $('correlation-list');
+    if (!section || !list) return;
+    clear(list);
+    if (!correlations.length) {
+      list.appendChild(el('div', 'empty', 'No correlation groups. Logify only links events when a documented rule finds shared evidence.'));
+      return;
+    }
+    correlations.forEach(function (group) {
+      var card = el('article', 'correlation');
+      card.id = 'corr-' + String(group.id || '').replace(/^corr-v1-/, '');
+      card.tabIndex = -1;
+      var heading = el('div', 'issue-heading');
+      var left = el('div');
+      left.appendChild(el('div', 'issue-id', group.id || ''));
+      left.appendChild(el('span', 'corr-kind ' + (group.kind || ''), kindLabel(group.kind, group.confidence)));
+      heading.appendChild(left);
+      card.appendChild(heading);
+      card.appendChild(el('div', 'review-title', 'Rule: ' + (group.rule || '')));
+      card.appendChild(el('div', 'detail', group.evidence || ''));
+      var ev = el('div', 'box');
+      ev.appendChild(el('h3', '', 'Supporting evidence'));
+      (group.members || []).forEach(function (id) {
+        var live = eventById(id);
+        var item = el('div', 'evidence-item');
+        var dl = el('dl', 'evidence');
+        field(dl, 'Evidence ID', id);
+        if (live) {
+          field(dl, 'When', live.hasTimestamp ? formatTime(live.timestamp) : 'No timestamp');
+          field(dl, 'Severity', live.severity || 'UNKNOWN');
+          field(dl, 'Instance', live.instance || '');
+          field(dl, 'Source', live.sourceType || '');
+          field(dl, 'File', (live.file || '') + ':' + live.line);
+          field(dl, 'Message', live.message || '');
+        } else {
+          field(dl, 'Status', 'Not in this report');
+        }
+        item.appendChild(dl);
+        if (live) {
+          var row = el('div', 'event-actions');
+          var show = el('button', '', 'Show event');
+          show.type = 'button';
+          show.addEventListener('click', function () { showEvidence(live); });
+          row.appendChild(show);
+          item.appendChild(row);
+        }
+        ev.appendChild(item);
+      });
+      card.appendChild(ev);
+      list.appendChild(card);
+    });
+  }
+
   function renderWarnings() {
     var section = $('warnings');
     var list = $('warning-list');
@@ -705,6 +808,7 @@
   function renderAll() {
     renderStats();
     renderWarnings();
+    renderCorrelations();
     renderStorage();
     renderTimeline();
     renderReviews();

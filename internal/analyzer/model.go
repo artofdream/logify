@@ -30,6 +30,38 @@ type Event struct {
 	Occurrences  int       `json:"occurrences"`
 	LastSeen     time.Time `json:"lastSeen"`
 	StatusCode   int       `json:"statusCode,omitempty"`
+	// ClientAddr is the parsed HTTPD remote address when known. It is used by
+	// correlation (FR-012) and is not part of signature or evidence identity.
+	ClientAddr string `json:"clientAddr,omitempty"`
+}
+
+type CorrelationKind string
+
+const (
+	KindExact     CorrelationKind = "exact"
+	KindHeuristic CorrelationKind = "heuristic"
+)
+
+type Confidence string
+
+const (
+	ConfidenceHigh Confidence = "high"
+	ConfidenceLow  Confidence = "low"
+)
+
+const (
+	RuleSharedRequestID = "shared-request-id"
+	RuleClientIPWindow  = "client-ip-window"
+)
+
+// Correlation is one inferred group. Members are indexes into Result.Events.
+type Correlation struct {
+	ID         string          `json:"id"`
+	Rule       string          `json:"rule"`
+	Kind       CorrelationKind `json:"kind"`
+	Confidence Confidence      `json:"confidence"`
+	Evidence   string          `json:"evidence"`
+	Members    []int           `json:"members"`
 }
 
 // WarningCategory is a deterministic scan-failure class (FR-015).
@@ -77,14 +109,15 @@ func (w Warning) String() string {
 }
 
 type Result struct {
-	Root           string    `json:"root"`
-	GeneratedAt    time.Time `json:"generatedAt"`
-	FilesScanned   int       `json:"filesScanned"`
-	FilesProcessed int       `json:"filesProcessed"`
-	FilesSkipped   int       `json:"filesSkipped"`
-	FilesFailed    int       `json:"filesFailed"`
-	Events         []Event   `json:"events"`
-	Warnings       []Warning `json:"warnings"`
+	Root           string        `json:"root"`
+	GeneratedAt    time.Time     `json:"generatedAt"`
+	FilesScanned   int           `json:"filesScanned"`
+	FilesProcessed int           `json:"filesProcessed"`
+	FilesSkipped   int           `json:"filesSkipped"`
+	FilesFailed    int           `json:"filesFailed"`
+	Events         []Event       `json:"events"`
+	Warnings       []Warning     `json:"warnings"`
+	Correlations   []Correlation `json:"correlations"`
 }
 
 func (r Result) SummaryLine() string {

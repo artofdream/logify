@@ -50,11 +50,15 @@ jobs:
       - name: go vet
         run: go vet ./...
 
+      # Go 1.22's default Darwin linker omits LC_UUID. macOS 26 dyld then
+      # aborts test/tool binaries before main (golang/go#68678). The 1.22
+      # backport emits a UUID when -B gobuildid is passed. Linux/Windows
+      # do not need this. See INC-20260911-macos-go122-lc-uuid.
       - name: go build
-        run: go build -o ${{ matrix.bin }} ./cmd/logify
+        run: go build ${{ runner.os == 'macOS' && '-ldflags=-B=gobuildid' || '' }} -o ${{ matrix.bin }} ./cmd/logify
 
       - name: go test
-        run: go test ./... -v
+        run: go test ${{ runner.os == 'macOS' && '-ldflags=-B=gobuildid' || '' }} ./... -v
 
       - name: fixture bundle smoke test
         if: runner.os != 'Windows'

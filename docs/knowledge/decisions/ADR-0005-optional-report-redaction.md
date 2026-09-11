@@ -4,7 +4,7 @@ type: decision
 status: accepted
 owner: cursor-agent
 created: 2026-09-09
-updated: 2026-09-10
+updated: 2026-09-11
 requirements: [NFR-006, NFR-010, NFR-016, NFR-017]
 supersedes: []
 ---
@@ -29,9 +29,11 @@ and line (ADR-0001 / NFR-017), not message text.
 1. Redaction is opt-in via repeatable `-redact` rules and optional
    `-redact-file`. Default analysis and report embedding stay unredacted.
 2. Apply redaction in the report package after `EvidenceID` is computed, to
-   `root`, structured warning `file`/`message`, and each event `message`,
-   `file`, and `instance`. Do not rewrite source logs, signatures, timestamps,
-   severity, status codes, or source type.
+   `root`, structured warning `file`/`message`, each event `message`,
+   `file`, `instance`, and `clientAddr`, and each correlation `evidence`
+   string. Do not rewrite source logs, signatures, timestamps,
+   severity, status codes, source type, or correlation IDs / rule / kind /
+   confidence labels.
 3. Rules are stdlib `regexp` only: named presets (`email`, `ipv4`, `uuid`,
    `bearer`, `jwt`), `literal:<text>`, `regex:<pattern>`, or a bare pattern.
    Reject empty-matching patterns. Replacement token is `[REDACTED]`.

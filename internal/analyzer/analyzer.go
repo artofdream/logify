@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -18,6 +19,7 @@ import (
 var javaStart = regexp.MustCompile(`^(?:\[)?(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:[.,]\d+)?(?:Z|[+-]\d\d:?\d\d)?)(?:\])?\s+(?:\[([^]]+)\]\s+)?(?:(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL|SEVERE)\b)?\s*(.*)$`)
 var httpdError = regexp.MustCompile(`^\[([^]]+)\]\s+(?:\[([^]:]+)(?::([^]]+))?\]\s+)?(?:\[pid[^]]+\]\s+)?(?:\[client[^]]+\]\s+)?(.*)$`)
 var httpdAccess = regexp.MustCompile(`^(\S+)\s+\S+\s+\S+\s+\[([^]]+)\]\s+"([^"]*)"\s+(\d{3})\s+(\S+)`)
+var httpdClient = regexp.MustCompile(`\[client\s+([^]]+)\]`)
 var volatile = regexp.MustCompile(`(?i)(?:0x[0-9a-f]+|\b\d{2,}\b|[0-9a-f]{8}-[0-9a-f-]{27,})`)
 var javaException = regexp.MustCompile(`^(?:Caused by:\s+)?[\w.$]+(?:Exception|Error)(?::|$)`)
 
@@ -33,7 +35,7 @@ func Analyze(root string, o Options) (Result, error) {
 	if !i.IsDir() {
 		return Result{}, fmt.Errorf("%s is not a directory", abs)
 	}
-	r := Result{Root: abs, GeneratedAt: time.Now(), Events: []Event{}, Warnings: []Warning{}}
+	r := Result{Root: abs, GeneratedAt: time.Now(), Events: []Event{}, Warnings: []Warning{}, Correlations: []Correlation{}}
 	e = filepath.WalkDir(abs, func(p string, d os.DirEntry, we error) error {
 		if we != nil {
 			r.FilesSkipped++
@@ -76,6 +78,7 @@ func Analyze(root string, o Options) (Result, error) {
 		}
 		return r.Events[i].Timestamp.Before(r.Events[j].Timestamp)
 	})
+	r.Correlations = Correlate(r.Events)
 	return r, nil
 }
 func looks(n string) bool {
@@ -244,7 +247,11 @@ func apacheError(s string) (Event, bool) {
 	if level == "" {
 		level = m[2]
 	}
-	return Event{Timestamp: t, HasTimestamp: true, Severity: severity(level), Message: strings.TrimSpace(m[4])}, true
+	addr := ""
+	if cm := httpdClient.FindStringSubmatch(s); cm != nil {
+		addr = canonicalClientAddr(cm[1])
+	}
+	return Event{Timestamp: t, HasTimestamp: true, Severity: severity(level), Message: strings.TrimSpace(m[4]), ClientAddr: addr}, true
 }
 func access(s string) (Event, bool) {
 	m := httpdAccess.FindStringSubmatch(s)
@@ -262,7 +269,23 @@ func access(s string) (Event, bool) {
 	} else if code >= 400 {
 		sev = Warn
 	}
-	return Event{Timestamp: t, HasTimestamp: true, Severity: sev, Message: m[3] + " -> " + m[4] + " (" + m[5] + " bytes)", StatusCode: code}, true
+	return Event{Timestamp: t, HasTimestamp: true, Severity: sev, Message: m[3] + " -> " + m[4] + " (" + m[5] + " bytes)", StatusCode: code, ClientAddr: canonicalClientAddr(m[1])}, true
+}
+
+func canonicalClientAddr(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+	if ip := net.ParseIP(strings.Trim(raw, "[]")); ip != nil {
+		return ip.String()
+	}
+	if host, _, err := net.SplitHostPort(raw); err == nil {
+		if ip := net.ParseIP(host); ip != nil {
+			return ip.String()
+		}
+	}
+	return ""
 }
 func flexTime(s string) (time.Time, bool) {
 	s = strings.Replace(s, ",", ".", 1)

@@ -15,11 +15,11 @@ func TestAnalyzeEmptyDirectorySlices(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.Events == nil || r.Warnings == nil {
-		t.Fatalf("nil slices events=%v warnings=%v", r.Events, r.Warnings)
+	if r.Events == nil || r.Warnings == nil || r.Correlations == nil {
+		t.Fatalf("nil slices events=%v warnings=%v correlations=%v", r.Events, r.Warnings, r.Correlations)
 	}
-	if len(r.Events) != 0 || len(r.Warnings) != 0 {
-		t.Fatalf("events=%d warnings=%d", len(r.Events), len(r.Warnings))
+	if len(r.Events) != 0 || len(r.Warnings) != 0 || len(r.Correlations) != 0 {
+		t.Fatalf("events=%d warnings=%d correlations=%d", len(r.Events), len(r.Warnings), len(r.Correlations))
 	}
 	assertCounts(t, r, 0, 0, 0, 0)
 }
@@ -30,8 +30,11 @@ func TestAnalyzeFixtures(t *testing.T) {
 		t.Fatal(e)
 	}
 	assertCounts(t, r, 3, 3, 0, 0)
-	if r.Events == nil || r.Warnings == nil {
-		t.Fatalf("nil slices events=%v warnings=%v", r.Events, r.Warnings)
+	if r.Events == nil || r.Warnings == nil || r.Correlations == nil {
+		t.Fatalf("nil slices events=%v warnings=%v correlations=%v", r.Events, r.Warnings, r.Correlations)
+	}
+	if len(r.Correlations) != 0 {
+		t.Fatalf("case fixture should stay ungrouped: %+v", r.Correlations)
 	}
 	if len(r.Events) != 6 {
 		t.Fatalf("events=%d: %#v", len(r.Events), r.Events)
@@ -279,8 +282,18 @@ func assertCounts(t *testing.T, r Result, scanned, processed, skipped, failed in
 }
 func TestAccessSeverity(t *testing.T) {
 	e, ok := access(`127.0.0.1 - - [03/Sep/2026:10:00:03 +0200] "GET /fail HTTP/1.1" 503 12`)
-	if !ok || e.Severity != Error || e.StatusCode != 503 {
+	if !ok || e.Severity != Error || e.StatusCode != 503 || e.ClientAddr != "127.0.0.1" {
 		t.Fatalf("%+v %v", e, ok)
+	}
+}
+
+func TestApacheErrorRetainsClientAddr(t *testing.T) {
+	e, ok := apacheError(`[Thu Sep 03 10:00:01.050000 2026] [proxy:error] [pid 7] [client 198.51.100.10:51234] requestId=abc-req-001 backend connection failed`)
+	if !ok || e.ClientAddr != "198.51.100.10" || !strings.Contains(e.Message, "requestId=abc-req-001") {
+		t.Fatalf("%+v %v", e, ok)
+	}
+	if strings.Contains(e.Message, "[client") {
+		t.Fatalf("client token leaked into message: %q", e.Message)
 	}
 }
 func TestSignatureNormalizesIDs(t *testing.T) {
