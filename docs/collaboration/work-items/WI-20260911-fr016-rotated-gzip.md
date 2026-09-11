@@ -1,10 +1,10 @@
 ---
 id: WI-20260911-fr016-rotated-gzip
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-11T21:42:00Z
-updated: 2026-09-11T21:42:00Z
+updated: 2026-09-11T21:50:00Z
 lease_expires: 2026-09-12T06:00:00Z
 scope:
   - internal/analyzer/analyzer.go
@@ -55,11 +55,22 @@ cursor-agent owns the paths in frontmatter.
 
 ## Validation
 
-Pending repository commands in `AGENTS.md`.
+- `gofmt -l cmd internal` — clean
+- `go test ./...` — pass
+- `go build -o logify.exe ./cmd/logify` — pass
+- `go vet ./...` — pass
+- `git diff --check` — clean
+- `./logify.exe -output sample-report.html testdata/case` —
+  `6 events from 3 files; processed=3 skipped=0 failed=0; 0 warnings`
+- `./logify.exe -output rotated-report.html testdata/rotated` —
+  `9 events from 6 files; processed=6 skipped=0 failed=0; 0 warnings`
+- PR: https://github.com/artofdream/logify/pull/15 (vs `main`). Do not merge.
 
 ## Activity log
 
 - `2026-09-11T21:42:00Z` — cursor-agent — claimed FR-016 on branch
   `cursor/fr016-rotated-gzip-logs-9b7b` from `main` (`79ac9e0`).
+- `2026-09-11T21:50:00Z` — cursor-agent — validation passed. FR-016 marked
+  Implemented. PR #15 ready for review. Do not merge.
 
 ## Handoff or completion

@@ -222,7 +222,7 @@
 ### FR-016 — Support compressed and rotated logs
 
 - **Priority:** Should
-- **Status:** Proposed
+- **Status:** Implemented
 - **Rationale:** Support bundles often include logrotate and Tomcat dated files,
   including `.gz` copies. Operators should not have to unpack those by hand
   before analysis.
@@ -246,7 +246,19 @@
 - **Dedup:** Rotation copies use the existing FR-010 instance+signature
   grouping. Distinct messages stay separate. The same signature on two
   instances is not merged.
-- **Verification:** pending `go test` / fixture smoke on this change.
+- **Verification:** `TestLooksRotatedAndGzipNames`,
+  `TestCanonicalLogNameStripsOneDecoration`, `TestDetectAccessNames` rotated
+  cases, `TestAnalyzeRotatedGzipFixtures` (9 grouped events from 6 files;
+  `tomcat-a` shared ERROR occurrences=2; `tomcat-b` not merged),
+  `TestGzipStreamParsesWithoutExtraction`,
+  `TestInvalidGzipIsScanErrorAndKeepsSiblings`,
+  `TestTruncatedGzipKeepsEarlierEvents`. Repository validation:
+  `gofmt -l cmd internal` clean; `go test ./...` pass; `go build -o logify.exe
+  ./cmd/logify` pass; `go vet ./...` pass; `git diff --check` clean.
+  `./logify.exe -output sample-report.html testdata/case` →
+  `6 events from 3 files; processed=3 skipped=0 failed=0; 0 warnings`.
+  `./logify.exe -output rotated-report.html testdata/rotated` →
+  `9 events from 6 files; processed=6 skipped=0 failed=0; 0 warnings`.
 
 ## Issue follow-up
 
