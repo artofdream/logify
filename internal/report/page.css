@@ -217,6 +217,34 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .feedback { min-height: 20px; color: var(--success); font-weight: 700; }
 .feedback.error { color: var(--danger); }
 .empty { text-align: center; padding: 40px; color: var(--muted); }
+.correlations { margin: 0 0 16px; }
+.correlation {
+  padding: 14px;
+  margin: 10px 0;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 9px;
+  background: var(--panel);
+  scroll-margin-top: 16px;
+}
+.corr-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.corr-kind {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--line);
+}
+.corr-kind.exact {
+  border-color: var(--success);
+  color: var(--success);
+}
+.corr-kind.heuristic {
+  border-color: var(--flag);
+  color: var(--flag);
+  background: var(--flag-bg);
+}
 .warnings { margin: 0 0 16px; }
 .warning {
   display: grid;

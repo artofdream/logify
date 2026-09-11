@@ -1,0 +1,2 @@
+[Thu Sep 03 10:00:01.050000 2026] [proxy:error] [pid 7] [client 198.51.100.10:51234] requestId=abc-req-001 backend connection failed
+[Thu Sep 03 10:00:40.000000 2026] [core:info] [pid 8] leftover without ids

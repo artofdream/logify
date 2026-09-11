@@ -127,7 +127,7 @@
 ### FR-012 — Correlate related events beyond chronological proximity
 
 - **Priority:** Should
-- **Status:** Proposed
+- **Status:** Partial
 - **Rationale:** Shared request IDs, client addresses, exception causes, or short
   time windows can expose one incident spanning HTTPD and Tomcat.
 - **Acceptance criteria:**
@@ -137,6 +137,12 @@
   4. False-positive-prone heuristics are distinguishable from exact identifiers.
   5. Each correlation identifies its rule and confidence; no correlation is
      preferable to an unsupported relationship.
+- **Notes:** Rules, kind/confidence labels, and non-goals are in
+  [ADR-0008](../knowledge/decisions/ADR-0008-event-correlation.md). Implemented:
+  `shared-request-id` (exact/high) and `client-ip-window` (heuristic/low, 5s,
+  access+Tomcat, non-loopback IPv4). Java `Caused by:` chains stay one observed
+  event and are not a cross-event rule. Status stays Partial until report UI
+  and fixture probes verify AC2–AC5.
 
 ## Report and CLI
 
@@ -320,8 +326,9 @@
      operator-authored issue metadata.
 - **Note:** Owner, due date, and notes are displayed when present (including
   after import). Editors for those fields are FR-021. Observed-record counts are
-  the sum of group `occurrences`. Correlations are labeled as not available
-  (FR-012 remains Proposed).
+  the sum of group `occurrences`. Inferred correlations are listed separately
+  with rule, kind, confidence, and evidence (FR-012 / ADR-0008); they are not
+  operator issue metadata.
 
 ### FR-024 — Merge recurring evidence into an existing issue
 

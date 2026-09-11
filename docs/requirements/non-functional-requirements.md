@@ -71,8 +71,9 @@
      before report generation.
 - **Notes:** Default runs do not redact. `-redact` (repeatable) and
   `-redact-file` apply operator-supplied presets, regexes, or literals to
-  report-embedded `root`, warnings, and each event `message`, `file`, and
-  `instance` after evidence IDs are computed. Source bundles are never modified.
+  report-embedded `root`, warnings, each event `message`, `file`, `instance`,
+  and `clientAddr`, and each correlation `evidence` string after evidence IDs
+  are computed. Source bundles are never modified.
   Redaction is best-effort string replacement; it does not scan for unknown
   secret types, does not cover operator-typed follow-up fields, and does not
   make a report safe to publish. User-facing warnings are the README section,

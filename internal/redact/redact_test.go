@@ -161,6 +161,43 @@ func TestApplyResultRedactsVisibleFieldsOnly(t *testing.T) {
 	}
 }
 
+func TestApplyResultRedactsCorrelationEvidence(t *testing.T) {
+	t.Parallel()
+	// FR-012 / NFR-006: correlation evidence is log-derived display text.
+	rule, err := ParseRule("literal:10.2.3.4")
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := analyzer.Result{
+		Events: []analyzer.Event{{
+			Message:    "client 10.2.3.4 timeout",
+			ClientAddr: "10.2.3.4",
+			Signature:  "keep",
+		}},
+		Correlations: []analyzer.Correlation{{
+			ID:         "corr-v1-keep",
+			Rule:       analyzer.RuleClientIPWindow,
+			Kind:       analyzer.KindHeuristic,
+			Confidence: analyzer.ConfidenceLow,
+			Evidence:   "heuristic client 10.2.3.4 within 5s",
+			Members:    []int{0},
+		}},
+	}
+	out, n := ApplyResult(in, New([]Rule{rule}))
+	if n != 3 {
+		t.Fatalf("replacements=%d want 3", n)
+	}
+	if out.Events[0].Signature != "keep" || out.Correlations[0].ID != "corr-v1-keep" || out.Correlations[0].Rule != analyzer.RuleClientIPWindow {
+		t.Fatalf("identity fields changed: %#v %#v", out.Events[0], out.Correlations[0])
+	}
+	if out.Events[0].ClientAddr != Replacement || !strings.Contains(out.Correlations[0].Evidence, Replacement) {
+		t.Fatalf("event=%#v corr=%#v", out.Events[0], out.Correlations[0])
+	}
+	if in.Correlations[0].Evidence != "heuristic client 10.2.3.4 within 5s" {
+		t.Fatal("ApplyResult mutated the input correlation")
+	}
+}
+
 func TestApplyResultNoEngineLeavesInput(t *testing.T) {
 	t.Parallel()
 	in := analyzer.Result{Events: []analyzer.Event{{Message: "plain"}}}

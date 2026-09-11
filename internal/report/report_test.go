@@ -49,6 +49,12 @@ func TestWriteSelfContained(t *testing.T) {
 	if !strings.Contains(s, "Link to existing issue") || !strings.Contains(s, "Recurring evidence review") {
 		t.Fatal("report is missing FR-024 merge/review chrome")
 	}
+	if !strings.Contains(s, "Correlation groups") || !strings.Contains(s, "Exact identifier") {
+		t.Fatal("report is missing FR-012 correlation chrome")
+	}
+	if !strings.Contains(s, "documented groups with a named rule") {
+		t.Fatal("legend still claims correlations are unavailable")
+	}
 }
 
 func TestWriteEmptySlicesAreJSONArrays(t *testing.T) {
@@ -57,7 +63,7 @@ func TestWriteEmptySlicesAreJSONArrays(t *testing.T) {
 	if err := Write(p, analyzer.Result{}); err != nil {
 		t.Fatal(err)
 	}
-	assertEmbeddedArrays(t, p, 0, 0)
+	assertEmbeddedArrays(t, p, 0, 0, 0)
 }
 
 func TestWriteFixtureReportArraysAndEvidence(t *testing.T) {
@@ -72,7 +78,7 @@ func TestWriteFixtureReportArraysAndEvidence(t *testing.T) {
 	if err := Write(p, r); err != nil {
 		t.Fatal(err)
 	}
-	raw := assertEmbeddedArrays(t, p, 6, 0)
+	raw := assertEmbeddedArrays(t, p, 6, 0, 0)
 	var payload struct {
 		Events []struct {
 			EvidenceID  string `json:"evidenceId"`
@@ -273,7 +279,7 @@ func TestWriteStructuredWarningsAndCounts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	raw := assertEmbeddedArrays(t, p, 1, 1)
+	raw := assertEmbeddedArrays(t, p, 1, 1, 0)
 	var payload struct {
 		FilesScanned   int                `json:"filesScanned"`
 		FilesProcessed int                `json:"filesProcessed"`
@@ -345,7 +351,104 @@ func requireNode(t *testing.T) string {
 	return node
 }
 
-func assertEmbeddedArrays(t *testing.T, path string, wantEvents, wantWarnings int) []byte {
+func TestWriteCorrelateGroupsExactAndHeuristic(t *testing.T) {
+	// FR-012 AC2–AC5: groups are embedded with rule/kind/confidence/evidence;
+	// events remain individually listed.
+	r, err := analyzer.Analyze(filepath.Join("..", "..", "testdata", "correlate"), analyzer.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := filepath.Join(t.TempDir(), "corr.html")
+	if err := Write(p, r); err != nil {
+		t.Fatal(err)
+	}
+	raw := assertEmbeddedArrays(t, p, 14, 0, 2)
+	var payload struct {
+		Events []struct {
+			EvidenceID string `json:"evidenceId"`
+			Message    string `json:"message"`
+		} `json:"events"`
+		Correlations []struct {
+			ID         string   `json:"id"`
+			Rule       string   `json:"rule"`
+			Kind       string   `json:"kind"`
+			Confidence string   `json:"confidence"`
+			Evidence   string   `json:"evidence"`
+			Members    []string `json:"members"`
+		} `json:"correlations"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.Correlations == nil {
+		t.Fatal("correlations unmarshaled nil")
+	}
+	var exact, heuristic int
+	ids := map[string]bool{}
+	for _, ev := range payload.Events {
+		ids[ev.EvidenceID] = true
+	}
+	for _, c := range payload.Correlations {
+		if !strings.HasPrefix(c.ID, "corr-v1-") || c.Evidence == "" || len(c.Members) < 2 {
+			t.Fatalf("incomplete group %+v", c)
+		}
+		for _, m := range c.Members {
+			if !ids[m] {
+				t.Fatalf("member %q is not an event evidence id", m)
+			}
+		}
+		switch {
+		case c.Rule == analyzer.RuleSharedRequestID && c.Kind == "exact" && c.Confidence == "high":
+			exact++
+		case c.Rule == analyzer.RuleClientIPWindow && c.Kind == "heuristic" && c.Confidence == "low":
+			heuristic++
+		default:
+			t.Fatalf("unexpected group %+v", c)
+		}
+	}
+	if exact != 1 || heuristic != 1 {
+		t.Fatalf("exact=%d heuristic=%d", exact, heuristic)
+	}
+	html := string(mustRead(t, p))
+	if !strings.Contains(html, "Heuristic (confidence: low)") || !strings.Contains(html, "Exact identifier") {
+		t.Fatal("report JS is missing distinguishable kind labels")
+	}
+}
+
+func TestWriteRedactsCorrelationEvidence(t *testing.T) {
+	rule, err := redact.ParseRule("literal:abc-req-001")
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := analyzer.Event{Message: "requestId=abc-req-001", File: "a.out", Instance: "t", Signature: "aa", Line: 1}
+	p := filepath.Join(t.TempDir(), "corr-redact.html")
+	err = Write(p, analyzer.Result{
+		Events: []analyzer.Event{src},
+		Correlations: []analyzer.Correlation{{
+			ID:         "corr-v1-demo",
+			Rule:       analyzer.RuleSharedRequestID,
+			Kind:       analyzer.KindExact,
+			Confidence: analyzer.ConfidenceHigh,
+			Evidence:   "exact identifier request-id=abc-req-001",
+			Members:    []int{0},
+		}},
+	}, Options{Redact: redact.New([]redact.Rule{rule})})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := embeddedJSON(mustRead(t, p))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(raw, []byte("abc-req-001")) {
+		t.Fatal("unredacted correlation identifier leaked into embedded JSON")
+	}
+	if !bytes.Contains(raw, []byte("corr-v1-demo")) || !bytes.Contains(raw, []byte(redact.Replacement)) {
+		t.Fatal("expected redacted evidence and stable correlation id")
+	}
+}
+
+func assertEmbeddedArrays(t *testing.T, path string, wantEvents, wantWarnings, wantCorrelations int) []byte {
 	t.Helper()
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -359,24 +462,26 @@ func assertEmbeddedArrays(t *testing.T, path string, wantEvents, wantWarnings in
 	if err := json.Unmarshal(raw, &fields); err != nil {
 		t.Fatalf("embedded JSON: %v", err)
 	}
-	for _, key := range []string{"events", "warnings"} {
+	for _, key := range []string{"events", "warnings", "correlations"} {
 		v := fields[key]
 		if bytes.Equal(v, []byte("null")) || !bytes.HasPrefix(bytes.TrimSpace(v), []byte("[")) {
 			t.Fatalf("%s marshaled as %s, want a JSON array", key, v)
 		}
 	}
 	var payload struct {
-		Events   []json.RawMessage  `json:"events"`
-		Warnings []analyzer.Warning `json:"warnings"`
+		Events       []json.RawMessage  `json:"events"`
+		Warnings     []analyzer.Warning `json:"warnings"`
+		Correlations []json.RawMessage  `json:"correlations"`
 	}
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		t.Fatal(err)
 	}
-	if payload.Events == nil || payload.Warnings == nil {
-		t.Fatalf("unmarshaled nil slice events=%v warnings=%v", payload.Events, payload.Warnings)
+	if payload.Events == nil || payload.Warnings == nil || payload.Correlations == nil {
+		t.Fatalf("unmarshaled nil slice events=%v warnings=%v correlations=%v", payload.Events, payload.Warnings, payload.Correlations)
 	}
-	if len(payload.Events) != wantEvents || len(payload.Warnings) != wantWarnings {
-		t.Fatalf("events=%d want %d; warnings=%d want %d", len(payload.Events), wantEvents, len(payload.Warnings), wantWarnings)
+	if len(payload.Events) != wantEvents || len(payload.Warnings) != wantWarnings || len(payload.Correlations) != wantCorrelations {
+		t.Fatalf("events=%d want %d; warnings=%d want %d; correlations=%d want %d",
+			len(payload.Events), wantEvents, len(payload.Warnings), wantWarnings, len(payload.Correlations), wantCorrelations)
 	}
 	return raw
 }

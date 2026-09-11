@@ -172,9 +172,11 @@ func (e *Engine) Apply(s string) (string, int) {
 }
 
 // ApplyResult copies r and redacts operator-visible log-derived fields:
-// Root, Warnings, and each event Message, File, and Instance.
-// Signatures, evidence identity inputs, timestamps, severity, and status
-// codes are left unchanged so the caller can compute identities first.
+// Root, Warnings, each event Message, File, Instance, and ClientAddr, and
+// each correlation Evidence string.
+// Signatures, evidence identity inputs, timestamps, severity, status
+// codes, correlation IDs, and rule/kind/confidence labels are left unchanged
+// so the caller can compute identities first.
 func ApplyResult(r analyzer.Result, e *Engine) (analyzer.Result, int) {
 	if e == nil || e.RuleCount() == 0 {
 		return r, 0
@@ -198,8 +200,17 @@ func ApplyResult(r analyzer.Result, e *Engine) (analyzer.Result, int) {
 			events[i].Message, n = replaceCount(e, events[i].Message, n)
 			events[i].File, n = replaceCount(e, events[i].File, n)
 			events[i].Instance, n = replaceCount(e, events[i].Instance, n)
+			events[i].ClientAddr, n = replaceCount(e, events[i].ClientAddr, n)
 		}
 		out.Events = events
+	}
+	if r.Correlations != nil {
+		corrs := make([]analyzer.Correlation, len(r.Correlations))
+		copy(corrs, r.Correlations)
+		for i := range corrs {
+			corrs[i].Evidence, n = replaceCount(e, corrs[i].Evidence, n)
+		}
+		out.Correlations = corrs
 	}
 	return out, n
 }

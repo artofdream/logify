@@ -32,6 +32,7 @@ type payload struct {
 	FilesFailed    int                `json:"filesFailed"`
 	Events         []event            `json:"events"`
 	Warnings       []analyzer.Warning `json:"warnings"`
+	Correlations   []correlation      `json:"correlations"`
 	Redaction      redactionInfo      `json:"redaction"`
 }
 
@@ -62,6 +63,15 @@ type event struct {
 	FirstSeen    *time.Time        `json:"firstSeen,omitempty"`
 	LastSeen     *time.Time        `json:"lastSeen,omitempty"`
 	StatusCode   int               `json:"statusCode,omitempty"`
+}
+
+type correlation struct {
+	ID         string   `json:"id"`
+	Rule       string   `json:"rule"`
+	Kind       string   `json:"kind"`
+	Confidence string   `json:"confidence"`
+	Evidence   string   `json:"evidence"`
+	Members    []string `json:"members"`
 }
 
 type pageView struct {
@@ -103,6 +113,10 @@ func buildPayload(r analyzer.Result, opt Options) payload {
 	for i, src := range events {
 		ids[i] = EvidenceID(src)
 	}
+	srcCorrs := r.Correlations
+	if srcCorrs == nil {
+		srcCorrs = []analyzer.Correlation{}
+	}
 	redacted, replacements := redact.ApplyResult(analyzer.Result{
 		Root:           r.Root,
 		GeneratedAt:    r.GeneratedAt,
@@ -112,11 +126,16 @@ func buildPayload(r analyzer.Result, opt Options) payload {
 		FilesFailed:    r.FilesFailed,
 		Events:         events,
 		Warnings:       r.Warnings,
+		Correlations:   srcCorrs,
 	}, opt.Redact)
 	events = redacted.Events
 	warnings := redacted.Warnings
 	if warnings == nil {
 		warnings = []analyzer.Warning{}
+	}
+	srcCorrs = redacted.Correlations
+	if srcCorrs == nil {
+		srcCorrs = []analyzer.Correlation{}
 	}
 	info := redactionInfo{
 		Enabled:      opt.Redact != nil && opt.Redact.RuleCount() > 0,
@@ -147,6 +166,23 @@ func buildPayload(r analyzer.Result, opt Options) payload {
 		}
 		out = append(out, item)
 	}
+	corrs := make([]correlation, 0, len(srcCorrs))
+	for _, c := range srcCorrs {
+		members := make([]string, 0, len(c.Members))
+		for _, idx := range c.Members {
+			if idx >= 0 && idx < len(ids) {
+				members = append(members, ids[idx])
+			}
+		}
+		corrs = append(corrs, correlation{
+			ID:         c.ID,
+			Rule:       c.Rule,
+			Kind:       string(c.Kind),
+			Confidence: string(c.Confidence),
+			Evidence:   c.Evidence,
+			Members:    members,
+		})
+	}
 	return payload{
 		Root:           redacted.Root,
 		GeneratedAt:    r.GeneratedAt,
@@ -156,6 +192,7 @@ func buildPayload(r analyzer.Result, opt Options) payload {
 		FilesFailed:    r.FilesFailed,
 		Events:         out,
 		Warnings:       warnings,
+		Correlations:   corrs,
 		Redaction:      info,
 	}
 }
