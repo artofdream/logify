@@ -410,8 +410,11 @@ func TestWriteCorrelateGroupsExactAndHeuristic(t *testing.T) {
 		t.Fatalf("exact=%d heuristic=%d", exact, heuristic)
 	}
 	html := string(mustRead(t, p))
-	if !strings.Contains(html, "Heuristic (confidence: low)") || !strings.Contains(html, "Exact identifier") {
+	if !strings.Contains(html, "Exact identifier (confidence:") || !strings.Contains(html, "Heuristic (confidence:") {
 		t.Fatal("report JS is missing distinguishable kind labels")
+	}
+	if !strings.Contains(html, "shared-request-id") || !strings.Contains(html, "client-ip-window") {
+		t.Fatal("report is missing documented rule ids")
 	}
 }
 

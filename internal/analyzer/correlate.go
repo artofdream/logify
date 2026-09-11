@@ -33,7 +33,7 @@ func Correlate(events []Event) []Correlation {
 	if len(events) == 0 {
 		return []Correlation{}
 	}
-	var groups []Correlation
+	groups := make([]Correlation, 0)
 	groups = append(groups, exactRequestIDGroups(events)...)
 	groups = append(groups, heuristicClientIPGroups(events)...)
 	sort.SliceStable(groups, func(i, j int) bool {

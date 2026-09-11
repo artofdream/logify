@@ -1,10 +1,10 @@
 ---
 id: WI-20260911-fr012-event-correlation
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-11T19:25:43Z
-updated: 2026-09-11T19:25:43Z
+updated: 2026-09-11T19:40:00Z
 lease_expires: 2026-09-12T03:25:43Z
 scope:
   - internal/analyzer/model.go
@@ -67,11 +67,24 @@ read-only.
 
 ## Validation
 
-Pending `gofmt`, `go test ./...`, `go vet`, build, fixture smoke.
+- `gofmt -l cmd internal` — clean
+- `go test ./...` — pass (after empty-slice and JS label-string fixes)
+- `go vet ./...` — pass
+- `go build -o logify.exe ./cmd/logify` — pass
+- `git diff --check` — pass
+- `./logify.exe -output sample-report.html testdata/case` — 6 events, 3 files, 0 warnings, 0 groups
+- `./logify.exe -output correlate-report.html testdata/correlate` — 14 events, 3 files, 0 warnings, 2 groups (exact `shared-request-id` ×4, heuristic `client-ip-window` ×2)
+- Browser probe of both HTML files: groups/evidence visible, exact vs heuristic named in text, Show event / Show correlation navigation works, `testdata/case` empty-state shown, issue queue intact
+- PR: https://github.com/artofdream/logify/pull/13 (vs `main`). Do not merge.
 
 ## Activity log
 
 - `2026-09-11T19:25:43Z` — cursor-agent — claimed FR-012 on branch
   `cursor/fr012-event-correlation-1995` from `main` (`4c8da68`).
+- `2026-09-11T19:40:00Z` — cursor-agent — validation passed. FR-012 marked
+  Implemented with documented limits. Draft PR #13.
 
 ## Handoff or completion
+
+In review on PR #13. Do not mark done until the PR is reviewed. Do not merge
+from this task.
