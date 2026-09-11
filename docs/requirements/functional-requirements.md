@@ -140,8 +140,11 @@
 - **Notes:** Rules, kind/confidence labels, and non-goals are in
   [ADR-0008](../knowledge/decisions/ADR-0008-event-correlation.md). Verified:
   `shared-request-id` (exact/high) and `client-ip-window` (heuristic/low, 5s,
-  access+Tomcat, non-loopback IPv4). Java `Caused by:` chains stay one observed
-  event and are not a cross-event rule. `testdata/case` produces zero groups.
+  one access+Tomcat pair, non-loopback IPv4). Heuristic pairs are not unioned
+  across time or distinct IPs. Identifiers and client addresses from FR-010
+  collapsed occurrences still participate; the timeline stays one row per
+  (instance, signature). Java `Caused by:` chains stay one observed event and
+  are not a cross-event rule. `testdata/case` produces zero groups.
   `testdata/correlate` produces one exact group (4 members) and one heuristic
   group (2 members); unlabeled, loopback, out-of-window, and singleton IDs
   stay ungrouped. Report embeds groups as a JSON array and names rule, kind,

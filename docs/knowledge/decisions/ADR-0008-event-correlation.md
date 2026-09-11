@@ -32,7 +32,8 @@ retained it.
 
 1. Correlation runs after discovery, parsing, time filtering, instance-local
    deduplication, and chronological sort. It never merges, hides, or reorders
-   timeline events.
+   timeline events. Labeled identifiers and client addresses from occurrences
+   collapsed by FR-010 still participate; groups point at the surviving rows.
 2. Only two rules are implemented. Both are deterministic: same input events
    produce the same groups, rule names, confidence labels, evidence strings,
    member order, and correlation IDs.
@@ -40,7 +41,7 @@ retained it.
    | Rule ID | Kind | Confidence | Members | Evidence required |
    |---|---|---|---|---|
    | `shared-request-id` | `exact` | `high` | 2+ events | Same labeled identifier value |
-   | `client-ip-window` | `heuristic` | `low` | 2+ events | Same non-loopback client address on at least one `apache-access` event and one `tomcat-java` event whose timestamps differ by at most 5s |
+   | `client-ip-window` | `heuristic` | `low` | one access + one Tomcat | Same non-loopback client address on an `apache-access` event and a `tomcat-java` event whose timestamps differ by at most 5s. Each valid pair is its own group; pairs are not unioned across time or across distinct IPs. |
 
 3. **Exact identifiers** are taken only from labeled forms in the event
    message: `request-id` / `requestId` / `reqId` / `x-request-id`,
@@ -57,9 +58,11 @@ retained it.
    `[client …]` is retained for provenance and may appear in exact groups when
    a labeled ID is also present; it does not satisfy the HTTPD side of this
    heuristic by itself. IPv6 literals in free-text Tomcat lines are not mined.
-5. An event may belong to more than one group when different rules fire. A
-   single matching event never creates a group. Two access events that share
-   only a client address, with no in-window Tomcat counterpart, stay ungrouped.
+5. An event may belong to more than one group when different rules fire or
+   when distinct heuristic pairs share a member. A single matching event never
+   creates a group. Two access events that share only a client address, with
+   no in-window Tomcat counterpart, stay ungrouped. Transitive chains (A–B
+   within 5s, B–C within 5s, A–C outside 5s) stay separate pairs.
 6. Each group has a stable `corr-v1-…` id derived from rule, normalized key,
    and member identity (`signature`, `instance`, slash-normalized file, line) —
    the same provenance tuple as evidence IDs, not display order.
@@ -102,15 +105,19 @@ Operators can see a high-confidence request-id incident that spans HTTPD and
 Tomcat, and a separately labeled low-confidence IP+window hint. Quiet bundles
 produce an empty list rather than speculative edges. A later parser that
 surfaces more labeled IDs will form more exact groups without changing rule
-IDs. The 5s window and IPv4-only Tomcat harvest are documented limits; widening
-them needs a new ADR.
+IDs. Collapsed-duplicate identifiers still correlate after FR-010. Heuristic
+groups stay pairwise so a 5s chain cannot span times or clients outside the
+bound. The 5s window and IPv4-only Tomcat harvest are documented limits;
+widening them needs a new ADR.
 
 ## Verification
 
 Analyzer tests on `testdata/correlate` and `testdata/case` must prove: exact
 groups form for a shared labeled id; the IP-window group is `heuristic`/`low`
 and distinct; unlabeled, loopback, out-of-window, and singleton identifiers
-stay ungrouped; `testdata/case` has zero groups. Report tests must embed a
-JSON array of groups (never `null`), render rule/kind/confidence/evidence, and
-keep events individually listed. Redaction must rewrite evidence text after
-identities are computed.
+stay ungrouped; `testdata/case` has zero groups. Regression tests must prove
+later request IDs and client addresses on collapsed rows still correlate, and
+that `client-ip-window` does not transitively union across a >5s chain or
+across distinct IPs. Report tests must embed a JSON array of groups (never
+`null`), render rule/kind/confidence/evidence, and keep events individually
+listed. Redaction must rewrite evidence text after identities are computed.

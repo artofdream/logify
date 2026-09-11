@@ -331,19 +331,26 @@ func signature(e Event) string {
 	sum := sha256.Sum256([]byte(e.SourceType + "|" + string(e.Severity) + "|" + norm))
 	return hex.EncodeToString(sum[:8])
 }
+func hintOf(e Event) occHint {
+	return occHint{ts: e.Timestamp, has: e.HasTimestamp, msg: e.Message, addr: e.ClientAddr}
+}
+
 func dedup(in []Event) []Event {
 	type key struct{ inst, sig string }
 	idx := map[key]int{}
 	out := make([]Event, 0, len(in))
 	for _, e := range in {
 		k := key{e.Instance, e.Signature}
+		h := hintOf(e)
 		if i, ok := idx[k]; ok {
 			out[i].Occurrences++
 			if e.HasTimestamp && e.Timestamp.After(out[i].LastSeen) {
 				out[i].LastSeen = e.Timestamp
 			}
+			out[i].occHints = append(out[i].occHints, h)
 			continue
 		}
+		e.occHints = []occHint{h}
 		idx[k] = len(out)
 		out = append(out, e)
 	}
