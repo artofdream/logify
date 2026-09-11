@@ -58,15 +58,24 @@ func firstMember(c Correlation) int {
 	return c.Members[0]
 }
 
+func eventHints(e Event) []occHint {
+	if len(e.occHints) > 0 {
+		return e.occHints
+	}
+	return []occHint{{ts: e.Timestamp, has: e.HasTimestamp, msg: e.Message, addr: e.ClientAddr}}
+}
+
 func exactRequestIDGroups(events []Event) []Correlation {
 	buckets := map[string][]int{}
 	display := map[string]string{}
 	for i, e := range events {
-		for _, id := range extractLabeledIDs(e.Message) {
-			key := id.canon + "\x00" + id.value
-			buckets[key] = append(buckets[key], i)
-			if display[key] == "" {
-				display[key] = id.canon + "=" + id.display
+		for _, h := range eventHints(e) {
+			for _, id := range extractLabeledIDs(h.msg) {
+				key := id.canon + "\x00" + id.value
+				buckets[key] = append(buckets[key], i)
+				if display[key] == "" {
+					display[key] = id.canon + "=" + id.display
+				}
 			}
 		}
 	}
@@ -94,116 +103,87 @@ func exactRequestIDGroups(events []Event) []Correlation {
 }
 
 func heuristicClientIPGroups(events []Event) []Correlation {
-	accessByIP := map[string][]int{}
-	tomcatByIP := map[string][]int{}
+	// One group per in-window access/Tomcat pair and IP. Do not union pairs
+	// across time or across distinct addresses (ADR-0008).
+	type pair struct {
+		a, t int
+		ip   string
+	}
+	seen := map[pair]bool{}
+	var pairs []pair
 	for i, e := range events {
-		if !e.HasTimestamp {
+		if e.SourceType != "apache-access" {
 			continue
 		}
-		if e.SourceType == "apache-access" {
-			if ip := usableHeuristicAddr(e.ClientAddr); ip != "" {
-				accessByIP[ip] = append(accessByIP[ip], i)
+		for _, ah := range eventHints(e) {
+			if !ah.has {
+				continue
 			}
-			continue
-		}
-		if e.SourceType == "tomcat-java" {
-			for _, ip := range messageIPs(e.Message) {
-				tomcatByIP[ip] = append(tomcatByIP[ip], i)
+			ip := usableHeuristicAddr(ah.addr)
+			if ip == "" {
+				continue
 			}
-		}
-	}
-	ips := make([]string, 0, len(accessByIP))
-	for ip := range accessByIP {
-		if len(tomcatByIP[ip]) == 0 {
-			continue
-		}
-		ips = append(ips, ip)
-	}
-	sort.Strings(ips)
-	u := newUF(len(events))
-	linked := make([]bool, len(events))
-	for _, ip := range ips {
-		for _, a := range accessByIP[ip] {
-			for _, t := range tomcatByIP[ip] {
-				if withinWindow(events[a], events[t], clientIPWindow) {
-					u.union(a, t)
-					linked[a] = true
-					linked[t] = true
+			for j, te := range events {
+				if te.SourceType != "tomcat-java" {
+					continue
+				}
+				for _, th := range eventHints(te) {
+					if !th.has || !withinHintWindow(ah, th) || !hintHasIP(th, ip) {
+						continue
+					}
+					p := pair{a: i, t: j, ip: ip}
+					if seen[p] {
+						continue
+					}
+					seen[p] = true
+					pairs = append(pairs, p)
 				}
 			}
 		}
 	}
-	components := map[int][]int{}
-	for i := range events {
-		if !linked[i] {
-			continue
+	sort.SliceStable(pairs, func(i, j int) bool {
+		if pairs[i].ip != pairs[j].ip {
+			return pairs[i].ip < pairs[j].ip
 		}
-		r := u.find(i)
-		components[r] = append(components[r], i)
-	}
-	roots := make([]int, 0, len(components))
-	for r := range components {
-		roots = append(roots, r)
-	}
-	sort.Ints(roots)
+		if pairs[i].a != pairs[j].a {
+			return pairs[i].a < pairs[j].a
+		}
+		return pairs[i].t < pairs[j].t
+	})
 	var out []Correlation
-	for _, r := range roots {
-		members := append([]int(nil), components[r]...)
+	for _, p := range pairs {
+		members := []int{p.a, p.t}
 		sort.Ints(members)
-		ip := sharedHeuristicIP(members, events)
-		if ip == "" || !componentHasBothSides(members, events) {
-			continue
-		}
-		if len(members) < 2 {
-			continue
-		}
 		out = append(out, Correlation{
-			ID:         correlationID(RuleClientIPWindow, ip, members, events),
+			ID:         correlationID(RuleClientIPWindow, p.ip, members, events),
 			Rule:       RuleClientIPWindow,
 			Kind:       KindHeuristic,
 			Confidence: ConfidenceLow,
-			Evidence:   "heuristic client " + ip + " within 5s across apache-access and tomcat-java",
+			Evidence:   "heuristic client " + p.ip + " within 5s across apache-access and tomcat-java",
 			Members:    members,
 		})
 	}
 	return out
 }
 
-func sharedHeuristicIP(members []int, events []Event) string {
-	seen := map[string]int{}
-	for _, i := range members {
-		e := events[i]
-		if e.SourceType == "apache-access" {
-			if ip := usableHeuristicAddr(e.ClientAddr); ip != "" {
-				seen[ip]++
-			}
-		}
-		if e.SourceType == "tomcat-java" {
-			for _, ip := range messageIPs(e.Message) {
-				seen[ip]++
-			}
+func hintHasIP(h occHint, ip string) bool {
+	for _, got := range messageIPs(h.msg) {
+		if got == ip {
+			return true
 		}
 	}
-	var best string
-	for ip := range seen {
-		if best == "" || ip < best {
-			best = ip
-		}
-	}
-	return best
+	return false
 }
 
-func componentHasBothSides(members []int, events []Event) bool {
-	var access, tomcat bool
-	for _, i := range members {
-		switch events[i].SourceType {
-		case "apache-access":
-			access = true
-		case "tomcat-java":
-			tomcat = true
-		}
+func withinHintWindow(a, b occHint) bool {
+	if !a.has || !b.has {
+		return false
 	}
-	return access && tomcat
+	d := a.ts.Sub(b.ts)
+	if d < 0 {
+		d = -d
+	}
+	return d <= clientIPWindow
 }
 
 type labeledRef struct {
@@ -318,29 +298,4 @@ func correlationID(rule, key string, members []int, events []Event) string {
 		_, _ = fmt.Fprintf(h, "\x00%s\x00%s\x00%s\x00%d", e.Signature, e.Instance, e.File, e.Line)
 	}
 	return "corr-v1-" + hex.EncodeToString(h.Sum(nil))[:16]
-}
-
-type uf struct{ p []int }
-
-func newUF(n int) *uf {
-	p := make([]int, n)
-	for i := range p {
-		p[i] = i
-	}
-	return &uf{p: p}
-}
-
-func (u *uf) find(x int) int {
-	for u.p[x] != x {
-		u.p[x] = u.p[u.p[x]]
-		x = u.p[x]
-	}
-	return x
-}
-
-func (u *uf) union(a, b int) {
-	ra, rb := u.find(a), u.find(b)
-	if ra != rb {
-		u.p[rb] = ra
-	}
 }

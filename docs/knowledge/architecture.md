@@ -27,7 +27,9 @@ evidence groups (`linkedEvidence`); import surfaces signature matches and new
 occurrence counts for review and does not change workflow state (FR-024 /
 ADR-0007). Correlation groups are inferences (`exact` vs `heuristic`) with a
 named rule, confidence, and evidence string; they do not merge timeline rows
-or mint issues.
+or mint issues. Correlation still reads labeled IDs and client addresses from
+occurrences collapsed by FR-010. The IP-window heuristic emits pairwise
+access/Tomcat groups only.
 
 Recoverable scan problems are structured warnings (`walk-error`, `open-error`,
 `scan-overflow`, `scan-error`) with file, category, optional line/range, and

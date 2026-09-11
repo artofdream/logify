@@ -1,10 +1,10 @@
 ---
 id: INC-20260911-macos-go122-lc-uuid
 type: incident
-status: open
+status: mitigated
 owner: cursor-agent
 created: 2026-09-11T19:39:00Z
-updated: 2026-09-11T19:39:00Z
+updated: 2026-09-11T20:20:00Z
 requirements: [NFR-001, NFR-002]
 work_item: WI-20260911-fr012-event-correlation
 ---
@@ -49,7 +49,10 @@ once that toolchain is the documented baseline.
 
 ## Verification and remaining risk
 
-Re-run of PR #13 must show the macOS `go test` and fixture smoke steps
-executing (not dyld abort). Cross-compiled Darwin release artifacts from
-Ubuntu are not executed on macOS in this workflow; they may still lack
-`LC_UUID` until a tag build is verified on a Mac (open).
+PR #13 run
+[34640118520](https://github.com/artofdream/logify/actions/runs/34640118520)
+showed `test (macos-latest)`, `test (ubuntu-latest)`, `test (windows-latest)`,
+and `validate` successful after `-ldflags=-B=gobuildid`. Cross-compiled
+Darwin release artifacts from Ubuntu are not executed on macOS in this
+workflow; they may still lack `LC_UUID` until a tag build is verified on a
+Mac (open).

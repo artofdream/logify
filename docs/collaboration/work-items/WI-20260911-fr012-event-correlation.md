@@ -1,11 +1,11 @@
 ---
 id: WI-20260911-fr012-event-correlation
 type: work-item
-status: review
+status: active
 owner: cursor-agent
 created: 2026-09-11T19:25:43Z
-updated: 2026-09-11T19:42:00Z
-lease_expires: 2026-09-12T03:25:43Z
+updated: 2026-09-11T20:20:00Z
+lease_expires: 2026-09-12T04:20:00Z
 scope:
   - internal/analyzer/model.go
   - internal/analyzer/analyzer.go
@@ -85,8 +85,12 @@ read-only.
   `cursor/fr012-event-correlation-1995` from `main` (`4c8da68`).
 - `2026-09-11T19:40:00Z` — cursor-agent — validation passed. FR-012 marked
   Implemented with documented limits. Draft PR #13.
+- `2026-09-11T20:20:00Z` — cursor-agent — sponsor follow-up on the same
+  branch: keep collapsed-occurrence identifiers for correlation (FR-010
+  still one row) and emit pairwise `client-ip-window` groups only.
+  macOS LC_UUID CI fix already on this branch (`940f6f1`). Do not merge.
 
 ## Handoff or completion
 
-In review on PR #13. Do not mark done until the PR is reviewed. Do not merge
-from this task.
+Active bugfix follow-up on PR #13 / `cursor/fr012-event-correlation-1995`.
+Do not open a duplicate PR. Do not merge.
