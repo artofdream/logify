@@ -1,11 +1,11 @@
 ---
 id: WI-20260911-fr012-event-correlation
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-11T19:25:43Z
-updated: 2026-09-11T20:20:00Z
-lease_expires: 2026-09-12T04:20:00Z
+updated: 2026-09-11T20:27:00Z
+lease_expires: 2026-09-12T04:27:00Z
 scope:
   - internal/analyzer/model.go
   - internal/analyzer/analyzer.go
@@ -69,15 +69,22 @@ read-only.
 
 ## Validation
 
+Observed on `02bd242` (Linux):
+
 - `gofmt -l cmd internal` — clean
-- `go test ./...` — pass (after empty-slice and JS label-string fixes)
+- `go test ./...` — pass (`cmd/logify`, `analyzer`, `redact`, `report`)
 - `go vet ./...` — pass
 - `go build -o logify.exe ./cmd/logify` — pass
 - `git diff --check` — pass
-- `./logify.exe -output sample-report.html testdata/case` — 6 events, 3 files, 0 warnings, 0 groups
-- `./logify.exe -output correlate-report.html testdata/correlate` — 14 events, 3 files, 0 warnings, 2 groups (exact `shared-request-id` ×4, heuristic `client-ip-window` ×2)
-- Browser probe of both HTML files: groups/evidence visible, exact vs heuristic named in text, Show event / Show correlation navigation works, `testdata/case` empty-state shown, issue queue intact
-- PR: https://github.com/artofdream/logify/pull/13 (vs `main`). Do not merge.
+- `./logify.exe -output sample-report.html testdata/case` — 6 events, 3 files, 0 warnings
+- `./logify.exe -output correlate-report.html testdata/correlate` — 14 events, 3 files, 0 warnings, 2 groups (exact ×4, heuristic ×2)
+
+Prior GitHub CI on the merge commit (`940f6f1` / squash `76cae98`), run
+[34640118520](https://github.com/artofdream/logify/actions/runs/34640118520):
+ubuntu, windows, macos, and validate succeeded. PR #13 is already merged;
+this follow-up commit is on the same branch and was not re-run by CI
+(workflow is `pull_request` + `push` to `main` only). Do not merge from
+this task. Do not open a duplicate PR.
 
 ## Activity log
 
@@ -89,8 +96,13 @@ read-only.
   branch: keep collapsed-occurrence identifiers for correlation (FR-010
   still one row) and emit pairwise `client-ip-window` groups only.
   macOS LC_UUID CI fix already on this branch (`940f6f1`). Do not merge.
+- `2026-09-11T20:27:00Z` — cursor-agent — local validation passed on
+  `02bd242`. Pushed to `cursor/fr012-event-correlation-1995`. PR #13
+  description updated. No duplicate PR. Not merged.
 
 ## Handoff or completion
 
-Active bugfix follow-up on PR #13 / `cursor/fr012-event-correlation-1995`.
-Do not open a duplicate PR. Do not merge.
+Bugbot follow-up is on PR #13's branch at `02bd242`. Local tests passed.
+#13 is already merged to `main` (`76cae98`); these analyzer fixes are
+not on `main` until a later PR. Do not open a duplicate from this task.
+Do not merge.
