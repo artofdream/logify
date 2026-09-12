@@ -62,6 +62,12 @@ jobs:
       - name: go test
         run: go test ${{ runner.os == 'macOS' && '-ldflags=-B=gobuildid' || '' }} ./... -v
 
+      # NFR-009 AC4: small repeatable bench only. The 1 GiB fixture is
+      # generated on demand and is not run in CI (manual/nightly).
+      - name: NFR-009 scale smoke bench
+        if: matrix.lint
+        run: go test ./internal/analyzer -bench BenchmarkNFR009ScaleSmoke -benchtime=1x -count=1
+
       - name: fixture bundle smoke test
         if: runner.os != 'Windows'
         run: |

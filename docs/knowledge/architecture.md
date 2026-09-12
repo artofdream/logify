@@ -4,7 +4,7 @@ type: architecture
 status: active
 owner: human
 updated: 2026-09-12
-sources: [../../README.md, ../../cmd/logify/main.go, ../../internal/analyzer, ../../internal/redact, ../../internal/report]
+sources: [../../README.md, ../../cmd/logify/main.go, ../../internal/analyzer, ../../internal/redact, ../../internal/report, ../../testdata/scale/README.md]
 ---
 
 # Current architecture
@@ -16,7 +16,8 @@ Logify is a dependency-free Go CLI. `cmd/logify` accepts a directory and options
 major SemVer version, or a documented deprecation warning precedes removal.
 `internal/analyzer` discovers and normalizes logs (including common rotated
 and `.gz` names streamed via `compress/gzip`, ADR-0009 / FR-016), builds signatures, groups
-repeats, orders the timeline, and applies documented correlation rules
+repeats **online while scanning** (ADR-0010 / NFR-009; extra correlation hints
+are capped), orders the timeline, and applies documented correlation rules
 (ADR-0008 / FR-012); `internal/redact` compiles optional
 operator-supplied replacement rules; `internal/report` emits one offline HTML file
 from `page.html`, `page.css`, `page.js`, and `followup.js` (embedded at build
@@ -52,6 +53,12 @@ Issue-workflow usability (NFR-021 / ADR-0006): flag and state are named in
 text; common actions restore focus after a card rebuild and confirm in a live
 status region. `nfr021_filter_probe.js` times `store.filter` at 10,000 issues;
 the page still renders every matching card (see Q-002).
+
+NFR-009 scale: `GenerateScaleBundle` streams a multi-instance storm fixture to
+`/tmp` (or `testdata/scale/generated/`, gitignored). `TestNFR009ScaleSmoke` and
+`BenchmarkNFR009ScaleSmoke` run in ordinary tests/CI; the 1 GiB child-process
+run is `make bench-nfr009`. See [ADR-0010](decisions/ADR-0010-scale-benchmark.md)
+and [testdata/scale/README.md](../../testdata/scale/README.md).
 
 This note describes observed structure. Requirements remain authoritative for
 intended behavior, and tests/compiler output remain evidence of implementation.

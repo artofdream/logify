@@ -39,8 +39,10 @@ type Event struct {
 	// ClientAddr is the parsed HTTPD remote address when known. It is used by
 	// correlation (FR-012) and is not part of signature or evidence identity.
 	ClientAddr string `json:"clientAddr,omitempty"`
-	// occHints are this row plus occurrences collapsed by FR-010 so
-	// correlation can still see later labeled IDs and client addresses.
+	// occHints are additional collapsed occurrences (FR-010) that still
+	// carry correlation-useful labeled IDs or client addresses. The lead
+	// row's own fields are always visible to correlation. The extra slice
+	// is bounded (NFR-009) and is not serialized into the report payload.
 	occHints []occHint
 }
 

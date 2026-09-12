@@ -61,7 +61,7 @@ Proposed, or Deferred requirement.
 | Layer | Logify implementation | Status | Current probe/evidence | Gap |
 |---|---|---|---|---|
 | Guides | `AGENTS.md`, `CLAUDE.md`, requirements, collaboration protocol, [permissions](collaboration/permissions.md) | Adopted on `main` | Files exist, cross-link, and are committed; `TestNFR028DocsLinksAndLedger` fails on broken relative links | Running agents must reload guidance |
-| Sensors | Go tests, fixtures, `go vet`, build, `git diff --check`, multi-OS CI, Node `--check`, follow-up store tests, NFR-021 source-contract and 10k `store.filter` probe, `internal/harness` docs/link + ledger + work-item probes | Partial | `test` matrix plus `validate` on `main` push/PR; `go test ./internal/harness` on every OS; `TestNFR028DocsLinksAndLedger`, `TestNFR028ImplementedClaimsHaveNamedProbes`, `TestNFR028OpenWorkItemsHaveOwnershipFields` | No analyzer benchmark, WCAG engine / AT run, or full in-browser DOM/page execution |
+| Sensors | Go tests, fixtures, `go vet`, build, `git diff --check`, multi-OS CI, Node `--check`, follow-up store tests, NFR-021 source-contract and 10k `store.filter` probe, `internal/harness` docs/link + ledger + work-item probes, NFR-009 generated-fixture smoke + `BenchmarkNFR009ScaleSmoke` | Partial | `test` matrix plus `validate` on `main` push/PR; `go test ./internal/harness` on every OS; `TestNFR028DocsLinksAndLedger`, `TestNFR028ImplementedClaimsHaveNamedProbes`, `TestNFR028OpenWorkItemsHaveOwnershipFields`; Linux CI `BenchmarkNFR009ScaleSmoke`; `TestNFR009ScaleSmoke` on every OS | Full 1 GiB NFR-009 bench is manual/nightly; no WCAG engine / AT run or full in-browser DOM/page execution |
 | Loop | Interpret → Act → Verify → Remember | Adopted | Collaboration steps and handoff gates are documented | No automation enforces every transition |
 | Memory | Git-reviewable Obsidian-compatible Markdown vault | Adopted on `main` | Vault structure, templates, and relative links validate via the docs/link probe | No dedicated index-freshness job beyond link resolution; uncommitted notes are not shared history |
 | Permissions | Read-only source handling, scoped work items, advisory leases, `.github/CODEOWNERS`, CI `validate` checklist | Partial | [permissions.md](collaboration/permissions.md); CODEOWNERS names `@artofdream`; open-WI field probe; `validate` aggregator is the documented merge check | Leases are advisory; CODEOWNERS is review routing, not a merge lock, unless an operator enables required code-owner reviews (that GitHub setting is Unknown from this tree) |
@@ -78,7 +78,7 @@ Deferred requirement must appear. Values must match `docs/requirements/`.
 
 | ID | Status |
 |---|---|
-| NFR-009 | Proposed |
+| NFR-009 | Partial |
 | NFR-013 | Partial |
 | NFR-021 | Partial |
 | NFR-028 | Partial |
@@ -99,5 +99,6 @@ changes require an ADR. The ledger must link to observed evidence and must not b
 advanced because documentation or code merely exists.
 
 NFR-028 remains **Partial**: Permissions still cannot claim an enforced
-path/merge lock from this repository, and Sensors still lack WCAG, in-browser
-DOM, and an NFR-009 scale bench.
+path/merge lock from this repository, and Sensors still lack WCAG and
+in-browser DOM. NFR-009 now has a generated-fixture smoke bench in `go test`
+/ Linux CI; the 1 GiB run stays manual.
