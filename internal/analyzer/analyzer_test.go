@@ -294,6 +294,26 @@ func TestWarningStringAndSummary(t *testing.T) {
 	}
 }
 
+func TestDedupMixedParseConfidenceCountsOnlyUnparsed(t *testing.T) {
+	// NFR-028: FR-010 can collapse a parsed row with an unrecognized line that
+	// shares instance+signature. Count only the unrecognized occurrence.
+	parsed := Event{Instance: "t", Signature: "sig", Occurrences: 1, ParseConfidence: ConfidenceHigh, Message: "parsed"}
+	unparsed := Event{Instance: "t", Signature: "sig", Occurrences: 1, ParseConfidence: ConfidenceLow, UnparsedOccurrences: 1, Message: "unparsed"}
+	merged := dedup([]Event{parsed, unparsed})
+	if len(merged) != 1 {
+		t.Fatalf("events=%d want 1: %#v", len(merged), merged)
+	}
+	e := merged[0]
+	if e.Occurrences != 2 || e.UnparsedOccurrences != 1 || e.ParseConfidence != ConfidenceLow {
+		t.Fatalf("mixed group occ=%d unparsedOcc=%d conf=%q", e.Occurrences, e.UnparsedOccurrences, e.ParseConfidence)
+	}
+	r := Result{Events: merged}
+	got, _, _ := r.Observability()
+	if got != 1 {
+		t.Fatalf("unparsed=%d want 1", got)
+	}
+}
+
 func TestObservabilityCountsUnparsedAndCorrelations(t *testing.T) {
 	// NFR-028 AC6: unparsed-line accounting and correlation confidence counts.
 	caseResult, err := Analyze(filepath.Join("..", "..", "testdata", "case"), Options{})

@@ -262,6 +262,9 @@ func decorate(e *Event, src, inst, file string, line int) {
 	if e.ParseConfidence == "" {
 		e.ParseConfidence = ConfidenceHigh
 	}
+	if e.ParseConfidence == ConfidenceLow && e.UnparsedOccurrences == 0 {
+		e.UnparsedOccurrences = 1
+	}
 }
 func java(s string) (Event, bool) {
 	m := javaStart.FindStringSubmatch(s)
@@ -400,6 +403,7 @@ func dedup(in []Event) []Event {
 			}
 			if e.ParseConfidence == ConfidenceLow {
 				out[i].ParseConfidence = ConfidenceLow
+				out[i].UnparsedOccurrences++
 			}
 			out[i].occHints = append(out[i].occHints, h)
 			continue

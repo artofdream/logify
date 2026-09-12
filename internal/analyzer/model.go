@@ -33,6 +33,9 @@ type Event struct {
 	// ParseConfidence is high when a format-specific parser matched the
 	// record and low when the line was retained as unrecognized (FR-008).
 	ParseConfidence Confidence `json:"parseConfidence,omitempty"`
+	// UnparsedOccurrences is how many collapsed rows were unrecognized.
+	// It is the unparsed-line count after FR-010 merge; Occurrences may be larger.
+	UnparsedOccurrences int `json:"unparsedOccurrences,omitempty"`
 	// ClientAddr is the parsed HTTPD remote address when known. It is used by
 	// correlation (FR-012) and is not part of signature or evidence identity.
 	ClientAddr string `json:"clientAddr,omitempty"`
@@ -149,14 +152,13 @@ func (r Result) SummaryLine() string {
 // correlation groups by confidence. Empty parseConfidence is not unparsed.
 func (r Result) Observability() (unparsed, highCorr, lowCorr int) {
 	for _, e := range r.Events {
-		if e.ParseConfidence != ConfidenceLow {
+		if e.UnparsedOccurrences > 0 {
+			unparsed += e.UnparsedOccurrences
 			continue
 		}
-		n := e.Occurrences
-		if n < 1 {
-			n = 1
+		if e.ParseConfidence == ConfidenceLow {
+			unparsed++
 		}
-		unparsed += n
 	}
 	for _, c := range r.Correlations {
 		switch c.Confidence {

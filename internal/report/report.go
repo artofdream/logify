@@ -52,21 +52,22 @@ type Options struct {
 }
 
 type event struct {
-	Timestamp       time.Time         `json:"timestamp"`
-	HasTimestamp    bool              `json:"hasTimestamp"`
-	Severity        analyzer.Severity `json:"severity"`
-	SourceType      string            `json:"sourceType"`
-	Instance        string            `json:"instance"`
-	File            string            `json:"file"`
-	Line            int               `json:"line"`
-	Message         string            `json:"message"`
-	Signature       string            `json:"signature"`
-	EvidenceID      string            `json:"evidenceId"`
-	Occurrences     int               `json:"occurrences"`
-	FirstSeen       *time.Time        `json:"firstSeen,omitempty"`
-	LastSeen        *time.Time        `json:"lastSeen,omitempty"`
-	StatusCode      int               `json:"statusCode,omitempty"`
-	ParseConfidence string            `json:"parseConfidence,omitempty"`
+	Timestamp           time.Time         `json:"timestamp"`
+	HasTimestamp        bool              `json:"hasTimestamp"`
+	Severity            analyzer.Severity `json:"severity"`
+	SourceType          string            `json:"sourceType"`
+	Instance            string            `json:"instance"`
+	File                string            `json:"file"`
+	Line                int               `json:"line"`
+	Message             string            `json:"message"`
+	Signature           string            `json:"signature"`
+	EvidenceID          string            `json:"evidenceId"`
+	Occurrences         int               `json:"occurrences"`
+	FirstSeen           *time.Time        `json:"firstSeen,omitempty"`
+	LastSeen            *time.Time        `json:"lastSeen,omitempty"`
+	StatusCode          int               `json:"statusCode,omitempty"`
+	ParseConfidence     string            `json:"parseConfidence,omitempty"`
+	UnparsedOccurrences int               `json:"unparsedOccurrences,omitempty"`
 }
 
 type correlation struct {
@@ -149,19 +150,20 @@ func buildPayload(r analyzer.Result, opt Options) payload {
 	out := make([]event, 0, len(events))
 	for i, src := range events {
 		item := event{
-			Timestamp:       src.Timestamp,
-			HasTimestamp:    src.HasTimestamp,
-			Severity:        src.Severity,
-			SourceType:      src.SourceType,
-			Instance:        src.Instance,
-			File:            src.File,
-			Line:            src.Line,
-			Message:         src.Message,
-			Signature:       src.Signature,
-			EvidenceID:      ids[i],
-			Occurrences:     src.Occurrences,
-			StatusCode:      src.StatusCode,
-			ParseConfidence: string(src.ParseConfidence),
+			Timestamp:           src.Timestamp,
+			HasTimestamp:        src.HasTimestamp,
+			Severity:            src.Severity,
+			SourceType:          src.SourceType,
+			Instance:            src.Instance,
+			File:                src.File,
+			Line:                src.Line,
+			Message:             src.Message,
+			Signature:           src.Signature,
+			EvidenceID:          ids[i],
+			Occurrences:         src.Occurrences,
+			StatusCode:          src.StatusCode,
+			ParseConfidence:     string(src.ParseConfidence),
+			UnparsedOccurrences: src.UnparsedOccurrences,
 		}
 		if src.HasTimestamp {
 			first := src.Timestamp

@@ -60,6 +60,9 @@ func TestWriteSelfContained(t *testing.T) {
 	if !strings.Contains(s, "unparsed records") || !strings.Contains(s, "Unparsed record (low parse confidence)") {
 		t.Fatal("report is missing NFR-028 unparsed-record chrome")
 	}
+	if !strings.Contains(s, "Contains ") || !strings.Contains(s, "unparsed occurrence") {
+		t.Fatal("report is missing mixed unparsed-occurrence chrome")
+	}
 	if !strings.Contains(s, "max-width: 1400px") {
 		t.Fatal("report CSS is missing NFR-012 max-width container")
 	}

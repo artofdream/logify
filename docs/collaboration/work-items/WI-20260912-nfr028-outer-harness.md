@@ -83,5 +83,7 @@ PR https://github.com/artofdream/logify/pull/16 (do not merge from this item).
   and work-item/dispatch scan.
 - `2026-09-12T06:20:00Z` — cursor-agent — probes landed; local validation
   passed; lease released for review.
+- `2026-09-12T06:12:00Z` — cursor-agent — Bugbot review on #16: fix unparsed
+  count after mixed FR-010 merge and parse `scope:` only (not other lists).
 
 ## Handoff or completion

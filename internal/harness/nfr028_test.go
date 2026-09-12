@@ -26,7 +26,6 @@ var (
 	frontStatus = regexp.MustCompile(`(?m)^status:\s*(\S+)`)
 	frontOwner  = regexp.MustCompile(`(?m)^owner:\s*(.+)$`)
 	frontLease  = regexp.MustCompile(`(?m)^lease_expires:`)
-	frontScope  = regexp.MustCompile(`(?m)^  - \S+`)
 	frontReqs   = regexp.MustCompile(`(?m)^requirements:\s*\[([^\]]*)\]`)
 	nfr028FM    = regexp.MustCompile(`(?m)^nfr028_status:\s*(\w+)`)
 )
@@ -175,7 +174,8 @@ func TestNFR028OpenWorkItemsHaveOwnershipFields(t *testing.T) {
 		if !frontLease.MatchString(body) {
 			problems = append(problems, e.Name()+": lease_expires field is missing")
 		}
-		if !frontScope.MatchString(body) {
+		scope, hasScope := frontmatterList(body, "scope")
+		if !hasScope || len(scope) == 0 {
 			problems = append(problems, e.Name()+": scope must list at least one path")
 		}
 		reqMatch := frontReqs.FindStringSubmatch(body)
@@ -191,6 +191,37 @@ func TestNFR028OpenWorkItemsHaveOwnershipFields(t *testing.T) {
 	}
 	if len(problems) > 0 {
 		t.Fatalf("permissions/ownership probe failed:\n  %s", strings.Join(problems, "\n  "))
+	}
+}
+
+func TestFrontmatterListReadsOnlyNamedKey(t *testing.T) {
+	// NFR-028: scope: [] must not pass because depends_on lists an id.
+	body := "---\n" +
+		"id: WI-demo\n" +
+		"scope: []\n" +
+		"depends_on:\n" +
+		"  - WI-other\n" +
+		"supersedes:\n" +
+		"  - WI-old\n" +
+		"---\n"
+	scope, has := frontmatterList(body, "scope")
+	if !has || len(scope) != 0 {
+		t.Fatalf("empty scope: has=%v items=%v", has, scope)
+	}
+	deps, hasDeps := frontmatterList(body, "depends_on")
+	if !hasDeps || len(deps) != 1 || deps[0] != "WI-other" {
+		t.Fatalf("depends_on=%v has=%v", deps, hasDeps)
+	}
+	block := "---\n" +
+		"scope:\n" +
+		"  - docs/a.md\n" +
+		"  - internal/b.go\n" +
+		"depends_on:\n" +
+		"  - WI-other\n" +
+		"---\n"
+	paths, ok := frontmatterList(block, "scope")
+	if !ok || len(paths) != 2 || paths[0] != "docs/a.md" || paths[1] != "internal/b.go" {
+		t.Fatalf("block scope=%v ok=%v", paths, ok)
 	}
 }
 
@@ -378,6 +409,66 @@ func splitTableRow(line string) []string {
 		out = append(out, strings.TrimSpace(p))
 	}
 	return out
+}
+
+func frontmatterList(body, key string) ([]string, bool) {
+	fm, ok := yamlFrontmatter(body)
+	if !ok {
+		return nil, false
+	}
+	lines := strings.Split(fm, "\n")
+	prefix := key + ":"
+	for i, line := range lines {
+		line = strings.TrimRight(line, "\r")
+		if line != prefix && !strings.HasPrefix(line, prefix+" ") {
+			continue
+		}
+		rest := strings.TrimSpace(strings.TrimPrefix(line, prefix))
+		if strings.HasPrefix(rest, "[") && strings.HasSuffix(rest, "]") {
+			inner := strings.TrimSpace(rest[1 : len(rest)-1])
+			if inner == "" {
+				return nil, true
+			}
+			var out []string
+			for _, p := range strings.Split(inner, ",") {
+				p = strings.TrimSpace(strings.Trim(p, `"'`))
+				if p != "" {
+					out = append(out, p)
+				}
+			}
+			return out, true
+		}
+		var out []string
+		for _, nxt := range lines[i+1:] {
+			trim := strings.TrimRight(nxt, "\r")
+			if strings.HasPrefix(trim, "  - ") {
+				item := strings.TrimSpace(strings.TrimPrefix(trim, "  - "))
+				if item != "" && item != "[]" {
+					out = append(out, item)
+				}
+				continue
+			}
+			if trim == "" || strings.HasPrefix(trim, " ") || strings.HasPrefix(trim, "\t") {
+				continue
+			}
+			break
+		}
+		return out, true
+	}
+	return nil, false
+}
+
+func yamlFrontmatter(body string) (string, bool) {
+	if !strings.HasPrefix(body, "---") {
+		return "", false
+	}
+	rest := strings.TrimPrefix(body, "---")
+	rest = strings.TrimPrefix(rest, "\n")
+	end := strings.Index(rest, "\n---")
+	if end < 0 {
+		return "", false
+	}
+	return rest[:end], true
 }
 
 func firstSub(re *regexp.Regexp, s string) string {

@@ -232,8 +232,13 @@
       article.appendChild(src);
       var body = el('div');
       body.appendChild(el('div', 'msg', event.message));
-      if (event.parseConfidence === 'low') {
-        body.appendChild(el('div', 'parse-low', 'Unparsed record (low parse confidence)'));
+      var unparsedOcc = event.unparsedOccurrences || (event.parseConfidence === 'low' ? 1 : 0);
+      if (unparsedOcc > 0) {
+        var totalOcc = event.occurrences || 1;
+        var parseLabel = unparsedOcc >= totalOcc ?
+          'Unparsed record (low parse confidence)' :
+          'Contains ' + unparsedOcc + ' unparsed occurrence(s)';
+        body.appendChild(el('div', 'parse-low', parseLabel));
       }
       var details = (event.file || '') + ':' + event.line + ' • ' + (event.signature || '');
       if ((event.occurrences || 0) > 1) {
