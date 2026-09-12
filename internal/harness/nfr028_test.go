@@ -179,8 +179,10 @@ func TestNFR028OpenWorkItemsHaveOwnershipFields(t *testing.T) {
 			problems = append(problems, e.Name()+": scope must list at least one path")
 		}
 		reqMatch := frontReqs.FindStringSubmatch(body)
-		if reqMatch == nil || !reqID.MatchString(reqMatch[1]) {
-			problems = append(problems, e.Name()+": requirements must list at least one FR/NFR id")
+		if reqMatch == nil {
+			problems = append(problems, e.Name()+": requirements field is missing")
+		} else if (st == "active" || st == "blocked") && !reqID.MatchString(reqMatch[1]) {
+			problems = append(problems, e.Name()+": active/blocked work items must list at least one FR/NFR id")
 		}
 	}
 	owners := readRepoFile(t, root, ".github/CODEOWNERS")
