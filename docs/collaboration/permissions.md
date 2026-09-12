@@ -54,8 +54,8 @@ self-approval of an irreversible action.
 the intended human/CI gate. Operator-side GitHub settings (not enforceable
 from this tree) for `main`:
 
-1. Settings → General → Pull Requests → allow or deny auto-merge as policy.
-2. Settings → Branches → protect `main`.
+1. Settings â†’ General â†’ Pull Requests â†’ allow or deny auto-merge as policy.
+2. Settings â†’ Branches â†’ protect `main`.
 3. Require status checks to pass before merging.
 4. Select the single aggregator job named `validate` (covers the OS `test`
    matrix: `gofmt` on Linux, `go vet`, `go test ./...`, native `go build`,
@@ -65,9 +65,12 @@ from this tree) for `main`:
    do not rely on a bot rubber-stamp.
 6. Do not grant agents permission to push directly to `main`.
 
-If those settings are absent, the workflow still runs on pull requests and
-pushes, but GitHub will not refuse a merge. That enablement state is
-**Unknown** unless an operator inspects the repository settings.
+A dated read-only probe of the live settings lives in
+[branch-protection-probe.md](branch-protection-probe.md) (NFR-028). As of that
+probe, **Require status checks** is enabled with the aggregator job `validate`
+required, so GitHub refuses merges to `main` without a green `validate`.
+**Require review from Code Owners** is still off. Re-probe when settings change;
+do not treat this paragraph as live without an updated `probed_at`.
 
 ## What remains advisory
 
