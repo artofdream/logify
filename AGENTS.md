@@ -31,6 +31,9 @@ requirement implemented until every acceptance criterion is verified.
   deduplication, filtering, and timeline ordering.
 - `internal/redact/`: optional operator-supplied report-time redaction rules.
 - `internal/report/`: embedded HTML/CSS/JavaScript report generation.
+- `internal/harness/`: NFR-028 outer-harness probes (docs/link freshness,
+  adoption-ledger vs requirement status, Implemented-claim probes, open
+  work-item ownership). Runs under `go test ./...` / CI.
 - `testdata/case/`: representative Tomcat and HTTPD fixtures.
 - `testdata/rotated/`: numeric/date rotation and gzip fixtures (FR-016).
 - `testdata/redact/`: example optional redaction rule file.
@@ -65,7 +68,8 @@ requirement implemented until every acceptance criterion is verified.
 - Delegate only bounded, independently verifiable work with named FR/NFR IDs and
   explicit file or area ownership.
 - Avoid concurrent edits to the same files. All agents share one working tree, so
-  preserve user and peer changes.
+  preserve user and peer changes. Leases are advisory; real gates are listed in
+  `docs/collaboration/permissions.md` and `.github/CODEOWNERS`.
 - Require handoffs to state scope, evidence, artifacts or files, validation,
   assumptions, failures, and unresolved questions.
 - Treat agent summaries as leads. The coordinator inspects the actual diff and

@@ -3,7 +3,7 @@ id: collaboration-protocol
 type: protocol
 status: active
 owner: human
-updated: 2026-09-04
+updated: 2026-09-12
 tags: [collaboration, multi-agent, second-brain]
 ---
 
@@ -70,6 +70,11 @@ then document takeover or request a transfer.
 This protocol does not assume exactly two participants. Any number of agents may
 hold non-overlapping leases at the same time; the coordination cost is in
 declaring and checking scope, not in the count of agents involved.
+
+Technical gates that exist today (CODEOWNERS review routing, CI `validate`,
+open work-item field checks) and the constraints that remain advisory are
+recorded in [permissions.md](permissions.md). Do not invent merge locks the
+repository does not have.
 
 ## During work
 

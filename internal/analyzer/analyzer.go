@@ -81,6 +81,7 @@ func Analyze(root string, o Options) (Result, error) {
 		return r.Events[i].Timestamp.Before(r.Events[j].Timestamp)
 	})
 	r.Correlations = Correlate(r.Events)
+	r.refreshObservability()
 	return r, nil
 }
 func looks(n string) bool {
@@ -125,7 +126,7 @@ func parseFile(root, path string) ([]Event, *Warning) {
 				out = append(out, v)
 			} else if strings.TrimSpace(x) != "" {
 				flush()
-				v := Event{Severity: infer(x), Message: x}
+				v := Event{Severity: infer(x), Message: x, ParseConfidence: ConfidenceLow}
 				decorate(&v, src, inst, rel, line)
 				out = append(out, v)
 			}
@@ -148,7 +149,7 @@ func parseFile(root, path string) ([]Event, *Warning) {
 		}
 		if trim != "" {
 			flush()
-			v = Event{Severity: infer(x), Message: x, Line: line}
+			v = Event{Severity: infer(x), Message: x, Line: line, ParseConfidence: ConfidenceLow}
 			cur = &v
 		}
 	}
@@ -258,6 +259,9 @@ func decorate(e *Event, src, inst, file string, line int) {
 	e.Signature = signature(*e)
 	e.Occurrences = 1
 	e.LastSeen = e.Timestamp
+	if e.ParseConfidence == "" {
+		e.ParseConfidence = ConfidenceHigh
+	}
 }
 func java(s string) (Event, bool) {
 	m := javaStart.FindStringSubmatch(s)
@@ -393,6 +397,9 @@ func dedup(in []Event) []Event {
 			out[i].Occurrences++
 			if e.HasTimestamp && e.Timestamp.After(out[i].LastSeen) {
 				out[i].LastSeen = e.Timestamp
+			}
+			if e.ParseConfidence == ConfidenceLow {
+				out[i].ParseConfidence = ConfidenceLow
 			}
 			out[i].occHints = append(out[i].occHints, h)
 			continue

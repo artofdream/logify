@@ -16,6 +16,8 @@ import (
 )
 
 func TestWriteSelfContained(t *testing.T) {
+	// NFR-003 / NFR-004 / NFR-012 / NFR-014: offline self-contained HTML, untrusted
+	// log text escaped, CSS max-width containers, compiler-backed report probe.
 	p := filepath.Join(t.TempDir(), "r.html")
 	if e := Write(p, analyzer.Result{Events: []analyzer.Event{{Message: "</script><b>x</b>"}}}); e != nil {
 		t.Fatal(e)
@@ -55,6 +57,12 @@ func TestWriteSelfContained(t *testing.T) {
 	if !strings.Contains(s, "documented groups with a named rule") {
 		t.Fatal("legend still claims correlations are unavailable")
 	}
+	if !strings.Contains(s, "unparsed records") || !strings.Contains(s, "Unparsed record (low parse confidence)") {
+		t.Fatal("report is missing NFR-028 unparsed-record chrome")
+	}
+	if !strings.Contains(s, "max-width: 1400px") {
+		t.Fatal("report CSS is missing NFR-012 max-width container")
+	}
 }
 
 func TestWriteEmptySlicesAreJSONArrays(t *testing.T) {
@@ -80,13 +88,17 @@ func TestWriteFixtureReportArraysAndEvidence(t *testing.T) {
 	}
 	raw := assertEmbeddedArrays(t, p, 6, 0, 0)
 	var payload struct {
-		Events []struct {
-			EvidenceID  string `json:"evidenceId"`
-			Signature   string `json:"signature"`
-			Instance    string `json:"instance"`
-			File        string `json:"file"`
-			Line        int    `json:"line"`
-			Occurrences int    `json:"occurrences"`
+		UnparsedRecords            int `json:"unparsedRecords"`
+		HighConfidenceCorrelations int `json:"highConfidenceCorrelations"`
+		LowConfidenceCorrelations  int `json:"lowConfidenceCorrelations"`
+		Events                     []struct {
+			EvidenceID      string `json:"evidenceId"`
+			Signature       string `json:"signature"`
+			Instance        string `json:"instance"`
+			File            string `json:"file"`
+			Line            int    `json:"line"`
+			Occurrences     int    `json:"occurrences"`
+			ParseConfidence string `json:"parseConfidence"`
 		} `json:"events"`
 		Warnings []analyzer.Warning `json:"warnings"`
 	}
@@ -96,7 +108,16 @@ func TestWriteFixtureReportArraysAndEvidence(t *testing.T) {
 	if payload.Events == nil || payload.Warnings == nil {
 		t.Fatal("unmarshaled nil slice")
 	}
+	if payload.UnparsedRecords != 1 || payload.HighConfidenceCorrelations != 0 || payload.LowConfidenceCorrelations != 0 {
+		t.Fatalf("fixture observability counts=%+v", payload)
+	}
+	var sawUnparsed bool
 	for i, ev := range payload.Events {
+		if ev.ParseConfidence == "low" {
+			sawUnparsed = true
+		} else if ev.ParseConfidence != "high" {
+			t.Fatalf("event %d parseConfidence=%q", i, ev.ParseConfidence)
+		}
 		if !strings.HasPrefix(ev.EvidenceID, EvidenceIDPrefix) {
 			t.Fatalf("event %d missing evidenceId: %q", i, ev.EvidenceID)
 		}
@@ -109,6 +130,9 @@ func TestWriteFixtureReportArraysAndEvidence(t *testing.T) {
 		if ev.EvidenceID != want {
 			t.Fatalf("event %d evidenceId=%q want %q", i, ev.EvidenceID, want)
 		}
+	}
+	if !sawUnparsed {
+		t.Fatal("fixture report missing a low-confidence unparsed event")
 	}
 }
 
@@ -249,7 +273,8 @@ func TestPageScriptsAreSyntacticallyValid(t *testing.T) {
 }
 
 func TestFollowUpStoreCreateExportImport(t *testing.T) {
-	// FR-017 / FR-018 / FR-019 / FR-020 / FR-021 / FR-022 / FR-023: executed page-script
+	// FR-017 / FR-018 / FR-019 / FR-020 / FR-021 / FR-022 / FR-023 /
+	// NFR-018 / NFR-019 / NFR-020: executed page-script
 	// store, not only embedded JSON shape. The prior happy-path crash was missed
 	// because CI never ran the report JavaScript.
 	node := requireNode(t)
@@ -364,7 +389,9 @@ func TestWriteCorrelateGroupsExactAndHeuristic(t *testing.T) {
 	}
 	raw := assertEmbeddedArrays(t, p, 14, 0, 2)
 	var payload struct {
-		Events []struct {
+		HighConfidenceCorrelations int `json:"highConfidenceCorrelations"`
+		LowConfidenceCorrelations  int `json:"lowConfidenceCorrelations"`
+		Events                     []struct {
 			EvidenceID string `json:"evidenceId"`
 			Message    string `json:"message"`
 		} `json:"events"`
@@ -408,6 +435,9 @@ func TestWriteCorrelateGroupsExactAndHeuristic(t *testing.T) {
 	}
 	if exact != 1 || heuristic != 1 {
 		t.Fatalf("exact=%d heuristic=%d", exact, heuristic)
+	}
+	if payload.HighConfidenceCorrelations != 1 || payload.LowConfidenceCorrelations != 1 {
+		t.Fatalf("embedded correlation counts high=%d low=%d", payload.HighConfidenceCorrelations, payload.LowConfidenceCorrelations)
 	}
 	html := string(mustRead(t, p))
 	if !strings.Contains(html, "Exact identifier (confidence:") || !strings.Contains(html, "Heuristic (confidence:") {

@@ -357,6 +357,12 @@
   6. **Observability** provides provenance and a probe for material status claims;
      without one, status is `Unknown`.
   7. `docs/framework-adoption.md` maintains evidence and gaps for every layer.
-- **Gap:** Guides, loop, and local memory are present. Sensors, technical
-  permissions, and product/delivery observability remain partial as documented in
-  the adoption ledger.
+- **Gap:** Guides, loop, and local memory remain adopted. Sensors now include a
+  docs/link and ledger-status checker (`internal/harness`) that runs in `go test`
+  / CI; still no WCAG engine, full in-browser DOM/AT run, or NFR-009 scale bench.
+  Permissions add CODEOWNERS review routing, a documented CI/`validate` merge
+  checklist, and a work-item ownership-field probe; leases stay advisory and
+  GitHub required-review / branch-protection enablement is operator-side, not
+  claimed here. Observability now counts unparsed records and correlation
+  confidence and fails Implemented claims that lack a named probe. Remaining
+  layer evidence lives in the adoption ledger.
