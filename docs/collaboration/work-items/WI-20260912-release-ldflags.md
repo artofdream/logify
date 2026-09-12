@@ -74,7 +74,7 @@ local ldflags smoke prints `logify v0.1.0`. See the handoff.
 - `2026-09-12T11:00:00Z` — cursor-agent — PR
   https://github.com/artofdream/logify/pull/21 opened (ready for review).
   YAML parse, harness probe, and local ldflags smoke passed. Status
-  remains active until coordinator review; do not tag from this item.
+  moved to review; do not tag from this item.
 
 ## Handoff or completion
 
