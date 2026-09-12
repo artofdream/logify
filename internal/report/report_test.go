@@ -45,6 +45,12 @@ func TestWriteSelfContained(t *testing.T) {
 	if !strings.Contains(s, "issue-workflow-hint") || !strings.Contains(s, "issue-summary") {
 		t.Fatal("report is missing NFR-021 issue-workflow usability chrome")
 	}
+	if !strings.Contains(s, `for="q"`) || !strings.Contains(s, `for="iq"`) || !strings.Contains(s, "Severity: ") {
+		t.Fatal("report is missing NFR-013 explicit labels or severity text")
+	}
+	if !strings.Contains(s, "issue-pager") || !strings.Contains(s, "ISSUE_PAGE_SIZE") {
+		t.Fatal("report is missing NFR-021 issue-list windowing chrome")
+	}
 	if !strings.Contains(s, `aria-live="polite"`) || !strings.Contains(s, `aria-atomic="true"`) {
 		t.Fatal("report is missing live status semantics")
 	}
@@ -266,7 +272,7 @@ func TestWriteEscapesOperatorAndLogText(t *testing.T) {
 
 func TestPageScriptsAreSyntacticallyValid(t *testing.T) {
 	node := requireNode(t)
-	for _, name := range []string{"followup.js", "page.js", "followup_node_test.js", "nfr021_a11y_test.js", "nfr021_filter_probe.js"} {
+	for _, name := range []string{"followup.js", "page.js", "followup_node_test.js", "nfr013_a11y_test.js", "nfr021_a11y_test.js", "nfr021_filter_probe.js"} {
 		cmd := exec.Command(node, "--check", name)
 		cmd.Dir = "."
 		if out, err := cmd.CombinedOutput(); err != nil {
@@ -344,6 +350,17 @@ func mustRead(t *testing.T, path string) []byte {
 		t.Fatal(err)
 	}
 	return b
+}
+
+func TestNFR013AccessibleReportContracts(t *testing.T) {
+	// NFR-013 AC1–AC4: source-contract audit companion to a11y.go.
+	node := requireNode(t)
+	cmd := exec.Command(node, "nfr013_a11y_test.js")
+	cmd.Dir = "."
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("NFR-013 a11y contracts: %v\n%s", err, out)
+	}
 }
 
 func TestNFR021IssueWorkflowA11yContracts(t *testing.T) {

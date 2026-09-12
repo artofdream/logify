@@ -30,9 +30,12 @@ is mergeable. Do not merge the PR.
 - Auto-merged without markers: `docs/framework-adoption.md`,
   `docs/knowledge/architecture.md`,
   `docs/requirements/non-functional-requirements.md`.
-- Renamed this branch's scale ADR
+- First rebase: renamed scale ADR
   `ADR-0010-scale-benchmark.md` → `ADR-0011-scale-benchmark.md`.
-  Main's `ADR-0010-cli-compatibility.md` is unchanged.
+- Then #19 landed on `main` (`273293d`, ADR-0011 a11y). Merged that
+  commit and renamed the scale ADR again to
+  `ADR-0012-scale-benchmark.md`. Main's ADR-0010 (CLI) and ADR-0011
+  (a11y) stay.
 - Updated NFR-009 / architecture / README / RES / WI / HO references.
 - NFR-009 remains **Implemented** (probe-host 13.6 MiB / 59.3 s).
 

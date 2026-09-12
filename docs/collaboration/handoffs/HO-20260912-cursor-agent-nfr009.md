@@ -27,7 +27,7 @@ active NFR-009 owner), NFR-009 ACs, analyzer parse/dedup/occHints path.
 - Generated storm fixture (`internal/analyzer/scale_fixture.go`)
 - `TestNFR009ScaleSmoke`, `TestNFR009Scale1GiB`, `BenchmarkNFR009ScaleSmoke`
 - `Makefile`, Linux CI smoke bench, `testdata/scale/README.md`
-- ADR-0011, RES-20260912, NFR-009 Implemented with measured numbers
+- ADR-0012, RES-20260912, NFR-009 Implemented with measured numbers
 
 ## Validation and observed results
 

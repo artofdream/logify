@@ -1,5 +1,5 @@
 ---
-id: ADR-0011-scale-benchmark
+id: ADR-0012-scale-benchmark
 type: decision
 status: accepted
 owner: cursor-agent
@@ -9,13 +9,14 @@ requirements: [NFR-009, NFR-008, FR-010, FR-012]
 supersedes: []
 ---
 
-# ADR-0011: Generated scale fixture and online merge
+# ADR-0012: Generated scale fixture and online merge
 
 ## Context and evidence
 
 This decision was drafted as ADR-0010 on `cursor/nfr009-scale-bench-fd16`.
 It was renumbered to ADR-0011 after #17 merged
-[ADR-0010-cli-compatibility](ADR-0010-cli-compatibility.md) on `main`.
+[ADR-0010-cli-compatibility](ADR-0010-cli-compatibility.md), then to ADR-0012
+after #19 merged [ADR-0011-accessible-report-checks](ADR-0011-accessible-report-checks.md).
 
 NFR-009 asks for a 1 GiB multi-instance fixture, peak RSS below 512 MiB,
 analysis within five minutes on documented hardware, and a repeatable bench.

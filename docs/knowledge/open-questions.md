@@ -26,15 +26,20 @@ date, and any promoted ADR/requirement.
   enough for AC3 wording; a specific SKU is still unset. NFR-021 AC4 still
   records probe-host timings with a disclaimer
   ([RES-20260909-nfr021-issue-filter-probe](research/RES-20260909-nfr021-issue-filter-probe.md)).
-  Probe hosts are not a published operator workstation.
+  Probe hosts are not a published operator workstation. Card list paging
+  (Q-002) does not close this question.
 
 ## Q-002 — Issue-queue card windowing at 10k matches
 
-- **Status:** Open
-- **Owner:** human
+- **Status:** Resolved
+- **Owner:** cursor-agent
 - **Opened:** 2026-09-09
+- **Resolved:** 2026-09-12
 - **Requirements:** NFR-021
-- **Evidence needed:** Operator decision on whether the queue should window,
-  paginate, or virtualize when many issues match. ADR-0006 deferred this.
-- **Notes:** `store.filter` at n=10,000 is a few milliseconds on the probe
-  host. Rendering every matching card is unmeasured and expected to dominate.
+- **Answer:** Paginate the matching issue list at 25 cards
+  (`ISSUE_PAGE_SIZE`). Previous/Next are labeled buttons. `showIssue` jumps
+  to the page that contains the issue. Virtualized scrolling was rejected as
+  the first bound (ADR-0011).
+- **Evidence:** `internal/report/page.js` `renderIssues` slices the filter
+  result; `nfr021_filter_probe.js` records `issuePageSize: 25`. NFR-021
+  remains Partial because Q-001 is still open.

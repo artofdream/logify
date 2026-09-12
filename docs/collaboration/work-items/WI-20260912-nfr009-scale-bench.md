@@ -17,7 +17,7 @@ scope:
   - docs/framework-adoption.md
   - docs/knowledge/architecture.md
   - docs/knowledge/open-questions.md
-  - docs/knowledge/decisions/ADR-0011-scale-benchmark.md
+  - docs/knowledge/decisions/ADR-0012-scale-benchmark.md
   - docs/knowledge/research/RES-20260912-nfr009-scale-bench.md
   - docs/collaboration/work-items/WI-20260912-nfr009-scale-bench.md
   - docs/collaboration/handoffs/HO-20260912-cursor-agent-nfr009.md

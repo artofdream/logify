@@ -1,13 +1,15 @@
 'use strict';
 
 // NFR-021 AC4: measure store.filter() with 10,000 synthetic issues.
-// This probe does not render issue cards and is not a published workstation spec.
+// The live page windows matching cards to ISSUE_PAGE_SIZE (see page.js).
+// This probe still does not paint DOM cards and is not a published workstation spec.
 
 var assert = require('assert');
 var os = require('os');
 var follow = require('./followup.js');
 
 var COUNT = 10000;
+var ISSUE_PAGE_SIZE = 25;
 var INTERACTIVE_MS = 100;
 var CI_GUARD_MS = 500;
 var STATES = follow.STATES;
@@ -126,12 +128,18 @@ cases.forEach(function (c) { store.filter(c.criteria); });
 
 var results = cases.map(function (c) {
   var stats = measure(function () { return store.filter(c.criteria); }, 5);
+  var windowStats = measure(function () {
+    return store.filter(c.criteria).slice(0, ISSUE_PAGE_SIZE);
+  }, 5);
   return {
     name: c.name,
     matched: stats.count,
     minMs: Number(stats.minMs.toFixed(3)),
     medianMs: Number(stats.medianMs.toFixed(3)),
-    maxMs: Number(stats.maxMs.toFixed(3))
+    maxMs: Number(stats.maxMs.toFixed(3)),
+    windowed: windowStats.count,
+    windowMedianMs: Number(windowStats.medianMs.toFixed(3)),
+    windowMaxMs: Number(windowStats.maxMs.toFixed(3))
   };
 });
 
@@ -151,10 +159,11 @@ var report = {
   requirement: 'NFR-021',
   acceptance: 'AC4',
   issueCount: COUNT,
+  issuePageSize: ISSUE_PAGE_SIZE,
   interactiveTargetMs: INTERACTIVE_MS,
   ciGuardMs: CI_GUARD_MS,
   host: hostInfo(),
-  disclaimer: 'Probe host is not a published operator reference workstation. Times measure store.filter() only, not DOM card rendering. A green CI check is not proof for every machine.',
+  disclaimer: 'Probe host is not a published operator reference workstation. Times measure store.filter() and a 25-item window slice, not painted DOM cards. The live report pages matching cards (ISSUE_PAGE_SIZE=25). A green CI check is not proof for every machine or for Q-001 reference hardware.',
   filters: results,
   worstMedianMs: Number(worstMedian.toFixed(3)),
   worstMaxMs: Number(worst.toFixed(3)),

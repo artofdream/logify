@@ -4,7 +4,7 @@ type: decision
 status: accepted
 owner: cursor-agent
 created: 2026-09-09
-updated: 2026-09-10
+updated: 2026-09-12
 requirements: [NFR-021]
 supersedes: []
 ---
@@ -38,15 +38,16 @@ visible match count. AC4 had no measured probe.
 4. Measure AC4 with a Node harness that imports 10,000 synthetic issues and
    times `store.filter` only. Document an interactive target of 100 ms median
    and a CI guard of 500 ms. Do not treat the probe host as published reference
-   hardware. Do not window or virtualize the card list in this change.
-5. Keep NFR-021 **Partial** until a published reference workstation exists and
-   DOM rendering of a 10,000-issue match set is measured or bounded.
+   hardware. The 2026-09-09 change did not window the card list; that bound
+   landed later (see addendum and ADR-0011).
+5. Keep NFR-021 **Partial** until a published reference workstation exists
+   (Q-001). Windowing bounds default DOM cost but is not a timed 10,000-card
+   paint on reference hardware.
 
 ## Alternatives considered
 
-- Virtualizing or capping rendered cards was deferred: it would change what
-  operators can see without a filter and is a larger product decision
-  (see Q-002).
+- Virtualizing or capping rendered cards was deferred in the first change.
+  Q-002 is now resolved as **pagination of 25 cards** (ADR-0011).
 - Adding axe-core or a CDN a11y engine was rejected: NFR-003 / no-CDN, and
   full WCAG tooling is out of the NFR-021 scope. Source-contract tests are the
   in-repo sensor.
@@ -56,15 +57,20 @@ visible match count. AC4 had no measured probe.
 ## Consequences and risks
 
 Keyboard users keep their place after common edits. Screen-reader users hear
-status text and named flag/state. Operators with 10,000 issues will still
-freeze the tab if they render every card; they should narrow filters. Status
-must not be advanced to Implemented on the strength of the Node filter probe
-alone.
+status text and named flag/state. Operators with more than 25 matching issues
+page the queue. Status must not be advanced to Implemented on the strength of
+the Node filter probe alone.
+
+## Addendum (2026-09-12)
+
+The issue queue now slices `store.filter` results to `ISSUE_PAGE_SIZE` (25)
+with Previous/Next controls. The filter probe also times a 25-item slice.
+Q-002 is answered. Q-001 remains open. See ADR-0011.
 
 ## Verification
 
 `nfr021_a11y_test.js` asserts the AC1–AC3 source contracts, including that
 `showFeedback` cancels `detailFeedbackTimer` and that empty `renderIssues`
 paths call `applyPendingFocus`. `nfr021_filter_probe.js`
-builds 10,000 issues, checks filter counts, prints host + timings, and exits
-non-zero only if a timed filter exceeds 500 ms.
+builds 10,000 issues, checks filter counts, prints host + timings, times a
+25-item window slice, and exits non-zero only if a timed filter exceeds 500 ms.
