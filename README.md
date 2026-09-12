@@ -93,7 +93,7 @@ patterns that match the empty string are rejected.
 
 Requires Go 1.22 or newer on `PATH`. On Windows, if `go` is not recognized after install, close and reopen the terminal so the updated PATH applies.
 
-Generated `logify.exe` and `*-report.html` files (including `sample-report.html` and `report.html`) are gitignored — do not commit them.
+Generated `logify.exe` and `*-report.html` files (including `sample-report.html` and `report.html`) are gitignored — do not commit them. Do not commit NFR-009 generated scale corpora.
 
 ```powershell
 go test ./...
@@ -139,6 +139,30 @@ patch. While the product is still `0.y.z`, documented flags are still a
 compatibility contract; a break after that warning window ships as `1.0.0`
 (or a later major).
 
+## Scale benchmark (NFR-009)
+
+A documented **storm** fixture (four instances, ≥1 GiB of repeating
+Tomcat/HTTPD-like lines) is generated on demand. It is not in git.
+
+**Reference hardware class:** Linux amd64, 2+ CPU, 4+ GiB RAM, local disk for
+the generated tree. A specific workstation SKU is still open (Q-001).
+
+```text
+make bench-nfr009-smoke
+make bench-nfr009
+```
+
+`bench-nfr009-smoke` is the repeatable CI-sized bench (8 MiB). `bench-nfr009`
+writes `/tmp/logify-nfr009` and measures analysis in a child process (Linux
+peak RSS via `VmHWM`). Details: [`testdata/scale/README.md`](testdata/scale/README.md).
+Measured probe-host numbers: [`docs/knowledge/research/RES-20260912-nfr009-scale-bench.md`](docs/knowledge/research/RES-20260912-nfr009-scale-bench.md).
+
+On the 2026-09-12 probe host (4× Xeon, 16 GiB, Linux, Go 1.22.2) the 1 GiB
+storm fixture used 13.6 MiB peak RSS and finished analysis+report in 59 s.
+Unique-heavy access logs (millions of distinct signatures) can still exceed
+512 MiB; that is the timeline model (one row per signature), not a missing
+scanner bound.
+
 ## Behavior
 
 - Recursively discovers `.log`, `.out`, `access_log`, and `error_log` files, including common numeric/date rotation suffixes (`catalina.out.1`, `access.log.2026-09-03`, `error.log.1.gz`) and `.gz` on those same names. Gzip is streamed with the Go standard library; tar/zip/bz2 archives are not unpacked.
@@ -162,7 +186,7 @@ compatibility contract; a break after that warning window ships as `1.0.0`
 6. Create, flag, tag, and change state with the keyboard: **Tab** reaches labeled controls (`<label for>`), **Enter** adds a tag, and **Left/Right** switches the Timeline and Issue queue tabs. Timeline severity is named in text (**Severity: ERROR**), not color alone. Flag and workflow state are named in text (**Flagged**, **State: Open**). The status line confirms each action; the queue shows **Showing N of M issue(s)** when filters change and pages 25 matching cards at a time.
 7. **Export follow-up JSON** writes a portable file. **Import follow-up JSON** loads it into this report. A later report with the same `signature` + `instance` lists candidate matches and newly observed occurrence counts (or a newer last-seen time) for review; nothing auto-changes state. Duplicate evidence ownership is skipped. **Clear local follow-up data** drops the browser copy after a confirmation.
 
-The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md). Scan warning categories and input-count identity are in [`docs/knowledge/decisions/ADR-0004-scan-warnings.md`](docs/knowledge/decisions/ADR-0004-scan-warnings.md). Redaction rules are in [`docs/knowledge/decisions/ADR-0005-optional-report-redaction.md`](docs/knowledge/decisions/ADR-0005-optional-report-redaction.md). Keyboard, confirmation, the 10,000-issue filter probe, and issue-list paging are in [`docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md`](docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md), [`docs/knowledge/decisions/ADR-0011-accessible-report-checks.md`](docs/knowledge/decisions/ADR-0011-accessible-report-checks.md), and [`docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md`](docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md). Multi-evidence merge and review rules are in [`docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md`](docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md). Correlation rules are in [`docs/knowledge/decisions/ADR-0008-event-correlation.md`](docs/knowledge/decisions/ADR-0008-event-correlation.md). Rotated and gzip discovery is in [`docs/knowledge/decisions/ADR-0009-rotated-gzip-logs.md`](docs/knowledge/decisions/ADR-0009-rotated-gzip-logs.md). CLI compatibility is in [`docs/knowledge/decisions/ADR-0010-cli-compatibility.md`](docs/knowledge/decisions/ADR-0010-cli-compatibility.md).
+The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md). Scan warning categories and input-count identity are in [`docs/knowledge/decisions/ADR-0004-scan-warnings.md`](docs/knowledge/decisions/ADR-0004-scan-warnings.md). Redaction rules are in [`docs/knowledge/decisions/ADR-0005-optional-report-redaction.md`](docs/knowledge/decisions/ADR-0005-optional-report-redaction.md). Keyboard, confirmation, the 10,000-issue filter probe, and issue-list paging are in [`docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md`](docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md), [`docs/knowledge/decisions/ADR-0011-accessible-report-checks.md`](docs/knowledge/decisions/ADR-0011-accessible-report-checks.md), and [`docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md`](docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md). Multi-evidence merge and review rules are in [`docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md`](docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md). Correlation rules are in [`docs/knowledge/decisions/ADR-0008-event-correlation.md`](docs/knowledge/decisions/ADR-0008-event-correlation.md). Rotated and gzip discovery is in [`docs/knowledge/decisions/ADR-0009-rotated-gzip-logs.md`](docs/knowledge/decisions/ADR-0009-rotated-gzip-logs.md). CLI compatibility is in [`docs/knowledge/decisions/ADR-0010-cli-compatibility.md`](docs/knowledge/decisions/ADR-0010-cli-compatibility.md). The generated scale fixture and online merge are in [`docs/knowledge/decisions/ADR-0012-scale-benchmark.md`](docs/knowledge/decisions/ADR-0012-scale-benchmark.md) and [`docs/knowledge/research/RES-20260912-nfr009-scale-bench.md`](docs/knowledge/research/RES-20260912-nfr009-scale-bench.md).
 
 ## Current limits
 
@@ -173,3 +197,6 @@ issues is measured in milliseconds on the documented probe host; that host is
 not a published operator workstation (NFR-021 remains Partial). Accessibility
 checks on the generated report are a stdlib contrast/label probe, not an
 assistive-technology run (NFR-013 / ADR-0011).
+
+The NFR-009 1 GiB storm fixture is generated, not shipped. CI measures only
+the 8 MiB smoke bench. See [Scale benchmark (NFR-009)](#scale-benchmark-nfr-009).

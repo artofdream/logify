@@ -59,10 +59,13 @@ func firstMember(c Correlation) int {
 }
 
 func eventHints(e Event) []occHint {
-	if len(e.occHints) > 0 {
-		return e.occHints
+	lead := hintOf(e)
+	if len(e.occHints) == 0 {
+		return []occHint{lead}
 	}
-	return []occHint{{ts: e.Timestamp, has: e.HasTimestamp, msg: e.Message, addr: e.ClientAddr}}
+	out := make([]occHint, 0, 1+len(e.occHints))
+	out = append(out, lead)
+	return append(out, e.occHints...)
 }
 
 func exactRequestIDGroups(events []Event) []Correlation {

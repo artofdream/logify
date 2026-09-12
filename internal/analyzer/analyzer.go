@@ -38,6 +38,7 @@ func Analyze(root string, o Options) (Result, error) {
 		return Result{}, fmt.Errorf("%s is not a directory", abs)
 	}
 	r := Result{Root: abs, GeneratedAt: time.Now(), Events: []Event{}, Warnings: []Warning{}, Correlations: []Correlation{}}
+	merged := newEventMerger()
 	e = filepath.WalkDir(abs, func(p string, d os.DirEntry, we error) error {
 		if we != nil {
 			r.FilesSkipped++
@@ -48,7 +49,15 @@ func Analyze(root string, o Options) (Result, error) {
 			return nil
 		}
 		r.FilesScanned++
-		es, w := parseFile(abs, p)
+		w := parseFile(abs, p, func(v Event) {
+			if o.From != nil && (!v.HasTimestamp || v.Timestamp.Before(*o.From)) {
+				return
+			}
+			if o.To != nil && (!v.HasTimestamp || v.Timestamp.After(*o.To)) {
+				return
+			}
+			merged.add(v)
+		})
 		if w != nil {
 			r.Warnings = append(r.Warnings, *w)
 			if w.Category == CategoryOpenError {
@@ -59,21 +68,12 @@ func Analyze(root string, o Options) (Result, error) {
 		} else {
 			r.FilesProcessed++
 		}
-		for _, v := range es {
-			if o.From != nil && (!v.HasTimestamp || v.Timestamp.Before(*o.From)) {
-				continue
-			}
-			if o.To != nil && (!v.HasTimestamp || v.Timestamp.After(*o.To)) {
-				continue
-			}
-			r.Events = append(r.Events, v)
-		}
 		return nil
 	})
 	if e != nil {
 		return Result{}, e
 	}
-	r.Events = dedup(r.Events)
+	r.Events = merged.out
 	sort.SliceStable(r.Events, func(i, j int) bool {
 		if r.Events[i].HasTimestamp != r.Events[j].HasTimestamp {
 			return r.Events[i].HasTimestamp
@@ -89,30 +89,29 @@ func looks(n string) bool {
 	return strings.HasSuffix(n, ".log") || strings.HasSuffix(n, ".out") || strings.Contains(n, "access_log") || strings.Contains(n, "error_log")
 }
 
-func parseFile(root, path string) ([]Event, *Warning) {
+func parseFile(root, path string, emit func(Event)) *Warning {
 	rel := relPath(root, path)
 	f, e := os.Open(path)
 	if e != nil {
 		w := newWarning(rel, CategoryOpenError, 0, 0, e.Error())
-		return nil, &w
+		return &w
 	}
 	defer f.Close()
 	in, closer, e := openLogStream(f, path)
 	if e != nil {
 		w := newWarning(rel, CategoryScanError, 0, 0, e.Error())
-		return nil, &w
+		return &w
 	}
 	src := detect(path)
 	inst := instance(rel)
 	s := bufio.NewScanner(in)
 	s.Buffer(make([]byte, 65536), 4*1024*1024)
-	var out []Event
 	var cur *Event
 	line := 0
 	flush := func() {
 		if cur != nil {
 			decorate(cur, src, inst, rel, cur.Line)
-			out = append(out, *cur)
+			emit(*cur)
 			cur = nil
 		}
 	}
@@ -123,12 +122,12 @@ func parseFile(root, path string) ([]Event, *Warning) {
 			if v, ok := access(x); ok {
 				flush()
 				decorate(&v, src, inst, rel, line)
-				out = append(out, v)
+				emit(v)
 			} else if strings.TrimSpace(x) != "" {
 				flush()
 				v := Event{Severity: infer(x), Message: x, ParseConfidence: ConfidenceLow}
 				decorate(&v, src, inst, rel, line)
-				out = append(out, v)
+				emit(v)
 			}
 			continue
 		}
@@ -160,7 +159,7 @@ func parseFile(root, path string) ([]Event, *Warning) {
 			scanErr = ce
 		}
 	}
-	return out, warningFromScan(rel, line, scanErr)
+	return warningFromScan(rel, line, scanErr)
 }
 
 func relPath(root, path string) string {
@@ -387,30 +386,4 @@ func signature(e Event) string {
 }
 func hintOf(e Event) occHint {
 	return occHint{ts: e.Timestamp, has: e.HasTimestamp, msg: e.Message, addr: e.ClientAddr}
-}
-
-func dedup(in []Event) []Event {
-	type key struct{ inst, sig string }
-	idx := map[key]int{}
-	out := make([]Event, 0, len(in))
-	for _, e := range in {
-		k := key{e.Instance, e.Signature}
-		h := hintOf(e)
-		if i, ok := idx[k]; ok {
-			out[i].Occurrences++
-			if e.HasTimestamp && e.Timestamp.After(out[i].LastSeen) {
-				out[i].LastSeen = e.Timestamp
-			}
-			if e.ParseConfidence == ConfidenceLow {
-				out[i].ParseConfidence = ConfidenceLow
-				out[i].UnparsedOccurrences++
-			}
-			out[i].occHints = append(out[i].occHints, h)
-			continue
-		}
-		e.occHints = []occHint{h}
-		idx[k] = len(out)
-		out = append(out, e)
-	}
-	return out
 }

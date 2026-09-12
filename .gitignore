@@ -8,5 +8,9 @@
 /*-report.html
 /sample-report.html
 /report.html
+/nfr009-report.html
+
+# NFR-009 generated 1 GiB (and smaller) corpora. Never commit these trees.
+/testdata/scale/generated/
 
 .obsidian/

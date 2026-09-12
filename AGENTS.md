@@ -28,7 +28,8 @@ requirement implemented until every acceptance criterion is verified.
 
 - `cmd/logify/`: CLI entry point and flag handling.
 - `internal/analyzer/`: discovery, parsing, normalization, signatures,
-  deduplication, filtering, and timeline ordering.
+  online per-instance deduplication, filtering, timeline ordering, and the
+  NFR-009 generated scale fixture / benchmark helpers.
 - `internal/redact/`: optional operator-supplied report-time redaction rules.
 - `internal/report/`: embedded HTML/CSS/JavaScript report generation.
 - `internal/harness/`: NFR-028 outer-harness probes (docs/link freshness,
@@ -37,6 +38,9 @@ requirement implemented until every acceptance criterion is verified.
 - `testdata/case/`: representative Tomcat and HTTPD fixtures.
 - `testdata/rotated/`: numeric/date rotation and gzip fixtures (FR-016).
 - `testdata/redact/`: example optional redaction rule file.
+- `testdata/scale/`: NFR-009 scale-fixture documentation only; generated
+  corpora stay under `/tmp` or `testdata/scale/generated/` (gitignored).
+- `Makefile`: `bench-nfr009-smoke` and manual `bench-nfr009` (1 GiB).
 - `README.md`: user-facing behavior, build instructions, and known limits.
 - `docs/requirements/`: canonical functional and non-functional requirements.
 - `docs/principles.md`: non-negotiable decision and delivery principles.
@@ -58,7 +62,7 @@ requirement implemented until every acceptance criterion is verified.
 - Keep signatures deterministic. Normalize volatile identifiers carefully and
   deduplicate within an instance, not across unrelated instances.
 - Preserve source file and line provenance for every event.
-- Do not commit generated executables or HTML reports.
+- Do not commit generated executables, HTML reports, or NFR-009 scale corpora.
 - Avoid destructive Git operations and do not overwrite unrelated local changes.
 
 ## Multi-agent coordination
@@ -117,8 +121,17 @@ failed.
 
 CI (`.github/workflows/ci.yml`) runs `go vet`, `go test`, a native `go build`,
 and the fixture smoke on `ubuntu-latest`, `windows-latest`, and `macos-latest`.
+Linux also runs the NFR-009 8 MiB smoke bench (`BenchmarkNFR009ScaleSmoke`).
 `gofmt` and `git diff --check` run on Linux only. The `validate` job is a
 single aggregator over that matrix so draft auto-merge can keep requiring it.
+
+The 1 GiB NFR-009 run is manual/nightly, not CI:
+
+```text
+make bench-nfr009
+```
+
+See [`testdata/scale/README.md`](testdata/scale/README.md).
 
 ## Scope discipline
 

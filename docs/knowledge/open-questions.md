@@ -20,10 +20,14 @@ date, and any promoted ADR/requirement.
 - **Requirements:** NFR-009, NFR-021
 - **Evidence needed:** An agreed workstation or CI class (CPU, RAM, OS) that
   requirement text can call "documented reference hardware."
-- **Notes:** NFR-021 AC4 currently records probe-host timings with a disclaimer
+- **Notes:** NFR-009 now names a **hardware class** (Linux amd64, 2+ CPU,
+  4+ GiB RAM, local disk for a 1 GiB generated tree) in
+  [`testdata/scale/README.md`](../../testdata/scale/README.md). That class is
+  enough for AC3 wording; a specific SKU is still unset. NFR-021 AC4 still
+  records probe-host timings with a disclaimer
   ([RES-20260909-nfr021-issue-filter-probe](research/RES-20260909-nfr021-issue-filter-probe.md)).
-  That host is not a product reference. Card list paging (Q-002) does not
-  close this question.
+  Probe hosts are not a published operator workstation. Card list paging
+  (Q-002) does not close this question.
 
 ## Q-002 — Issue-queue card windowing at 10k matches
 
