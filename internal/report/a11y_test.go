@@ -69,6 +69,9 @@ func TestNFR013GeneratedReportA11y(t *testing.T) {
 	if !strings.Contains(html, "ISSUE_PAGE_SIZE") || !strings.Contains(html, "issue-pager") {
 		t.Fatal("generated report is missing NFR-021 issue-list windowing chrome")
 	}
+	if !strings.Contains(html, ".issue-pager[hidden]") {
+		t.Fatal("generated report CSS lets display:flex override the pager hidden attribute")
+	}
 	if !strings.Contains(html, "--control-border") {
 		t.Fatal("generated report CSS is missing AA control-border token")
 	}
