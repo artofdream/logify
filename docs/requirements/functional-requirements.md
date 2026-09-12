@@ -92,8 +92,11 @@
 - **Priority:** Must
 - **Status:** Implemented
 - **Acceptance criteria:** Every emitted event has severity, source type,
-  instance, file, line, message, signature, and occurrence count; it also records
-  whether a timestamp exists.
+  instance, file, line, message, signature, occurrence count, and parse
+  confidence; it also records whether a timestamp exists. Parse confidence is
+  `high` when a format-specific parser matched the record and `low` when the
+  line was retained as unrecognized. Unparsed-record and correlation-confidence
+  counts belong on the analysis result and report summary (NFR-028).
 
 ## Correlation and filtering
 

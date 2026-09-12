@@ -54,9 +54,11 @@ jobs:
       # aborts test/tool binaries before main (golang/go#68678). The 1.22
       # backport emits a UUID when -B gobuildid is passed. Linux/Windows
       # do not need this. See INC-20260911-macos-go122-lc-uuid.
+      # NFR-001: native standalone executable. NFR-014: automated verification.
       - name: go build
         run: go build ${{ runner.os == 'macOS' && '-ldflags=-B=gobuildid' || '' }} -o ${{ matrix.bin }} ./cmd/logify
 
+      # NFR-014 / NFR-028: unit tests plus docs/link, ledger, and work-item probes.
       - name: go test
         run: go test ${{ runner.os == 'macOS' && '-ldflags=-B=gobuildid' || '' }} ./... -v
 

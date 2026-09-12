@@ -28,10 +28,14 @@ func TestAnalyzeEmptyDirectorySlices(t *testing.T) {
 }
 
 func TestAnalyzeFixtures(t *testing.T) {
+	// FR-001 / FR-002 / FR-004 / FR-005 / FR-006 / FR-007 / FR-008 / FR-009:
+	// directory scan, supported names, Java/Apache parse, multiline join,
+	// normalize, chronological order. NFR-028: unparsed-line accounting.
 	r, e := Analyze(filepath.Join("..", "..", "testdata", "case"), Options{})
 	if e != nil {
 		t.Fatal(e)
 	}
+	// NFR-005: Analyze reads the fixture tree and does not rewrite source files.
 	assertCounts(t, r, 3, 3, 0, 0)
 	if r.Events == nil || r.Warnings == nil || r.Correlations == nil {
 		t.Fatalf("nil slices events=%v warnings=%v correlations=%v", r.Events, r.Warnings, r.Correlations)
@@ -52,6 +56,11 @@ func TestAnalyzeFixtures(t *testing.T) {
 		}
 		if v.Message == "malformed access record" && v.SourceType == "apache-access" && !v.HasTimestamp {
 			retainedMalformed = true
+			if v.ParseConfidence != ConfidenceLow {
+				t.Errorf("unparsed access line confidence=%q", v.ParseConfidence)
+			}
+		} else if v.ParseConfidence != ConfidenceHigh {
+			t.Errorf("parsed event confidence=%q msg=%q", v.ParseConfidence, v.Message)
 		}
 		if v.Message == "backend connection failed" && v.SourceType == "apache-error" && v.Severity == Error {
 			apacheSeverity = true
@@ -71,6 +80,9 @@ func TestAnalyzeFixtures(t *testing.T) {
 	}
 	if !apacheSeverity {
 		t.Error("facility-qualified Apache severity was not parsed")
+	}
+	if r.UnparsedRecords != 1 {
+		t.Fatalf("unparsedRecords=%d want 1", r.UnparsedRecords)
 	}
 	for i := 1; i < len(r.Events); i++ {
 		if r.Events[i-1].HasTimestamp && r.Events[i].HasTimestamp && r.Events[i].Timestamp.Before(r.Events[i-1].Timestamp) {
@@ -140,7 +152,7 @@ func TestFilterReadmePlus0200Window(t *testing.T) {
 }
 
 func TestOverflowKeepsEarlierEvents(t *testing.T) {
-	// NFR-008 / FR-015: a token-too-long line must not drop events already parsed.
+	// NFR-007 / NFR-008 / FR-015: a token-too-long line must not drop events already parsed.
 	dir := t.TempDir()
 	huge := strings.Repeat("A", 4*1024*1024+16)
 	body := "2026-09-03 10:00:00 INFO before\n" + huge + "\n2026-09-03 10:00:01 INFO after\n"
@@ -276,9 +288,52 @@ func TestWarningStringAndSummary(t *testing.T) {
 	if !r.CountsReconcile() {
 		t.Fatal("expected scanned = processed + failed")
 	}
-	want := "2 events from 3 files; processed=2 skipped=1 failed=1; 1 warnings"
+	want := "2 events from 3 files; processed=2 skipped=1 failed=1; 1 warnings; unparsed=0; correlations=0 (high=0 low=0)"
 	if r.SummaryLine() != want {
 		t.Fatalf("SummaryLine()=%q want %q", r.SummaryLine(), want)
+	}
+}
+
+func TestDedupMixedParseConfidenceCountsOnlyUnparsed(t *testing.T) {
+	// NFR-028: FR-010 can collapse a parsed row with an unrecognized line that
+	// shares instance+signature. Count only the unrecognized occurrence.
+	parsed := Event{Instance: "t", Signature: "sig", Occurrences: 1, ParseConfidence: ConfidenceHigh, Message: "parsed"}
+	unparsed := Event{Instance: "t", Signature: "sig", Occurrences: 1, ParseConfidence: ConfidenceLow, UnparsedOccurrences: 1, Message: "unparsed"}
+	merged := dedup([]Event{parsed, unparsed})
+	if len(merged) != 1 {
+		t.Fatalf("events=%d want 1: %#v", len(merged), merged)
+	}
+	e := merged[0]
+	if e.Occurrences != 2 || e.UnparsedOccurrences != 1 || e.ParseConfidence != ConfidenceLow {
+		t.Fatalf("mixed group occ=%d unparsedOcc=%d conf=%q", e.Occurrences, e.UnparsedOccurrences, e.ParseConfidence)
+	}
+	r := Result{Events: merged}
+	got, _, _ := r.Observability()
+	if got != 1 {
+		t.Fatalf("unparsed=%d want 1", got)
+	}
+}
+
+func TestObservabilityCountsUnparsedAndCorrelations(t *testing.T) {
+	// NFR-028 AC6: unparsed-line accounting and correlation confidence counts.
+	caseResult, err := Analyze(filepath.Join("..", "..", "testdata", "case"), Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	unparsed, high, low := caseResult.Observability()
+	if unparsed != 1 || high != 0 || low != 0 || caseResult.UnparsedRecords != 1 {
+		t.Fatalf("case observability unparsed=%d high=%d low=%d stored=%d", unparsed, high, low, caseResult.UnparsedRecords)
+	}
+	corr, err := Analyze(filepath.Join("..", "..", "testdata", "correlate"), Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	unparsed, high, low = corr.Observability()
+	if unparsed != 0 || high != 1 || low != 1 {
+		t.Fatalf("correlate observability unparsed=%d high=%d low=%d groups=%d", unparsed, high, low, len(corr.Correlations))
+	}
+	if corr.HighConfidenceCorrelations != 1 || corr.LowConfidenceCorrelations != 1 {
+		t.Fatalf("stored correlation counts high=%d low=%d", corr.HighConfidenceCorrelations, corr.LowConfidenceCorrelations)
 	}
 }
 
@@ -309,6 +364,7 @@ func TestApacheErrorRetainsClientAddr(t *testing.T) {
 	}
 }
 func TestSignatureNormalizesIDs(t *testing.T) {
+	// NFR-010: signatures are deterministic after volatile-token normalization.
 	a := Event{SourceType: "x", Severity: Error, Message: "failure request 12345"}
 	b := Event{SourceType: "x", Severity: Error, Message: "failure request 67890"}
 	if signature(a) != signature(b) {

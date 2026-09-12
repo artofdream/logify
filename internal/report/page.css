@@ -245,6 +245,12 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   color: var(--flag);
   background: var(--flag-bg);
 }
+.parse-low {
+  margin: 6px 0 0;
+  color: var(--flag);
+  font-size: 12px;
+  font-weight: 700;
+}
 .warnings { margin: 0 0 16px; }
 .warning {
   display: grid;

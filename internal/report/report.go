@@ -24,16 +24,19 @@ var followUpJS string
 var pageJS string
 
 type payload struct {
-	Root           string             `json:"root"`
-	GeneratedAt    time.Time          `json:"generatedAt"`
-	FilesScanned   int                `json:"filesScanned"`
-	FilesProcessed int                `json:"filesProcessed"`
-	FilesSkipped   int                `json:"filesSkipped"`
-	FilesFailed    int                `json:"filesFailed"`
-	Events         []event            `json:"events"`
-	Warnings       []analyzer.Warning `json:"warnings"`
-	Correlations   []correlation      `json:"correlations"`
-	Redaction      redactionInfo      `json:"redaction"`
+	Root                       string             `json:"root"`
+	GeneratedAt                time.Time          `json:"generatedAt"`
+	FilesScanned               int                `json:"filesScanned"`
+	FilesProcessed             int                `json:"filesProcessed"`
+	FilesSkipped               int                `json:"filesSkipped"`
+	FilesFailed                int                `json:"filesFailed"`
+	UnparsedRecords            int                `json:"unparsedRecords"`
+	HighConfidenceCorrelations int                `json:"highConfidenceCorrelations"`
+	LowConfidenceCorrelations  int                `json:"lowConfidenceCorrelations"`
+	Events                     []event            `json:"events"`
+	Warnings                   []analyzer.Warning `json:"warnings"`
+	Correlations               []correlation      `json:"correlations"`
+	Redaction                  redactionInfo      `json:"redaction"`
 }
 
 type redactionInfo struct {
@@ -49,20 +52,22 @@ type Options struct {
 }
 
 type event struct {
-	Timestamp    time.Time         `json:"timestamp"`
-	HasTimestamp bool              `json:"hasTimestamp"`
-	Severity     analyzer.Severity `json:"severity"`
-	SourceType   string            `json:"sourceType"`
-	Instance     string            `json:"instance"`
-	File         string            `json:"file"`
-	Line         int               `json:"line"`
-	Message      string            `json:"message"`
-	Signature    string            `json:"signature"`
-	EvidenceID   string            `json:"evidenceId"`
-	Occurrences  int               `json:"occurrences"`
-	FirstSeen    *time.Time        `json:"firstSeen,omitempty"`
-	LastSeen     *time.Time        `json:"lastSeen,omitempty"`
-	StatusCode   int               `json:"statusCode,omitempty"`
+	Timestamp           time.Time         `json:"timestamp"`
+	HasTimestamp        bool              `json:"hasTimestamp"`
+	Severity            analyzer.Severity `json:"severity"`
+	SourceType          string            `json:"sourceType"`
+	Instance            string            `json:"instance"`
+	File                string            `json:"file"`
+	Line                int               `json:"line"`
+	Message             string            `json:"message"`
+	Signature           string            `json:"signature"`
+	EvidenceID          string            `json:"evidenceId"`
+	Occurrences         int               `json:"occurrences"`
+	FirstSeen           *time.Time        `json:"firstSeen,omitempty"`
+	LastSeen            *time.Time        `json:"lastSeen,omitempty"`
+	StatusCode          int               `json:"statusCode,omitempty"`
+	ParseConfidence     string            `json:"parseConfidence,omitempty"`
+	UnparsedOccurrences int               `json:"unparsedOccurrences,omitempty"`
 }
 
 type correlation struct {
@@ -145,18 +150,20 @@ func buildPayload(r analyzer.Result, opt Options) payload {
 	out := make([]event, 0, len(events))
 	for i, src := range events {
 		item := event{
-			Timestamp:    src.Timestamp,
-			HasTimestamp: src.HasTimestamp,
-			Severity:     src.Severity,
-			SourceType:   src.SourceType,
-			Instance:     src.Instance,
-			File:         src.File,
-			Line:         src.Line,
-			Message:      src.Message,
-			Signature:    src.Signature,
-			EvidenceID:   ids[i],
-			Occurrences:  src.Occurrences,
-			StatusCode:   src.StatusCode,
+			Timestamp:           src.Timestamp,
+			HasTimestamp:        src.HasTimestamp,
+			Severity:            src.Severity,
+			SourceType:          src.SourceType,
+			Instance:            src.Instance,
+			File:                src.File,
+			Line:                src.Line,
+			Message:             src.Message,
+			Signature:           src.Signature,
+			EvidenceID:          ids[i],
+			Occurrences:         src.Occurrences,
+			StatusCode:          src.StatusCode,
+			ParseConfidence:     string(src.ParseConfidence),
+			UnparsedOccurrences: src.UnparsedOccurrences,
 		}
 		if src.HasTimestamp {
 			first := src.Timestamp
@@ -183,16 +190,20 @@ func buildPayload(r analyzer.Result, opt Options) payload {
 			Members:    members,
 		})
 	}
+	unparsed, high, low := redacted.Observability()
 	return payload{
-		Root:           redacted.Root,
-		GeneratedAt:    r.GeneratedAt,
-		FilesScanned:   r.FilesScanned,
-		FilesProcessed: r.FilesProcessed,
-		FilesSkipped:   r.FilesSkipped,
-		FilesFailed:    r.FilesFailed,
-		Events:         out,
-		Warnings:       warnings,
-		Correlations:   corrs,
-		Redaction:      info,
+		Root:                       redacted.Root,
+		GeneratedAt:                r.GeneratedAt,
+		FilesScanned:               r.FilesScanned,
+		FilesProcessed:             r.FilesProcessed,
+		FilesSkipped:               r.FilesSkipped,
+		FilesFailed:                r.FilesFailed,
+		UnparsedRecords:            unparsed,
+		HighConfidenceCorrelations: high,
+		LowConfidenceCorrelations:  low,
+		Events:                     out,
+		Warnings:                   warnings,
+		Correlations:               corrs,
+		Redaction:                  info,
 	}
 }

@@ -128,7 +128,10 @@
       [REPORT.filesSkipped || 0, 'skipped'],
       [REPORT.filesFailed || 0, 'failed'],
       [warnings.length, 'warnings'],
-      [correlations.length, 'correlation groups']
+      [REPORT.unparsedRecords || 0, 'unparsed records'],
+      [correlations.length, 'correlation groups'],
+      [REPORT.highConfidenceCorrelations || 0, 'high-confidence groups'],
+      [REPORT.lowConfidenceCorrelations || 0, 'low-confidence groups']
     ];
     var root = $('stats');
     clear(root);
@@ -229,6 +232,14 @@
       article.appendChild(src);
       var body = el('div');
       body.appendChild(el('div', 'msg', event.message));
+      var unparsedOcc = event.unparsedOccurrences || (event.parseConfidence === 'low' ? 1 : 0);
+      if (unparsedOcc > 0) {
+        var totalOcc = event.occurrences || 1;
+        var parseLabel = unparsedOcc >= totalOcc ?
+          'Unparsed record (low parse confidence)' :
+          'Contains ' + unparsedOcc + ' unparsed occurrence(s)';
+        body.appendChild(el('div', 'parse-low', parseLabel));
+      }
       var details = (event.file || '') + ':' + event.line + ' • ' + (event.signature || '');
       if ((event.occurrences || 0) > 1) {
         details += ' • ' + event.occurrences + ' occurrences; first ' + formatTime(event.firstSeen) + '; last ' + formatTime(event.lastSeen);

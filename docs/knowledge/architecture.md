@@ -3,7 +3,7 @@ id: logify-architecture
 type: architecture
 status: active
 owner: human
-updated: 2026-09-11
+updated: 2026-09-12
 sources: [../../README.md, ../../cmd/logify/main.go, ../../internal/analyzer, ../../internal/redact, ../../internal/report]
 ---
 
@@ -35,7 +35,14 @@ access/Tomcat groups only.
 Recoverable scan problems are structured warnings (`walk-error`, `open-error`,
 `scan-overflow`, `scan-error`) with file, category, optional line/range, and
 message. `filesScanned` equals `filesProcessed + filesFailed`; `filesSkipped`
-counts walk paths that could not be visited (FR-015 / ADR-0004).
+counts walk paths that could not be visited (FR-015 / ADR-0004). Each event
+carries parse confidence (`high` when a format-specific parser matched, `low`
+when the line was retained unrecognized). The result and HTML summary count
+unparsed records (by occurrence) and correlation groups by confidence
+(NFR-028). `internal/harness` fails CI when critical relative docs links break,
+the adoption ledger contradicts requirement statuses, an Implemented
+requirement has no named test/CI/JS probe, or an open work item is missing
+ownership fields.
 
 Issue-workflow usability (NFR-021 / ADR-0006): flag and state are named in
 text; common actions restore focus after a card rebuild and confirm in a live

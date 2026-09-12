@@ -3,7 +3,7 @@ id: logify-glossary
 type: glossary
 status: active
 owner: human
-updated: 2026-09-11
+updated: 2026-09-12
 ---
 
 # Glossary
@@ -41,6 +41,10 @@ updated: 2026-09-11
 - **Signature:** deterministic normalized identity used to group recurring events.
 - **Work item:** a bounded unit of agent/human work with advisory path ownership.
 - **Lease:** time-limited declaration of edit intent; not a filesystem lock.
+- **Parse confidence:** `high` when a format-specific parser matched the
+  record; `low` when the line was retained as unrecognized (FR-008 / NFR-028).
+- **Unparsed record:** a retained unrecognized line. Counted on the analysis
+  result and report summary; distinct from a scan warning.
 - **Probe:** a direct observation, test, or command that supports a status claim.
 - **Issue-filter probe:** Node harness that imports 10,000 synthetic issues and
   times `store.filter` for NFR-021 AC4. It does not render issue cards.

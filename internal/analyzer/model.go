@@ -30,6 +30,12 @@ type Event struct {
 	Occurrences  int       `json:"occurrences"`
 	LastSeen     time.Time `json:"lastSeen"`
 	StatusCode   int       `json:"statusCode,omitempty"`
+	// ParseConfidence is high when a format-specific parser matched the
+	// record and low when the line was retained as unrecognized (FR-008).
+	ParseConfidence Confidence `json:"parseConfidence,omitempty"`
+	// UnparsedOccurrences is how many collapsed rows were unrecognized.
+	// It is the unparsed-line count after FR-010 merge; Occurrences may be larger.
+	UnparsedOccurrences int `json:"unparsedOccurrences,omitempty"`
 	// ClientAddr is the parsed HTTPD remote address when known. It is used by
 	// correlation (FR-012) and is not part of signature or evidence identity.
 	ClientAddr string `json:"clientAddr,omitempty"`
@@ -121,20 +127,52 @@ func (w Warning) String() string {
 }
 
 type Result struct {
-	Root           string        `json:"root"`
-	GeneratedAt    time.Time     `json:"generatedAt"`
-	FilesScanned   int           `json:"filesScanned"`
-	FilesProcessed int           `json:"filesProcessed"`
-	FilesSkipped   int           `json:"filesSkipped"`
-	FilesFailed    int           `json:"filesFailed"`
-	Events         []Event       `json:"events"`
-	Warnings       []Warning     `json:"warnings"`
-	Correlations   []Correlation `json:"correlations"`
+	Root                       string        `json:"root"`
+	GeneratedAt                time.Time     `json:"generatedAt"`
+	FilesScanned               int           `json:"filesScanned"`
+	FilesProcessed             int           `json:"filesProcessed"`
+	FilesSkipped               int           `json:"filesSkipped"`
+	FilesFailed                int           `json:"filesFailed"`
+	UnparsedRecords            int           `json:"unparsedRecords"`
+	HighConfidenceCorrelations int           `json:"highConfidenceCorrelations"`
+	LowConfidenceCorrelations  int           `json:"lowConfidenceCorrelations"`
+	Events                     []Event       `json:"events"`
+	Warnings                   []Warning     `json:"warnings"`
+	Correlations               []Correlation `json:"correlations"`
 }
 
 func (r Result) SummaryLine() string {
-	return fmt.Sprintf("%d events from %d files; processed=%d skipped=%d failed=%d; %d warnings",
-		len(r.Events), r.FilesScanned, r.FilesProcessed, r.FilesSkipped, r.FilesFailed, len(r.Warnings))
+	unparsed, high, low := r.Observability()
+	return fmt.Sprintf("%d events from %d files; processed=%d skipped=%d failed=%d; %d warnings; unparsed=%d; correlations=%d (high=%d low=%d)",
+		len(r.Events), r.FilesScanned, r.FilesProcessed, r.FilesSkipped, r.FilesFailed, len(r.Warnings),
+		unparsed, len(r.Correlations), high, low)
+}
+
+// Observability counts retained unrecognized records (by occurrence) and
+// correlation groups by confidence. Empty parseConfidence is not unparsed.
+func (r Result) Observability() (unparsed, highCorr, lowCorr int) {
+	for _, e := range r.Events {
+		if e.UnparsedOccurrences > 0 {
+			unparsed += e.UnparsedOccurrences
+			continue
+		}
+		if e.ParseConfidence == ConfidenceLow {
+			unparsed++
+		}
+	}
+	for _, c := range r.Correlations {
+		switch c.Confidence {
+		case ConfidenceHigh:
+			highCorr++
+		case ConfidenceLow:
+			lowCorr++
+		}
+	}
+	return unparsed, highCorr, lowCorr
+}
+
+func (r *Result) refreshObservability() {
+	r.UnparsedRecords, r.HighConfidenceCorrelations, r.LowConfidenceCorrelations = r.Observability()
 }
 
 func (r Result) CountsReconcile() bool {

@@ -1,0 +1,9 @@
+# Review routing for artofdream/logify (NFR-028 Permissions).
+#
+# This file requests reviews from the repository owner. It is not a filesystem
+# lock and does not merge-lock paths unless GitHub branch protection enables
+# "Require review from Code Owners". Leases in work items remain advisory.
+# Merge onto main still depends on the CI `validate` job when that check is
+# required. See docs/collaboration/permissions.md.
+
+* @artofdream
