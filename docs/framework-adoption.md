@@ -78,7 +78,6 @@ Deferred requirement must appear. Values must match `docs/requirements/`.
 
 | ID | Status |
 |---|---|
-| NFR-009 | Partial |
 | NFR-013 | Partial |
 | NFR-021 | Partial |
 | NFR-028 | Partial |
@@ -100,5 +99,5 @@ advanced because documentation or code merely exists.
 
 NFR-028 remains **Partial**: Permissions still cannot claim an enforced
 path/merge lock from this repository, and Sensors still lack WCAG and
-in-browser DOM. NFR-009 now has a generated-fixture smoke bench in `go test`
-/ Linux CI; the 1 GiB run stays manual.
+in-browser DOM. NFR-009 has a generated-fixture smoke bench in `go test` /
+Linux CI; the 1 GiB child-process run stays manual/nightly.

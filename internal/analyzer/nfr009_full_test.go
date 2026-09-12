@@ -80,7 +80,7 @@ func TestNFR009Scale1GiB(t *testing.T) {
 	}
 	if got.PeakRSSOK {
 		if got.PeakRSSBytes >= analyzer.ScaleMemoryBudget {
-			t.Logf("AC2 MISS: peak RSS %d >= 512 MiB (honest Partial; storm fixture still retained %d unique events)", got.PeakRSSBytes, got.Events)
+			t.Errorf("AC2 MISS: peak RSS %d >= 512 MiB (storm fixture unique events=%d)", got.PeakRSSBytes, got.Events)
 		} else {
 			t.Logf("AC2 PASS: peak RSS %d < 512 MiB", got.PeakRSSBytes)
 		}
@@ -88,7 +88,7 @@ func TestNFR009Scale1GiB(t *testing.T) {
 		t.Logf("AC2 unknown: peak RSS not available on this OS (heap_alloc=%d sys=%d)", got.HeapAlloc, got.SysBytes)
 	}
 	if time.Duration(got.DurationNS) > analyzer.ScaleTimeBudget {
-		t.Logf("AC3 MISS: analysis %s > 5m", time.Duration(got.DurationNS))
+		t.Errorf("AC3 MISS: analysis %s > 5m", time.Duration(got.DurationNS))
 	} else {
 		t.Logf("AC3 PASS: analysis %s <= 5m", time.Duration(got.DurationNS))
 	}

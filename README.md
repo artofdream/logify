@@ -157,10 +157,11 @@ writes `/tmp/logify-nfr009` and measures analysis in a child process (Linux
 peak RSS via `VmHWM`). Details: [`testdata/scale/README.md`](testdata/scale/README.md).
 Measured probe-host numbers: [`docs/knowledge/research/RES-20260912-nfr009-scale-bench.md`](docs/knowledge/research/RES-20260912-nfr009-scale-bench.md).
 
-NFR-009 remains **Partial** until a measured 1 GiB run meets both the 512 MiB
-peak-memory and five-minute budgets on that class. Unique-heavy access logs
-(millions of distinct signatures) can still exceed 512 MiB; that is the
-timeline model (one row per signature), not a missing scanner bound.
+On the 2026-09-12 probe host (4× Xeon, 16 GiB, Linux, Go 1.22.2) the 1 GiB
+storm fixture used 13.6 MiB peak RSS and finished analysis+report in 59 s.
+Unique-heavy access logs (millions of distinct signatures) can still exceed
+512 MiB; that is the timeline model (one row per signature), not a missing
+scanner bound.
 
 ## Behavior
 

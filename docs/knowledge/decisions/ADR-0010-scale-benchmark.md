@@ -42,9 +42,9 @@ scanner.
    only `TestNFR009ScaleSmoke` and Linux `BenchmarkNFR009ScaleSmoke`.
 5. **Reference hardware is a class.** Linux amd64, 2+ CPU, 4+ GiB RAM. A
    specific SKU stays [Q-001](../open-questions.md).
-6. **Stay Partial** unless a measured 1 GiB run meets AC2 and AC3. Do not
-   treat a highly repetitive storm fixture as proof that unique-heavy access
-   logs stay under 512 MiB.
+6. **Status follows measured ACs.** The 2026-09-12 probe-host run met AC2
+   and AC3 on the storm fixture (13.6 MiB RSS, 59 s). Do not treat that as
+   proof that unique-heavy access logs stay under 512 MiB.
 
 ## Alternatives considered
 

@@ -102,29 +102,31 @@
 ### NFR-009 — Scale to realistic support bundles
 
 - **Priority:** Should
-- **Status:** Partial
+- **Status:** Implemented
 - **Acceptance criteria:**
   1. A documented benchmark fixture represents at least 1 GiB and multiple
      instances.
   2. Peak memory remains below 512 MiB for that fixture.
   3. Analysis completes within five minutes on documented reference hardware.
   4. Performance regressions are measurable with a repeatable benchmark.
-- **Notes:** AC1 and AC4 are met. The fixture is profile `storm`: four
-  instances (`node-a`, `node-b`, `httpd-a`, `httpd-b`), generated on demand
-  (never committed). See [`testdata/scale/README.md`](../../testdata/scale/README.md),
+- **Notes:** The fixture is profile `storm`: four instances (`node-a`,
+  `node-b`, `httpd-a`, `httpd-b`), generated on demand (never committed).
+  See [`testdata/scale/README.md`](../../testdata/scale/README.md),
   `make bench-nfr009` / `make bench-nfr009-smoke`, and
   [`RES-20260912-nfr009-scale-bench`](../knowledge/research/RES-20260912-nfr009-scale-bench.md).
   Reference hardware is the Linux amd64 class in that README (2+ CPU, 4+ GiB
   RAM). A specific SKU remains [Q-001](../knowledge/open-questions.md).
   Analysis for AC2/AC3 is `Analyze` plus report write in a child process;
-  Linux peak memory is `VmHWM`. CI runs only the 8 MiB smoke bench.
-  Analyzer streaming: files are still scanned incrementally (NFR-008);
-  repeats merge online; extra correlation hints are capped at 64 per row
+  Linux peak memory is `VmHWM`. Probe-host evidence (2026-09-12, 4× Xeon,
+  16 GiB, Go 1.22.2): input 1,073,741,887 bytes, 4 instances, 44 unique
+  events, peak RSS 13.6 MiB, duration 59.3 s. CI runs only the 8 MiB smoke
+  bench (`BenchmarkNFR009ScaleSmoke`, 44 unique events, ~2.2 s/op on the
+  same host). Analyzer streaming: incremental scan (NFR-008), online merge,
+  extra correlation hints capped at 64 per row
   ([ADR-0010](../knowledge/decisions/ADR-0010-scale-benchmark.md)).
-- **Gap:** Status stays Partial until a measured 1 GiB run on the documented
-  class shows AC2 and AC3, or the ACs are rewritten. Unique-heavy access
-  corpora (millions of distinct signatures) are outside this fixture and can
-  still exceed 512 MiB because FR-010 retains one row per signature.
+  Unique-heavy access corpora (millions of distinct signatures) are outside
+  this fixture and can still exceed 512 MiB because FR-010 retains one row
+  per signature.
 
 ### NFR-010 — Deterministic results
 

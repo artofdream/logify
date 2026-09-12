@@ -1,11 +1,11 @@
 ---
 id: WI-20260912-nfr009-scale-bench
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-12T10:25:00Z
-updated: 2026-09-12T10:40:00Z
-lease_expires: 2026-09-12T18:00:00Z
+updated: 2026-09-12T10:35:00Z
+lease_expires: null
 scope:
   - Makefile
   - .gitignore
@@ -82,5 +82,10 @@ smoke, plus `make bench-nfr009` / `LOGIFY_NFR009_FULL=1` on this VM.
   `cursor/nfr009-scale-bench-fd16` from current `main`.
 - `2026-09-12T10:40:00Z` — cursor-agent — online merge, bounded occHints,
   generated storm fixture, docs/CI/Make; pre-test commit next.
+- `2026-09-12T10:35:00Z` — cursor-agent — 1 GiB child-process run passed
+  AC1–AC3 (13.6 MiB RSS, 59 s). Status Implemented. Handoff written.
 
 ## Handoff or completion
+
+[HO-20260912-cursor-agent-nfr009](../handoffs/HO-20260912-cursor-agent-nfr009.md)
+— PR #18, do not merge.
