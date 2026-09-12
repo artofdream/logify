@@ -1,10 +1,10 @@
 ---
 id: WI-20260912-release-ldflags
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-12T10:50:00Z
-updated: 2026-09-12T10:50:00Z
+updated: 2026-09-12T11:00:00Z
 lease_expires: 2026-09-12T18:00:00Z
 scope:
   - .github/workflows/release.yml
@@ -62,8 +62,8 @@ deferred this wiring as a non-goal).
 
 ## Validation
 
-- YAML of `release.yml` still parses.
-- `go test ./cmd/logify/...` if Go sources change (not expected).
+Observed on `536e2ea`: YAML parse OK; harness work-item probe pass;
+local ldflags smoke prints `logify v0.1.0`. See the handoff.
 
 ## Activity log
 
@@ -71,7 +71,14 @@ deferred this wiring as a non-goal).
   main` (`b4d6ec0`), work-item/dispatch scan, and principles/NFR-016/ADR-0010
   read. Transferred deferred ldflags wiring from
   `WI-20260912-nfr016-cli-compat`.
+- `2026-09-12T11:00:00Z` — cursor-agent — PR
+  https://github.com/artofdream/logify/pull/21 opened (ready for review).
+  YAML parse, harness probe, and local ldflags smoke passed. Status
+  remains active until coordinator review; do not tag from this item.
 
 ## Handoff or completion
+
+In review on https://github.com/artofdream/logify/pull/21. Do not merge
+or tag from this item.
 
 [HO-20260912-cursor-agent-release-ldflags](../handoffs/HO-20260912-cursor-agent-release-ldflags.md)
