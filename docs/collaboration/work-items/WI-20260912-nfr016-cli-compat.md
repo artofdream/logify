@@ -1,11 +1,11 @@
 ---
 id: WI-20260912-nfr016-cli-compat
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-12T10:27:11Z
-updated: 2026-09-12T10:27:11Z
-lease_expires: 2026-09-12T16:00:00Z
+updated: 2026-09-12T10:30:00Z
+lease_expires: null
 scope:
   - cmd/logify/main.go
   - cmd/logify/main_test.go
@@ -58,11 +58,17 @@ missing `var version` and defers tag injection.
 
 ## Validation
 
-`AGENTS.md` commands plus `./logify.exe -version` and `-h`.
+Local `AGENTS.md` commands passed. See
+`docs/collaboration/handoffs/HO-20260912-cursor-agent-nfr016.md`.
+PR https://github.com/artofdream/logify/pull/17 (do not merge from this item).
 
 ## Activity log
 
 - `2026-09-12T10:27:11Z` — cursor-agent — claimed after `git fetch origin main`
   and work-item/dispatch scan.
+- `2026-09-12T10:30:00Z` — cursor-agent — policy, `-version`, and probes
+  landed; local validation passed; lease released for review.
 
 ## Handoff or completion
+
+`docs/collaboration/handoffs/HO-20260912-cursor-agent-nfr016.md`
