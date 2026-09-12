@@ -1,11 +1,11 @@
 ---
 id: WI-20260912-nfr028-outer-harness
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-12T05:55:00Z
-updated: 2026-09-12T05:55:00Z
-lease_expires: 2026-09-12T14:00:00Z
+updated: 2026-09-12T06:20:00Z
+lease_expires: null
 scope:
   - .github/CODEOWNERS
   - .github/workflows/ci.yml
@@ -73,11 +73,15 @@ NFR-028. Review-status WIs exist but are not editing.
 
 ## Validation
 
-Commands in `AGENTS.md`.
+Local `AGENTS.md` commands passed. See
+`docs/collaboration/handoffs/HO-20260912-cursor-agent-nfr028.md`.
+PR https://github.com/artofdream/logify/pull/16 (do not merge from this item).
 
 ## Activity log
 
 - `2026-09-12T05:55:00Z` — cursor-agent — claimed after `git fetch origin main`
   and work-item/dispatch scan.
+- `2026-09-12T06:20:00Z` — cursor-agent — probes landed; local validation
+  passed; lease released for review.
 
 ## Handoff or completion
