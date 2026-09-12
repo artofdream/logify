@@ -4,7 +4,8 @@ This directory is the product source of truth for Logify. Requirements are
 defined before implementation and remain independent of package structure.
 
 All requirements and delivery work are governed by the project
-[core principles](../principles.md): honesty, antifragility, and knowledge first.
+[core principles](../principles.md): honesty, antifragility, knowledge first,
+and keep learning and apply.
 When work is delegated, follow the [multi-agent workflow](../multi-agent-workflow.md).
 Concurrent Codex–Claude work uses the document-based
 [collaboration protocol](../collaboration/README.md) and durable

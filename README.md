@@ -6,8 +6,8 @@ Development follows a documentation-first process. The canonical [functional
 and non-functional requirements](docs/requirements/README.md) define scope,
 acceptance criteria, implementation status, and planned gaps.
 
-Engineering and multi-agent work follows three [core principles](docs/principles.md):
-honesty, antifragility, and knowledge first.
+Engineering and multi-agent work follows four [core principles](docs/principles.md):
+honesty, antifragility, knowledge first, and keep learning and apply.
 Their complete Logify translation—including Shared Understanding, authoritative
 evidence, and the six-layer outer harness—is maintained in the
 [Adaptive Experience Architecture adoption map](docs/framework-adoption.md).
