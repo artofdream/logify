@@ -50,8 +50,15 @@ ownership fields.
 
 Issue-workflow usability (NFR-021 / ADR-0006): flag and state are named in
 text; common actions restore focus after a card rebuild and confirm in a live
-status region. `nfr021_filter_probe.js` times `store.filter` at 10,000 issues;
-the page still renders every matching card (see Q-002).
+status region. The queue pages matching cards (`ISSUE_PAGE_SIZE = 25`).
+`nfr021_filter_probe.js` times `store.filter` at 10,000 issues plus a 25-item
+slice. Q-001 (published reference hardware) remains open, so NFR-021 stays
+Partial.
+
+Accessible report interaction (NFR-013 / ADR-0011): static and dynamic
+controls use explicit `for=` labels; timeline severity is `Severity: …` text;
+`--control-border` meets 3:1 against `--panel`; `internal/report/a11y.go`
+checks generated-report labels and CSS token contrast in CI without npm/axe.
 
 This note describes observed structure. Requirements remain authoritative for
 intended behavior, and tests/compiler output remain evidence of implementation.

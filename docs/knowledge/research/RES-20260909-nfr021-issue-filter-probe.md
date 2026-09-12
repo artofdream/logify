@@ -4,8 +4,8 @@ type: research
 status: active
 owner: cursor-agent
 created: 2026-09-09
-updated: 2026-09-09
-sources: [../../internal/report/nfr021_filter_probe.js, ../../internal/report/followup.js]
+updated: 2026-09-12
+sources: [../../internal/report/nfr021_filter_probe.js, ../../internal/report/followup.js, ../../internal/report/page.js]
 ---
 
 # NFR-021 AC4 issue-filter probe
@@ -13,8 +13,10 @@ sources: [../../internal/report/nfr021_filter_probe.js, ../../internal/report/fo
 ## Question and scope
 
 Does `LogifyFollowUp` `store.filter` stay within an interactive budget when
-10,000 issues are loaded? The probe does **not** render HTML issue cards and
-is **not** a published operator workstation specification.
+10,000 issues are loaded? The probe does **not** paint HTML issue cards and
+is **not** a published operator workstation specification. Since 2026-09-12
+the live queue pages matches at 25 cards; the probe also times a 25-item
+slice.
 
 ## Sources and freshness
 
@@ -56,13 +58,13 @@ target was met for `store.filter` on this host. The 500 ms CI guard passed.
 - `filter()` concatenates several fields and lowercases them per issue. That is
   why text search is slower than equality filters. It is still far under 100 ms
   at n=10,000 on this host.
-- Rendering 10,000 full issue cards (each with multiple inputs) was not
-  measured and is expected to be the dominant cost. NFR-021 AC4 therefore
-  remains gapped for the on-page workflow.
+- Rendering 10,000 full issue cards (each with multiple inputs) is no longer
+  the default path: `renderIssues` pages at `ISSUE_PAGE_SIZE = 25`. The probe
+  still does not paint those 25 cards in a browser. NFR-021 AC4 remains
+  gapped for published reference hardware (Q-001).
 
 ## Recommendation and promotion targets
 
-Keep NFR-021 **Partial**. Promote this note from the requirement evidence
-block. Do not mark AC4 Implemented until a published reference workstation is
-agreed (Q-001) and either card rendering is windowed (Q-002) or a browser
-probe shows a 10,000-match render stays responsive.
+Keep NFR-021 **Partial**. Q-002 is resolved (paginate 25). Do not mark AC4
+Implemented until a published reference workstation is agreed (Q-001) or a
+browser probe on that hardware shows the paged queue stays responsive.

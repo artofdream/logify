@@ -48,6 +48,16 @@
     o.textContent = label;
     select.appendChild(o);
   }
+  function labeledField(labelText, control, className) {
+    var wrap = el('div', className || 'field');
+    var lab = el('label', '', labelText);
+    if (control.id) lab.setAttribute('for', control.id);
+    wrap.appendChild(lab);
+    wrap.appendChild(control);
+    return wrap;
+  }
+  var ISSUE_PAGE_SIZE = 25;
+  var issuePage = 0;
   function fillUnique(select, values) {
     var seen = {};
     values.forEach(function (v) {
@@ -199,11 +209,21 @@
     }
   }
 
+  function pageForIssue(issue) {
+    if (!issue) return 0;
+    var visible = store.filter(issueFilters());
+    for (var i = 0; i < visible.length; i++) {
+      if (visible[i].id === issue.id) return Math.floor(i / ISSUE_PAGE_SIZE);
+    }
+    return 0;
+  }
+
   function showIssue(issue) {
     switchView('issues');
     ['iq', 'istate', 'itags', 'iflag', 'iowner', 'isev', 'iinst'].forEach(function (id) { $(id).value = ''; });
     $('ioverdue').checked = false;
-    renderIssues();
+    issuePage = pageForIssue(issue);
+    renderIssues({ keepPage: true });
     var target = document.getElementById(issueAnchor(issue));
     if (target) {
       target.focus();
@@ -224,7 +244,10 @@
       article.id = evidenceAnchor(event);
       article.tabIndex = -1;
       article.appendChild(el('div', 'when', event.hasTimestamp ? formatTime(event.timestamp) : 'No timestamp'));
-      article.appendChild(el('div', 'sev', event.severity || 'UNKNOWN'));
+      var sevText = event.severity || 'UNKNOWN';
+      var sev = el('div', 'sev', 'Severity: ' + sevText);
+      sev.setAttribute('aria-label', 'Severity: ' + sevText);
+      article.appendChild(sev);
       var src = el('div', 'src');
       src.appendChild(document.createTextNode(event.instance || ''));
       src.appendChild(document.createElement('br'));
@@ -289,6 +312,8 @@
         picker = el('div', 'link-picker');
         picker.hidden = true;
         var linkSelect = document.createElement('select');
+        linkSelect.id = 'link-' + digest(event.evidenceId);
+        linkSelect.setAttribute('aria-label', 'Issue to link for ' + (event.file || 'event') + ' line ' + event.line);
         option(linkSelect, '', 'Choose an issue');
         store.list().forEach(function (issue) {
           option(linkSelect, issue.id, issue.title + ' (' + issue.id + ')');
@@ -310,7 +335,7 @@
           showIssue(result.issue);
           showFeedback('issue-feedback', 'Linked evidence to ' + result.issue.id + '; state remains ' + result.issue.state);
         });
-        picker.appendChild(linkSelect);
+        picker.appendChild(labeledField('Issue to link', linkSelect));
         picker.appendChild(confirmLink);
         linkBtn.addEventListener('click', function () {
           picker.hidden = !picker.hidden;
@@ -395,7 +420,6 @@
     heading.appendChild(tools);
     card.appendChild(heading);
 
-    var titleLabel = el('label', '', 'Title');
     var title = document.createElement('input');
     title.type = 'text';
     title.id = 'title-' + digest(issue.id);
@@ -406,10 +430,8 @@
       store.updateTitle(issue.id, title.value);
       showDetailFeedback('Updated title for ' + issue.id);
     });
-    titleLabel.appendChild(title);
-    card.appendChild(titleLabel);
+    card.appendChild(labeledField('Title', title));
 
-    var stateField = el('label', '', 'Workflow state');
     var state = document.createElement('select');
     state.id = 'state-' + digest(issue.id);
     state.setAttribute('data-control', 'state');
@@ -422,8 +444,7 @@
       renderAll();
       showFeedback('issue-feedback', 'State for ' + issue.id + ' is now ' + stateLabel(state.value));
     });
-    stateField.appendChild(state);
-    card.appendChild(stateField);
+    card.appendChild(labeledField('Workflow state', state));
 
     var op = el('div', 'box');
     op.appendChild(el('h3', '', 'Operator metadata'));
@@ -446,7 +467,6 @@
     });
     op.appendChild(tags);
     var add = el('div', 'tag-add');
-    var tagLabel = el('label', '', 'New tag');
     var tagInput = document.createElement('input');
     tagInput.type = 'text';
     tagInput.id = 'tag-' + digest(issue.id);
@@ -454,7 +474,6 @@
     tagInput.setAttribute('autocomplete', 'off');
     tagInput.maxLength = LogifyFollowUp.LIMITS.maxTagLength;
     tagInput.placeholder = 'e.g. database';
-    tagLabel.appendChild(tagInput);
     var addBtn = el('button', '', 'Add tag');
     addBtn.type = 'button';
     addBtn.setAttribute('data-control', 'tag-add');
@@ -475,19 +494,18 @@
         submitTag();
       }
     });
-    add.appendChild(tagLabel);
+    add.appendChild(labeledField('New tag', tagInput));
     add.appendChild(addBtn);
     op.appendChild(add);
 
     var details = el('div', 'follow-up-fields');
-    var ownerLabel = el('label', '', 'Owner');
     var ownerInput = document.createElement('input');
     ownerInput.type = 'text';
     ownerInput.id = 'owner-' + digest(issue.id);
     ownerInput.setAttribute('data-control', 'owner');
     ownerInput.maxLength = LogifyFollowUp.LIMITS.maxOwner;
     ownerInput.autocomplete = 'off';
-    ownerInput.placeholder = 'Optional owner';
+    ownerInput.placeholder = 'Optional owner name';
     ownerInput.value = issue.owner || '';
     ownerInput.addEventListener('input', function () {
       var result = store.setOwner(issue.id, ownerInput.value);
@@ -497,10 +515,9 @@
       }
       showDetailFeedback('Updated owner for ' + issue.id);
     });
-    ownerLabel.appendChild(ownerInput);
-    details.appendChild(ownerLabel);
+    details.appendChild(labeledField('Owner', ownerInput));
 
-    var dueLabel = el('label', '', 'Due date');
+    var dueWrap = el('div', 'field');
     var dueRow = el('div', 'due-row');
     var dueInput = document.createElement('input');
     dueInput.type = 'date';
@@ -517,6 +534,8 @@
       renderAll();
       showFeedback('issue-feedback', dueInput.value ? ('Due date for ' + issue.id + ' is ' + dueInput.value) : ('Cleared due date for ' + issue.id));
     });
+    var dueLabel = el('label', '', 'Due date');
+    dueLabel.setAttribute('for', dueInput.id);
     var clearDue = el('button', '', 'Clear due date');
     clearDue.type = 'button';
     clearDue.setAttribute('data-control', 'due-clear');
@@ -532,11 +551,11 @@
     });
     dueRow.appendChild(dueInput);
     dueRow.appendChild(clearDue);
-    dueLabel.appendChild(dueRow);
-    dueLabel.appendChild(el('span', 'hint', 'Overdue when before today (UTC calendar date) and the issue is not resolved or dismissed.'));
-    details.appendChild(dueLabel);
+    dueWrap.appendChild(dueLabel);
+    dueWrap.appendChild(dueRow);
+    dueWrap.appendChild(el('span', 'hint', 'Overdue when before today (UTC calendar date) and the issue is not resolved or dismissed.'));
+    details.appendChild(dueWrap);
 
-    var notesLabel = el('label', '', 'Notes');
     var notes = document.createElement('textarea');
     notes.id = 'notes-' + digest(issue.id);
     notes.setAttribute('data-control', 'notes');
@@ -552,8 +571,7 @@
       }
       showDetailFeedback('Updated notes for ' + issue.id);
     });
-    notesLabel.appendChild(notes);
-    details.appendChild(notesLabel);
+    details.appendChild(labeledField('Notes', notes));
     op.appendChild(details);
 
     var meta = el('dl', 'meta-grid');
@@ -709,6 +727,26 @@
     });
   }
 
+  function renderIssuePager(matchCount) {
+    var pager = $('issue-pager');
+    var status = $('issue-page-status');
+    var prev = $('issue-prev');
+    var next = $('issue-next');
+    if (!pager || !status || !prev || !next) return;
+    var pages = Math.max(1, Math.ceil(matchCount / ISSUE_PAGE_SIZE));
+    if (matchCount <= ISSUE_PAGE_SIZE) {
+      pager.hidden = true;
+      status.textContent = 'Page 1 of 1';
+      prev.disabled = true;
+      next.disabled = true;
+      return;
+    }
+    pager.hidden = false;
+    status.textContent = 'Page ' + (issuePage + 1) + ' of ' + pages;
+    prev.disabled = issuePage <= 0;
+    next.disabled = issuePage >= pages - 1;
+  }
+
   function renderIssues(opts) {
     opts = opts || {};
     var root = $('issues');
@@ -717,12 +755,24 @@
     var total = store.issueCount();
     var summary = $('issue-summary');
     var summaryText;
+    if (!opts.keepPage) issuePage = 0;
+    var pages = Math.max(1, Math.ceil(visible.length / ISSUE_PAGE_SIZE));
+    if (issuePage >= pages) issuePage = pages - 1;
+    if (issuePage < 0) issuePage = 0;
+    var start = issuePage * ISSUE_PAGE_SIZE;
+    var pageItems = visible.slice(start, start + ISSUE_PAGE_SIZE);
     if (!total) {
       summaryText = 'No issues yet. Create one from a timeline event or group.';
-    } else {
+    } else if (!visible.length) {
+      summaryText = 'Showing 0 of ' + total + ' issue(s).';
+    } else if (visible.length <= ISSUE_PAGE_SIZE) {
       summaryText = 'Showing ' + visible.length + ' of ' + total + ' issue(s).';
+    } else {
+      summaryText = 'Showing ' + (start + 1) + '–' + (start + pageItems.length) +
+        ' of ' + visible.length + ' matching issue(s) (' + total + ' total).';
     }
     if (summary) summary.textContent = summaryText;
+    renderIssuePager(visible.length);
     if (!total) {
       root.appendChild(el('div', 'empty', 'No issues yet. Create one from a timeline event or group.'));
       applyPendingFocus();
@@ -738,7 +788,7 @@
     var reviewIndex = { newOcc: {}, candidates: {} };
     reviews.occurrenceUpdates.forEach(function (u) { reviewIndex.newOcc[u.issueId] = true; });
     reviews.candidates.forEach(function (c) { reviewIndex.candidates[c.issueId] = true; });
-    visible.forEach(function (issue) { root.appendChild(renderIssueCard(issue, reviewIndex)); });
+    pageItems.forEach(function (issue) { root.appendChild(renderIssueCard(issue, reviewIndex)); });
     if (opts.announceCount) showFeedback('issue-feedback', summaryText);
     applyPendingFocus();
   }
@@ -823,7 +873,7 @@
     renderStorage();
     renderTimeline();
     renderReviews();
-    renderIssues();
+    renderIssues({ keepPage: true });
   }
 
   function exportFollowUp() {
@@ -888,6 +938,15 @@
   ['iq', 'istate', 'itags', 'iflag', 'iowner', 'isev', 'iinst', 'ioverdue'].forEach(function (id) {
     $(id).addEventListener('input', function () { renderIssues({ announceCount: true }); });
     $(id).addEventListener('change', function () { renderIssues({ announceCount: true }); });
+  });
+  $('issue-prev').addEventListener('click', function () {
+    if (issuePage <= 0) return;
+    issuePage--;
+    renderIssues({ announceCount: true, keepPage: true });
+  });
+  $('issue-next').addEventListener('click', function () {
+    issuePage++;
+    renderIssues({ announceCount: true, keepPage: true });
   });
   $('tab-timeline').addEventListener('click', function () { switchView('timeline'); });
   $('tab-issues').addEventListener('click', function () { switchView('issues'); });

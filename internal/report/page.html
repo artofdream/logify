@@ -50,30 +50,71 @@
   </div>
   <section id="view-timeline" class="view" role="tabpanel" aria-labelledby="tab-timeline">
     <div class="controls">
-      <label>Search<input id="q" type="search" placeholder="Messages, files, instances"></label>
-      <label>Severity<select id="sev"><option value="">All severities</option></select></label>
-      <label>Instance<select id="inst"><option value="">All instances</option></select></label>
-      <label>Source<select id="src"><option value="">All sources</option></select></label>
+      <div class="field">
+        <label for="q">Search</label>
+        <input id="q" type="search" placeholder="Messages, files, instances">
+      </div>
+      <div class="field">
+        <label for="sev">Severity</label>
+        <select id="sev"><option value="">All severities</option></select>
+      </div>
+      <div class="field">
+        <label for="inst">Instance</label>
+        <select id="inst"><option value="">All instances</option></select>
+      </div>
+      <div class="field">
+        <label for="src">Source</label>
+        <select id="src"><option value="">All sources</option></select>
+      </div>
     </div>
     <div id="timeline"></div>
   </section>
   <section id="view-issues" class="view" role="tabpanel" aria-labelledby="tab-issues" hidden>
     <p class="hint" id="issue-workflow-hint">Create, flag, tag, and change state with the keyboard: Tab moves between labeled controls, Enter adds a tag, and Left/Right arrows switch the Timeline and Issue queue tabs. Flag and workflow state are named in text. Action results appear in the status line.</p>
     <div class="controls issue-controls">
-      <label>Search issues<input id="iq" type="search" placeholder="Title, tags, evidence, owner, notes"></label>
-      <label>State<select id="istate"><option value="">All states</option></select></label>
-      <label>Tags (all of)<input id="itags" type="text" placeholder="comma-separated tags"></label>
-      <label>Flag<select id="iflag">
-        <option value="">All flags</option>
-        <option value="flagged">Flagged only</option>
-      </select></label>
-      <label>Owner<input id="iowner" type="search" placeholder="Owner"></label>
-      <label>Severity<select id="isev"><option value="">All severities</option></select></label>
-      <label>Instance<select id="iinst"><option value="">All instances</option></select></label>
-      <label class="check" title="Due before today (UTC calendar date) and not resolved or dismissed">Overdue only<input id="ioverdue" type="checkbox"></label>
+      <div class="field">
+        <label for="iq">Search issues</label>
+        <input id="iq" type="search" placeholder="Title, tags, evidence, owner, notes">
+      </div>
+      <div class="field">
+        <label for="istate">State</label>
+        <select id="istate"><option value="">All states</option></select>
+      </div>
+      <div class="field">
+        <label for="itags">Tags (all of)</label>
+        <input id="itags" type="text" placeholder="comma-separated tags">
+      </div>
+      <div class="field">
+        <label for="iflag">Flag</label>
+        <select id="iflag">
+          <option value="">All flags</option>
+          <option value="flagged">Flagged only</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="iowner">Owner</label>
+        <input id="iowner" type="search" placeholder="Owner name">
+      </div>
+      <div class="field">
+        <label for="isev">Severity</label>
+        <select id="isev"><option value="">All severities</option></select>
+      </div>
+      <div class="field">
+        <label for="iinst">Instance</label>
+        <select id="iinst"><option value="">All instances</option></select>
+      </div>
+      <div class="field check" title="Due before today (UTC calendar date) and not resolved or dismissed">
+        <input id="ioverdue" type="checkbox">
+        <label for="ioverdue">Overdue only</label>
+      </div>
     </div>
     <div id="issue-feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true"></div>
     <p id="issue-summary" class="issue-summary">No issues yet.</p>
+    <nav id="issue-pager" class="issue-pager" aria-label="Issue list pages" hidden>
+      <button type="button" id="issue-prev">Previous page</button>
+      <p id="issue-page-status">Page 1 of 1</p>
+      <button type="button" id="issue-next">Next page</button>
+    </nav>
     <section id="match-review" class="review-panel" hidden>
       <h2 id="match-review-heading">Recurring evidence review</h2>
       <p class="hint">Automatic signature matches and newly observed occurrences are listed here. Linking or acknowledging them does not change workflow state.</p>
