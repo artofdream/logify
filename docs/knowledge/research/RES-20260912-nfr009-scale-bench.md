@@ -29,7 +29,7 @@ report write) in a child process, not fixture generation.
 
 **Host (disclaimer):** Linux 6.12.94+ KVM, 4× Intel Xeon, 16 GiB RAM
 (`MemAvailable` at probe time ~7 GiB), Go 1.22.2 linux/amd64. This is the
-cloud-agent VM that implemented ADR-0010, not documented product reference
+cloud-agent VM that implemented ADR-0011, not documented product reference
 hardware. It meets the documented **class** (Linux amd64, 2+ CPU, 4+ GiB).
 
 **Method:** `EnsureScaleBundle` writes `/tmp/logify-nfr009`; a child `go test`

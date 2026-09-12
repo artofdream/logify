@@ -123,7 +123,7 @@
   bench (`BenchmarkNFR009ScaleSmoke`, 44 unique events, ~2.2 s/op on the
   same host). Analyzer streaming: incremental scan (NFR-008), online merge,
   extra correlation hints capped at 64 per row
-  ([ADR-0010](../knowledge/decisions/ADR-0010-scale-benchmark.md)).
+  ([ADR-0011](../knowledge/decisions/ADR-0011-scale-benchmark.md)).
   Unique-heavy access corpora (millions of distinct signatures) are outside
   this fixture and can still exceed 512 MiB because FR-010 retains one row
   per signature.
