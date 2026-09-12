@@ -2,10 +2,11 @@
 
 These principles govern product behavior, engineering decisions, and all
 human/agent collaboration in Logify. They are ordered for reference, not rank;
-all three must hold at the same time.
+all four must hold at the same time.
 
 They adopt the core principles documented by the
-[Adaptive Experience Architecture](https://architecture.artof.link/schema.html),
+[Adaptive Experience Architecture](https://architecture.artof.link/schema.html)
+and [AEA #434 Keep Learning and Apply](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434),
 with the Logify-specific mapping maintained in
 [`framework-adoption.md`](framework-adoption.md).
 
@@ -68,11 +69,42 @@ In practice:
 - Treat committed repository history as shared memory. Chat, an uncommitted note,
   and agent consensus are useful context but not durable shared knowledge.
 
+## 4. Keep learning and apply
+
+Turn repeated friction, misses, and successful patterns into durable assets,
+then use those assets on the next similar task. Learning that stays only in
+chat is lost. This is Logify's adoption of
+[AEA #434 Keep Learning and Apply](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
+(GitLab `artof-group/adaptive-experience-architecture` work item
+`docs(framework): core principle Keep Learning and Apply`; related
+[skill-matrix #433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433)).
+The public [glossary](https://architecture.artof.link/glossary.html) and
+[comparison](https://architecture.artof.link/comparison.html) still list
+Honesty, Knowledge first, and Antifragility; AEA marks this fourth principle
+Documented/Planned until a Pages probe. Do not claim it is Live on
+[architecture.artof.link](https://architecture.artof.link/).
+
+In practice:
+
+- File an issue, agree the change, then write a skill, sensor, fixture, ADR,
+  runbook, or doc. Do not leave the lesson in a transcript.
+- Label those assets honestly (`Documented`, `Simulated`, or `Live`). Do not
+  mark a skill Live without a live probe.
+- Apply the existing skill or doc on the next similar run. A second miss of
+  the same class is evidence the asset is missing, unused, or too weak.
+- Skill proposals from real stacks—[#22](https://github.com/artofdream/logify/issues/22)
+  (PR train / parallel-merge) and [#23](https://github.com/artofdream/logify/issues/23)
+  (tagged release cut)—are examples of this loop. Both are Documented/Simulated,
+  not Live. Docs adoption is tracked in
+  [#24](https://github.com/artofdream/logify/issues/24).
+
 ## Decision gate
 
 Agreement between agents is not sufficient evidence. Accept a result only when it
 is traceable and candid (**honesty**), captures learning and improves resilience
-(**antifragility**), and rests on durable shared evidence (**knowledge first**).
+(**antifragility**), rests on durable shared evidence (**knowledge first**), and
+turns that learning into assets the next similar task actually uses (**keep
+learning and apply**).
 
 Operational work follows **Interpret → Act → Verify → Remember**. Agents and
 parsers may interpret; authoritative evidence, explicit operator decisions, and

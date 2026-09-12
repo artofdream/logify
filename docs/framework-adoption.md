@@ -10,6 +10,8 @@ sources:
   - https://architecture.artof.link/schema.html
   - https://architecture.artof.link/comparison.html
   - https://architecture.artof.link/glossary.html
+  - https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434
+  - https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433
 tags: [architecture, principles, outer-harness, second-brain]
 ---
 
@@ -48,6 +50,7 @@ explicit operator decisions, and acceptance probes decide.**
 | Honesty | `verified`, `implemented`, `done`, and parser/correlation conclusions are claims; without a probe they remain `Unknown`, `Partial`, or `Proposed`. | Requirements status, provenance, warnings, validation output, handoffs |
 | Knowledge First | Durable repository knowledge is read before work; ephemeral chat and agent consensus are not canonical memory. | Requirements, ADRs, knowledge vault, work items, session promotion |
 | Antifragility | The same miss twice indicates a missing sensor or gate. A significant failure should create a durable safeguard rather than a prompt-only reminder. | Fixtures, regression tests, incidents, guides, automated checks |
+| [Keep Learning and Apply](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) (AEA #434) | Sponsor operating principle from GitLab `artof-group/adaptive-experience-architecture` (work item title: `docs(framework): core principle Keep Learning and Apply`). Related [skill-matrix #433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433). Not a public schema ID on [architecture.artof.link/schema.html](https://architecture.artof.link/schema.html); [glossary](https://architecture.artof.link/glossary.html) / [comparison](https://architecture.artof.link/comparison.html) remain Documented/Planned for this principle until a Pages probe—do not claim Live on the public site. Logify turns repeated friction and successful patterns into durable skills, sensors, fixtures, ADRs, runbooks, or docs, then applies them on the next similar task. Local evidence: skill proposals [#22](https://github.com/artofdream/logify/issues/22) and [#23](https://github.com/artofdream/logify/issues/23) (Documented/Simulated, not Live); docs gap [#24](https://github.com/artofdream/logify/issues/24). Closest harness fit: Guides, Memory, and the Remember step of the loop. | Skills, fixtures, ADRs, runbooks, issue → agree → skill/doc with honesty labels |
 
 The detailed behavioral contract remains in [core principles](principles.md).
 

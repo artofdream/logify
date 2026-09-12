@@ -5,8 +5,12 @@ HTTPD log bundles into a self-contained interactive HTML incident timeline.
 
 ## Source of truth and workflow
 
-Read and apply `docs/principles.md` first. Honesty, antifragility, and knowledge
-first are non-negotiable decision gates. For delegated work, follow
+Read and apply `docs/principles.md` first. Honesty, antifragility, knowledge
+first, and keep learning and apply
+([AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434))
+are non-negotiable decision gates. File skill or doc gaps from repeated
+misses, and apply existing skills on the next similar run. For delegated
+work, follow
 `docs/multi-agent-workflow.md`; the coordinating agent remains responsible for
 integration and final verification.
 
