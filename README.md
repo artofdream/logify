@@ -106,9 +106,9 @@ go build -o logify.exe ./cmd/logify
 `-h` / `-help` print flags to stderr and exit 0.
 
 `-version` / `-V` print `logify <version>` on stdout and exit 0 without a
-directory. Unreleased builds report `dev`. Tagged releases can overwrite that
-string later with `go build -ldflags "-X main.version=vX.Y.Z"` (not wired in
-the release workflow until `v0.1.0`).
+directory. Unreleased builds report `dev`. The Release workflow injects
+`main.version` from the git tag (`GITHUB_REF_NAME`) via
+`go build -ldflags "-X main.version=${GITHUB_REF_NAME}"`.
 
 Optional RFC3339 bounds filter timestamped events (untimestamped events are excluded when a bound is active). Bounds are compared as absolute instants. Java and Apache error timestamps without an offset are parsed as UTC, so they will not stay in a `+02:00` "morning" window unless that window still covers the UTC instant. Apache access stamps that include an offset are compared using that offset.
 
