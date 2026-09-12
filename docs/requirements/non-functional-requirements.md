@@ -139,14 +139,29 @@
 ### NFR-013 — Accessible report interaction
 
 - **Priority:** Should
-- **Status:** Partial
+- **Status:** Implemented
 - **Acceptance criteria:**
   1. All controls are keyboard operable and have programmatic labels.
   2. Severity is communicated by text, not color alone.
   3. Text and interactive controls meet WCAG 2.2 AA contrast requirements.
   4. Automated accessibility checks cover the generated report.
-- **Gap:** Controls rely on placeholder/option text and no automated accessibility
-  check exists.
+- **Evidence:**
+  1. Static filters use visible `<label for>`. Issue-card fields use
+     `labeledField` / `for=` (due date no longer wraps the clear button). Hidden
+     file input has `aria-label`. Tab, export, pager, and action buttons have
+     visible names. Source contracts: `internal/report/nfr013_a11y_test.js`.
+     Generated-report scan: `TestNFR013GeneratedReportA11y`.
+  2. Timeline cells render `Severity: ERROR` (and `aria-label`), not a color
+     bar alone. Left-border color remains supplementary.
+  3. `page.css` text tokens and `--control-border` (#5b70a0 on `--panel`) are
+     checked with WCAG 2.2 relative-luminance math in `internal/report/a11y.go`.
+     `TestNFR013ReportCSSContrast` fails CI below 4.5:1 text / 3:1 non-text.
+  4. CI runs the Go checker on a written HTML file plus the Node source
+     contract. No npm/axe/CDN dependency (NFR-003).
+- **Notes:** The automated check is a stdlib structural + token-contrast
+  probe, not a WCAG engine, computed-style pass, or assistive-technology run.
+  Browser-default placeholder and disabled-opacity painting are outside the
+  token table. See [ADR-0011](../knowledge/decisions/ADR-0011-accessible-report-checks.md).
 
 ## Maintainability and verification
 
@@ -258,15 +273,16 @@
      `detailFeedbackTimer` so a delayed title/owner/notes write cannot
      overwrite those confirmations.
   4. `internal/report/nfr021_filter_probe.js` builds 10,000 synthetic issues and
-     times `store.filter`. Interactive target is 100 ms median; CI fails only if
-     any timed filter exceeds 500 ms. A 2026-09-09 run on the cloud-agent host
-     (Linux 6.12.94+, 4× Intel Xeon KVM, 15 GiB RAM, Node v22.14.0) measured a
-     worst median of 3.8 ms. Re-run: `node internal/report/nfr021_filter_probe.js`.
+     times `store.filter` plus a 25-item window slice. Interactive target is
+     100 ms median; CI fails only if any timed filter exceeds 500 ms. The live
+     queue pages matching cards (`ISSUE_PAGE_SIZE = 25`) instead of painting
+     every match. Re-run: `node internal/report/nfr021_filter_probe.js`.
      Details: [RES-20260909-nfr021-issue-filter-probe](../knowledge/research/RES-20260909-nfr021-issue-filter-probe.md).
 - **Gap:** AC4 is not Implemented. The probe host is not a published operator
-  reference workstation, and the probe does not render 10,000 issue cards.
-  Unfiltered DOM render remains unwindowed. The a11y tests are source contracts,
-  not a WCAG engine or assistive-technology run (see also NFR-013).
+  reference workstation (Q-001). The probe still does not paint DOM cards; it
+  measures `store.filter` and a slice. Windowing bounds default render cost
+  but is not a timed 10,000-card paint on reference hardware. The a11y tests
+  are source contracts, not an assistive-technology run.
 
 ## Engineering principles
 

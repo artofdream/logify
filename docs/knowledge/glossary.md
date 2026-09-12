@@ -50,6 +50,10 @@ updated: 2026-09-12
   `-version` / `-V`). Breaking changes follow ADR-0010 / NFR-016.
 - **Probe:** a direct observation, test, or command that supports a status claim.
 - **Issue-filter probe:** Node harness that imports 10,000 synthetic issues and
-  times `store.filter` for NFR-021 AC4. It does not render issue cards.
+  times `store.filter` (and a 25-item window slice) for NFR-021 AC4. It does
+  not paint DOM issue cards. The live queue pages matches (`ISSUE_PAGE_SIZE`).
+- **Report a11y checker:** stdlib Go contrast + label scan of the generated
+  HTML (`internal/report/a11y.go`) plus Node source contracts. Not a WCAG
+  engine or assistive-technology run (NFR-013 / ADR-0011).
 - **Promotion:** moving durable learning from session/handoff context into a
   canonical requirement, ADR, test, fixture, or knowledge note.

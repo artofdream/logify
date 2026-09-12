@@ -5,6 +5,7 @@
   --muted: #97a7c4;
   --text: #edf3ff;
   --line: #2b3858;
+  --control-border: #5b70a0;
   --accent: #7bb6ff;
   --success: #50d6a5;
   --flag: #ffc24b;
@@ -54,9 +55,14 @@ main { max-width: 1400px; margin: auto; padding: 20px 5vw 48px; }
   align-items: center;
 }
 .stats { margin: 15px 0; }
-.stat, .event, .issue, .warning, .notice, .legend, input, select, button, textarea {
+.stat, .event, .issue, .warning, .notice, .legend {
   background: var(--panel);
   border: 1px solid var(--line);
+  border-radius: 9px;
+}
+input, select, button, textarea {
+  background: var(--panel);
+  border: 1px solid var(--control-border);
   border-radius: 9px;
 }
 .stat { padding: 10px 14px; }
@@ -84,12 +90,21 @@ main { max-width: 1400px; margin: auto; padding: 20px 5vw 48px; }
   margin-bottom: 16px;
 }
 .issue-controls { grid-template-columns: repeat(4, minmax(140px, 1fr)); }
-label { display: grid; gap: 5px; font-weight: 600; }
-label.check {
+.field, label { display: grid; gap: 5px; font-weight: 600; }
+.field.check {
   grid-template-columns: auto 1fr;
   align-items: center;
   font-weight: 600;
 }
+.field.check input { justify-self: start; width: auto; }
+.issue-pager {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0 0 12px;
+}
+.issue-pager p { margin: 0; font-weight: 700; }
 input, select, button, textarea {
   padding: 10px;
   color: var(--text);
@@ -167,8 +182,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   border: 1px dashed var(--line);
   border-radius: 8px;
 }
-.link-picker { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.link-picker select { flex: 1; min-width: 12rem; }
+.link-picker { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
+.link-picker .field { flex: 1; min-width: 12rem; }
 .review-panel {
   margin: 0 0 16px;
   padding: 12px 14px;
@@ -210,8 +225,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 .tag button { padding: 2px 6px; font-size: 12px; }
 .tag-add { display: flex; gap: 8px; margin-top: 8px; align-items: end; }
-.tag-add label { flex: 1; font-weight: 600; }
-.tag-add input { flex: 1; }
+.tag-add .field { flex: 1; }
 .issue-summary { margin: 0 0 10px; font-weight: 700; }
 #issue-workflow-hint { margin: 0 0 12px; }
 .feedback { min-height: 20px; color: var(--success); font-weight: 700; }
