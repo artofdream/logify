@@ -1,10 +1,10 @@
 ---
 id: WI-20260912-keep-learning-and-apply
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-12T14:18:00Z
-updated: 2026-09-12T14:18:00Z
+updated: 2026-09-12T14:25:00Z
 lease_expires: 2026-09-12T18:30:00Z
 scope:
   - docs/principles.md
@@ -13,6 +13,7 @@ scope:
   - README.md
   - docs/requirements/README.md
   - docs/collaboration/work-items/WI-20260912-keep-learning-and-apply.md
+  - docs/collaboration/handoffs/HO-20260912-cursor-agent-keep-learning-and-apply.md
 requirements: [NFR-023, NFR-026, NFR-028]
 depends_on: []
 supersedes: []
@@ -58,14 +59,19 @@ principle is Documented/Planned until a Pages probe.
 
 ## Validation
 
-- `git diff --check`
-- `go test ./...` if harness/docs probes require it
+- `git diff --check` — pass
+- `go test ./internal/harness ./...` — pass (NFR-028 docs/link + open-WI
+  probes included)
 
 ## Activity log
 
 - `2026-09-12T14:18:00Z` — cursor-agent — work item created; no other active
   item owns `docs/principles.md` or `AGENTS.md`.
+- `2026-09-12T14:22:00Z` — cursor-agent — draft PR #25 vs `main`.
+- `2026-09-12T14:25:00Z` — cursor-agent — validation passed. GitHub issue
+  comment on #24 returned 403 from the token; PR body already refs #24.
 
 ## Handoff or completion
 
-In progress. Do not merge from this item.
+In review on draft PR #25. Do not merge from this item. Docs adoption is
+Documented once merged. Skills #22/#23 remain Documented/Simulated.
