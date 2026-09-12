@@ -1,11 +1,11 @@
 ---
 id: WI-20260912-nfr021-pager-hidden
 type: work-item
-status: active
+status: review
 owner: cursor-agent
 created: 2026-09-12T10:42:00Z
-updated: 2026-09-12T10:42:00Z
-lease_expires: 2026-09-12T22:42:00Z
+updated: 2026-09-12T10:43:00Z
+lease_expires: 2026-09-13T10:43:00Z
 scope:
   - internal/report/page.css
   - internal/report/a11y_test.go
@@ -46,11 +46,23 @@ queue. The fix was on `ea0bfc9` after merge SHA `72a73c9`.
 
 ## Validation
 
-Pending.
+- `gofmt -l cmd internal` — clean
+- `go test ./internal/report ./internal/harness -count=1` — pass
+- `go build -o logify.exe ./cmd/logify` — pass
+- `go vet ./internal/report` — pass
+- `git diff --check` — pass
+- `node internal/report/nfr013_a11y_test.js` — ok
+- Draft PR: https://github.com/artofdream/logify/pull/20
 
 ## Activity log
 
 - `2026-09-12T10:42:00Z` — cursor-agent — #19 auto-merged without the
   pager-hide commit. Claimed a follow-up on current `main`.
 
+- `2026-09-12T10:43:00Z` — cursor-agent — CSS + contracts on
+  `cursor/nfr021-hide-issue-pager-8155`. Local report/harness tests passed.
+  Draft PR #20. Do not merge unless requested.
+
 ## Handoff or completion
+
+In review on draft PR #20. Do not merge unless requested.
