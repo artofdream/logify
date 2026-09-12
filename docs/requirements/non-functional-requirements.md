@@ -216,7 +216,8 @@
      (default `dev` for unreleased builds).
   4. A test probes that documented stable flags still exist and help exits 0.
 - **Notes:** Policy is [ADR-0010](../knowledge/decisions/ADR-0010-cli-compatibility.md).
-  Release-tag injection via `-ldflags -X main.version=` is deferred to `v0.1.0`.
+  Release tags inject `main.version` from `GITHUB_REF_NAME` via
+  `-ldflags -X` in [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
   Probes: `TestNFR016StableFlagsExist`, `TestNFR016VersionFlag`.
 
 ## Follow-up data integrity

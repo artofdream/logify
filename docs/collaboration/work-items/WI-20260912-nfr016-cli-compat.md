@@ -4,7 +4,7 @@ type: work-item
 status: review
 owner: cursor-agent
 created: 2026-09-12T10:27:11Z
-updated: 2026-09-12T10:30:00Z
+updated: 2026-09-12T10:50:00Z
 lease_expires: null
 scope:
   - cmd/logify/main.go
@@ -33,7 +33,8 @@ be marked Implemented.
 
 ## Non-goals
 
-- Wiring `.github/workflows/release.yml` `-ldflags -X` (deferred to v0.1.0)
+- Wiring `.github/workflows/release.yml` `-ldflags -X` (transferred to
+  `WI-20260912-release-ldflags` for the v0.1.0 cut)
 - Removing or renaming existing flags
 - Analyzer or report package edits
 
@@ -68,6 +69,9 @@ PR https://github.com/artofdream/logify/pull/17 (do not merge from this item).
   and work-item/dispatch scan.
 - `2026-09-12T10:30:00Z` — cursor-agent — policy, `-version`, and probes
   landed; local validation passed; lease released for review.
+- `2026-09-12T10:50:00Z` — cursor-agent — deferred Release ldflags wiring
+  transferred to `WI-20260912-release-ldflags`. This item stays review;
+  lease remains released.
 
 ## Handoff or completion
 

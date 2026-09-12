@@ -11,8 +11,8 @@ sources: [../../README.md, ../../cmd/logify/main.go, ../../internal/analyzer, ..
 
 Logify is a dependency-free Go CLI. `cmd/logify` accepts a directory and options
 (`-output`, `-from`, `-to`, `-redact`, `-redact-file`); `-version` / `-V` print
-`var version` (default `dev`; ldflags-overridable) and exit without analyzing
-(ADR-0010 / NFR-016). Public flag names and defaults stay supported for a
+`var version` (default `dev`; Release tags inject `GITHUB_REF_NAME` via
+`-ldflags -X main.version=`) and exit without analyzing (ADR-0010 / NFR-016). Public flag names and defaults stay supported for a
 major SemVer version, or a documented deprecation warning precedes removal.
 `internal/analyzer` discovers and normalizes logs (including common rotated
 and `.gz` names streamed via `compress/gzip`, ADR-0009 / FR-016), builds signatures, groups
