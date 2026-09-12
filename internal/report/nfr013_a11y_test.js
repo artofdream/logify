@@ -68,6 +68,7 @@ contains(html, 'id="issue-pager"', 'pager');
 contains(html, 'id="issue-prev"', 'previous page');
 contains(html, 'id="issue-next"', 'next page');
 contains(html, 'aria-label="Issue list pages"', 'pager name');
+contains(css, '.issue-pager[hidden]', 'hidden pager not display:flex');
 
 assert.strictEqual(js.indexOf('innerHTML'), -1, 'page.js must not assign innerHTML');
 assert.ok(!/https?:\/\//.test(html.replace(/\{\{\.Data\}\}/g, '')), 'page.html has no network URL');

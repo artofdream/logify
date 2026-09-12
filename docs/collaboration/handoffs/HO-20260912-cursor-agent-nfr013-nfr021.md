@@ -1,7 +1,7 @@
 ---
 id: HO-20260912-cursor-agent-nfr013-nfr021
 type: handoff
-status: proposed
+status: review
 owner: cursor-agent
 created: 2026-09-12T10:50:00Z
 work_item: WI-20260912-nfr013-nfr021-a11y
@@ -9,65 +9,71 @@ requirements: [NFR-013, NFR-021]
 next_owner: human
 ---
 
-# Handoff: rebase PR #19 onto main (NFR-013 / NFR-021)
+# NFR-013 a11y checks + NFR-021 issue-list paging
 
 ## Scope and requirement IDs
 
-Rebased `cursor/nfr013-a11y-nfr021-window-8155` onto `origin/main` `0ca7be7`
-(NFR-016 #17). Conflicts resolved. A11y ADR renumbered to ADR-0011. PR
-https://github.com/artofdream/logify/pull/19 left **open** (do not merge
-from this handoff).
+NFR-013 AC1–AC4 and leftover NFR-021 AC4 windowing. Branch
+`cursor/nfr013-a11y-nfr021-window-8155`. Draft PR
+https://github.com/artofdream/logify/pull/19 vs `main`. Do not merge.
+
+Rebased onto `origin/main` `0ca7be7` (NFR-016 #17). The a11y ADR is
+**ADR-0011** because `main` already has ADR-0010 CLI compatibility.
 
 ## Evidence consulted
 
-`docs/principles.md`, collaboration protocol, WI/dispatch scan, PR #19 vs
-`origin/main`, ADR lists on both sides, open PR #18 (NFR-009 ADR-0010 on
-that branch, not on `main`).
+- `docs/requirements/non-functional-requirements.md` NFR-013 / NFR-021
+- `docs/collaboration/README.md`, work items, DSP-20260909-NFR021 (review)
+- ADR-0006, ADR-0011, Q-001, Q-002, RES-20260909-nfr021-issue-filter-probe
+- `internal/report/page.html`, `page.css`, `page.js`
 
 ## Changes and artifacts
 
-- Rebase commit `fc99eb8` on top of `0ca7be7`
-- Git conflicts: `README.md`, `docs/framework-adoption.md`
-- Auto-merged and checked: `architecture.md`, `glossary.md`,
-  `non-functional-requirements.md`
-- Kept main **ADR-0010-cli-compatibility.md** (NFR-016)
-- This branch's a11y ADR is now **ADR-0011-accessible-report-checks.md**
-- NFR-013 remains **Implemented**; NFR-021 remains **Partial** (Q-001)
-- NFR-016 CLI (`-version` / `-V`, SemVer policy) preserved from #17
+- Explicit `<label for>` on filters; `labeledField` on issue-card controls
+- Timeline `Severity: …` text; `--control-border` AA 3:1
+- Stdlib `a11y.go` contrast + generated-HTML label scan; `nfr013_a11y_test.js`
+- Issue queue pages at 25 cards; pager `[hidden]` wins over `display:flex`
+- ADR-0011; Q-002 resolved; NFR-013 Implemented; NFR-021 Partial (Q-001)
+- NFR-016 CLI bits from #17 preserved
 
 ## Validation and observed results
 
-Ran (Go 1.22.2 linux/amd64) on `fc99eb8`:
-
-- `gofmt -w cmd internal` — clean (no post-commit diff)
-- `go test ./...` — pass (`cmd/logify`, `internal/analyzer`,
-  `internal/harness`, `internal/redact`, `internal/report`)
+- `gofmt -l cmd internal` — clean
+- `go test ./... -count=1` — pass
 - `go build -o logify.exe ./cmd/logify` — pass
 - `go vet ./...` — pass
 - `git diff --check` — pass
-- `./logify.exe -output sample-report.html testdata/case` — 6 events from
-  3 files; processed=3 skipped=0 failed=0; 0 warnings; unparsed=1
-- `./logify.exe -version` — `logify dev`
+- `./logify.exe -output sample-report.html testdata/case` — 6 events, 3 files,
+  0 warnings; labels, `Severity:`, pager chrome present; no `http://` / `https://`
+- `node internal/report/nfr013_a11y_test.js` — ok
+- `node internal/report/nfr021_a11y_test.js` — ok
+- `node internal/report/nfr021_filter_probe.js` — 10k issues; worst median
+  5.2 ms; `issuePageSize: 25`; 500 ms CI guard passed
+- Browser `file:///workspace/sample-report.html`: visible filter labels;
+  Severity text; create-issue flow; Showing 1 of 1; pager hidden for one
+  issue after the `[hidden]` CSS fix; Tab focus rings; 375px readable
 
-`gh pr view 19`: `mergeable=MERGEABLE`, `mergeStateStatus=BLOCKED`
-(not CONFLICTING; likely required review/CI), `state=OPEN`.
+Do not commit `logify.exe` or `sample-report.html`.
 
 ## Assumptions and confidence
 
-High for conflict resolution and ADR numbering against current `main`.
-NFR-009 #18 still owns a colliding ADR-0010 on its own branch; that is
-not this PR's problem until #18 rebases.
+- High for NFR-013 AC1–AC2 and the stdlib AC3/AC4 probes
+- Medium for calling NFR-013 Implemented: AC3/AC4 are token-contrast +
+  structural checks, not axe/AT. Scope is documented on the requirement.
+- High that NFR-021 must stay Partial (Q-001)
 
 ## Failures or conflicting evidence
 
-None locally. CI on the rebased head was not observed at write time.
+First browser pass showed Previous/Next on a 1-issue queue because
+`.issue-pager { display: flex }` overrode the `hidden` attribute. Fixed with
+`.issue-pager[hidden] { display: none; }` and re-verified.
 
 ## Uncommitted or concurrent changes
 
-This handoff file plus the work-item validation note are the remaining
-docs for this rebase.
+This branch was rebased onto `main` after NFR-016 #17. Concurrent NFR-009
+#18 still has a colliding ADR-0010 on that branch, not on `main`.
 
 ## Open questions and next action
 
-Human review of PR #19. Do not merge from this item. NFR-021 AC4 stays
-open until Q-001 (published reference hardware).
+Q-001 remains open. Review draft PR #19; do not merge; do not mark NFR-021
+Implemented.

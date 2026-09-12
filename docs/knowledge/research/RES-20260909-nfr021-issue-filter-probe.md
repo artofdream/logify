@@ -51,6 +51,11 @@ localStorage persist), warm each filter once, then five timed rounds with
 Worst median on this host: **3.8 ms** (text-few). The 100 ms interactive
 target was met for `store.filter` on this host. The 500 ms CI guard passed.
 
+**2026-09-12 re-run** on the same class of cloud-agent host (Linux 6.12.94+,
+4× Xeon KVM, 16 GiB, Node v22.14.0): worst median **5.2 ms** (text-many);
+windowed slice stayed 25 items on the `all` filter. Still under 100 ms.
+Still not reference hardware.
+
 ## Conflicts and uncertainty
 
 - Later CI or developer machines will print different milliseconds. Treat the

@@ -104,6 +104,7 @@ input, select, button, textarea {
   align-items: center;
   margin: 0 0 12px;
 }
+.issue-pager[hidden] { display: none; }
 .issue-pager p { margin: 0; font-weight: 700; }
 input, select, button, textarea {
   padding: 10px;
