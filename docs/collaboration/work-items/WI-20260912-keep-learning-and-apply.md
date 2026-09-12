@@ -4,7 +4,7 @@ type: work-item
 status: review
 owner: cursor-agent
 created: 2026-09-12T14:18:00Z
-updated: 2026-09-12T14:25:00Z
+updated: 2026-09-12T14:28:00Z
 lease_expires: 2026-09-12T18:30:00Z
 scope:
   - docs/principles.md
@@ -70,6 +70,9 @@ principle is Documented/Planned until a Pages probe.
 - `2026-09-12T14:22:00Z` — cursor-agent — draft PR #25 vs `main`.
 - `2026-09-12T14:25:00Z` — cursor-agent — validation passed. GitHub issue
   comment on #24 returned 403 from the token; PR body already refs #24.
+- `2026-09-12T14:28:00Z` — cursor-agent — added related AEA skill-matrix
+  [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433)
+  and named glossary/comparison as Documented/Planned (not Live).
 
 ## Handoff or completion
 

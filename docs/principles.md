@@ -76,10 +76,13 @@ then use those assets on the next similar task. Learning that stays only in
 chat is lost. This is Logify's adoption of
 [AEA #434 Keep Learning and Apply](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
 (GitLab `artof-group/adaptive-experience-architecture` work item
-`docs(framework): core principle Keep Learning and Apply`). The public AEA
-pages still list Honesty, Knowledge first, and Antifragility; AEA marks this
-fourth principle Documented/Planned until a Pages probe. Do not claim it is
-Live on [architecture.artof.link](https://architecture.artof.link/).
+`docs(framework): core principle Keep Learning and Apply`; related
+[skill-matrix #433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433)).
+The public [glossary](https://architecture.artof.link/glossary.html) and
+[comparison](https://architecture.artof.link/comparison.html) still list
+Honesty, Knowledge first, and Antifragility; AEA marks this fourth principle
+Documented/Planned until a Pages probe. Do not claim it is Live on
+[architecture.artof.link](https://architecture.artof.link/).
 
 In practice:
 
