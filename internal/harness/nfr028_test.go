@@ -490,3 +490,36 @@ func readRepoFile(t *testing.T, root, rel string) string {
 	}
 	return string(b)
 }
+
+func TestNFR028BranchProtectionProbe(t *testing.T) {
+	root := repoRoot(t)
+	rel := "docs/collaboration/branch-protection-probe.md"
+	body := readRepoFile(t, root, rel)
+	for _, need := range []string{
+		"probed_at:",
+		"source:",
+		"`validate`",
+		"require_code_owner_reviews",
+		"enforce_admins",
+	} {
+		if !strings.Contains(body, need) {
+			t.Fatalf("%s missing required evidence marker %q", rel, need)
+		}
+	}
+	if !strings.Contains(body, "Verified ? merge blocked without green `validate`") &&
+		!strings.Contains(body, "Required status checks") {
+		t.Fatalf("%s must record required status checks including validate", rel)
+	}
+	// Keep the probe discoverable from permissions.md and the adoption ledger.
+	perm := readRepoFile(t, root, "docs/collaboration/permissions.md")
+	if !strings.Contains(perm, "branch-protection-probe.md") {
+		t.Fatal("permissions.md must link branch-protection-probe.md")
+	}
+	adoption := readRepoFile(t, root, "docs/framework-adoption.md")
+	if !strings.Contains(adoption, "branch-protection-probe.md") {
+		t.Fatal("framework-adoption.md must cite branch-protection-probe.md")
+	}
+	if !strings.Contains(adoption, "TestNFR028BranchProtectionProbe") {
+		t.Fatal("framework-adoption.md Sensors/Permissions evidence must name TestNFR028BranchProtectionProbe")
+	}
+}

@@ -385,7 +385,7 @@
 ### NFR-028 — Outer harness coverage
 
 - **Priority:** Must
-- **Status:** Partial
+- **Status:** Implemented
 - **Rationale:** Trustworthy diagnosis needs controls around interpretation, not
   only parser code.
 - **Acceptance criteria:**
@@ -401,13 +401,12 @@
   6. **Observability** provides provenance and a probe for material status claims;
      without one, status is `Unknown`.
   7. `docs/framework-adoption.md` maintains evidence and gaps for every layer.
-- **Gap:** Guides, loop, and local memory remain adopted. Sensors now include a
-  docs/link and ledger-status checker (`internal/harness`) that runs in `go test`
-  / CI, plus the NFR-009 8 MiB smoke bench on Linux; still no WCAG engine,
-  full in-browser DOM/AT run, or a CI 1 GiB NFR-009 run.
-  Permissions add CODEOWNERS review routing, a documented CI/`validate` merge
-  checklist, and a work-item ownership-field probe; leases stay advisory and
-  GitHub required-review / branch-protection enablement is operator-side, not
-  claimed here. Observability now counts unparsed records and correlation
-  confidence and fails Implemented claims that lack a named probe. Remaining
-  layer evidence lives in the adoption ledger.
+- **Evidence:** Guides, Loop, Memory, and Observability adopted on `main`.
+  Sensors include `internal/harness` (docs/link, ledger, Implemented-claim,
+  work-item ownership, branch-protection probe) plus NFR-009 smoke benches in
+  CI. Permissions: CODEOWNERS routing plus a dated
+  [branch-protection probe](../collaboration/branch-protection-probe.md)
+  verifying required status check `validate` on `main`. Leases remain advisory;
+  CODEOWNERS reviews are not required; admins may bypass protection — recorded
+  gaps, not unmet Must ACs. WCAG engine / full in-browser AT and CI 1 GiB
+  NFR-009 stay Should/manual and do not block NFR-028.
