@@ -26,7 +26,7 @@ var (
 	frontStatus = regexp.MustCompile(`(?m)^status:\s*(\S+)`)
 	frontOwner  = regexp.MustCompile(`(?m)^owner:\s*(.+)$`)
 	frontLease  = regexp.MustCompile(`(?m)^lease_expires:`)
-	frontScope  = regexp.MustCompile(`(?m)^  - \S+`)
+	frontScope  = regexp.MustCompile(`(?m)^scope:[ \t]*\n(?:[ \t]*#[^\n]*\n)*[ \t]+-[ \t]+\S+`)
 	frontReqs   = regexp.MustCompile(`(?m)^requirements:\s*\[([^\]]*)\]`)
 	nfr028FM    = regexp.MustCompile(`(?m)^nfr028_status:\s*(\w+)`)
 )
@@ -191,6 +191,19 @@ func TestNFR028OpenWorkItemsHaveOwnershipFields(t *testing.T) {
 	}
 	if len(problems) > 0 {
 		t.Fatalf("permissions/ownership probe failed:\n  %s", strings.Join(problems, "\n  "))
+	}
+}
+
+func TestNFR028ScopeProbeRequiresScopePath(t *testing.T) {
+	// An empty scope: [] must not pass because depends_on/supersedes uses the
+	// same two-space list indent.
+	empty := "---\nstatus: active\nscope: []\ndepends_on:\n  - WI-other\nsupersedes:\n  - WI-old\n---\n"
+	if frontScope.MatchString(empty) {
+		t.Fatal("scope probe matched a depends_on/supersedes list item")
+	}
+	ok := "---\nstatus: active\nscope:\n  - internal/foo.go\ndepends_on:\n  - WI-other\n---\n"
+	if !frontScope.MatchString(ok) {
+		t.Fatal("scope probe missed a real scope path")
 	}
 }
 

@@ -317,6 +317,44 @@ func TestObservabilityCountsUnparsedAndCorrelations(t *testing.T) {
 	}
 }
 
+func TestObservabilityDoesNotCountMergedParsedAsUnparsed(t *testing.T) {
+	// FR-008 / NFR-028: a timestamped Java line with an omitted level and a
+	// later bare copy share a signature, but must not collapse into one
+	// low-confidence row that counts the parsed occurrence as unparsed.
+	dir := t.TempDir()
+	body := "2026-09-03 10:00:00 startup complete\nstartup complete\n"
+	if err := os.WriteFile(filepath.Join(dir, "catalina.out"), []byte(body), 0644); err != nil {
+		t.Fatal(err)
+	}
+	r, err := Analyze(dir, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.UnparsedRecords != 1 {
+		t.Fatalf("unparsedRecords=%d want 1", r.UnparsedRecords)
+	}
+	var high, low int
+	for _, e := range r.Events {
+		switch e.ParseConfidence {
+		case ConfidenceHigh:
+			high++
+			if e.Occurrences != 1 {
+				t.Fatalf("parsed row occurrences=%d want 1", e.Occurrences)
+			}
+		case ConfidenceLow:
+			low++
+			if e.Occurrences != 1 {
+				t.Fatalf("unparsed row occurrences=%d want 1", e.Occurrences)
+			}
+		default:
+			t.Fatalf("unexpected parseConfidence=%q msg=%q", e.ParseConfidence, e.Message)
+		}
+	}
+	if high != 1 || low != 1 {
+		t.Fatalf("rows high=%d low=%d events=%d want 1/1", high, low, len(r.Events))
+	}
+}
+
 func assertCounts(t *testing.T, r Result, scanned, processed, skipped, failed int) {
 	t.Helper()
 	if r.FilesScanned != scanned || r.FilesProcessed != processed || r.FilesSkipped != skipped || r.FilesFailed != failed {
