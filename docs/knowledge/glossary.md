@@ -45,6 +45,9 @@ updated: 2026-09-12
   record; `low` when the line was retained as unrecognized (FR-008 / NFR-028).
 - **Unparsed record:** a retained unrecognized line. Counted on the analysis
   result and report summary; distinct from a scan warning.
+- **Public CLI surface:** documented flags and defaults in README and `-h`
+  (`-output`, `-from`, `-to`, `-redact`, `-redact-file`, `-h` / `-help`,
+  `-version` / `-V`). Breaking changes follow ADR-0010 / NFR-016.
 - **Probe:** a direct observation, test, or command that supports a status claim.
 - **Issue-filter probe:** Node harness that imports 10,000 synthetic issues and
   times `store.filter` for NFR-021 AC4. It does not render issue cards.

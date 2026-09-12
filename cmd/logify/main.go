@@ -16,6 +16,33 @@ import (
 
 const sensitivityWarning = "logify: the HTML report contains copied log data (messages, paths, and host identifiers); treat it as sensitive as the source bundle"
 
+const defaultOutput = "logify-report.html"
+
+// version is the CLI version string. Unreleased builds keep "dev".
+// Release builds overwrite it with:
+//
+//	go build -ldflags "-X main.version=vX.Y.Z"
+var version = "dev"
+
+type cliFlags struct {
+	output      string
+	from        string
+	to          string
+	redactFile  string
+	showVersion bool
+	redactSpecs stringList
+}
+
+func registerCLI(fs *flag.FlagSet, c *cliFlags) {
+	fs.StringVar(&c.output, "output", defaultOutput, "output HTML file")
+	fs.StringVar(&c.from, "from", "", "RFC3339 lower time bound")
+	fs.StringVar(&c.to, "to", "", "RFC3339 upper time bound")
+	fs.Var(&c.redactSpecs, "redact", "optional redaction rule (repeatable): named preset (email, ipv4, uuid, bearer, jwt), regex:<pattern>, literal:<text>, or a bare regex")
+	fs.StringVar(&c.redactFile, "redact-file", "", "optional file of redaction rules (one per line; # comments and blanks ignored)")
+	fs.BoolVar(&c.showVersion, "version", false, "print version and exit")
+	fs.BoolVar(&c.showVersion, "V", false, "print version and exit")
+}
+
 type stringList []string
 
 func (s *stringList) String() string { return strings.Join(*s, ", ") }
@@ -31,12 +58,8 @@ func main() {
 func run(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("logify", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	out := fs.String("output", "logify-report.html", "output HTML file")
-	fromS := fs.String("from", "", "RFC3339 lower time bound")
-	toS := fs.String("to", "", "RFC3339 upper time bound")
-	var redactSpecs stringList
-	fs.Var(&redactSpecs, "redact", "optional redaction rule (repeatable): named preset (email, ipv4, uuid, bearer, jwt), regex:<pattern>, literal:<text>, or a bare regex")
-	redactFile := fs.String("redact-file", "", "optional file of redaction rules (one per line; # comments and blanks ignored)")
+	var cli cliFlags
+	registerCLI(fs, &cli)
 	fs.Usage = func() {
 		fmt.Fprintf(stderr, "Usage: %s [flags] DIRECTORY\n", os.Args[0])
 		fs.PrintDefaults()
@@ -47,21 +70,25 @@ func run(args []string, stdout, stderr io.Writer) int {
 		}
 		return 2
 	}
+	if cli.showVersion {
+		fmt.Fprintf(stdout, "logify %s\n", version)
+		return 0
+	}
 	if fs.NArg() != 1 {
 		fs.Usage()
 		return 2
 	}
-	from, err := pt(*fromS)
+	from, err := pt(cli.from)
 	if err != nil {
 		fmt.Fprintf(stderr, "logify: invalid -from: %v\n", err)
 		return 1
 	}
-	to, err := pt(*toS)
+	to, err := pt(cli.to)
 	if err != nil {
 		fmt.Fprintf(stderr, "logify: invalid -to: %v\n", err)
 		return 1
 	}
-	engine, err := redact.Compile(redactSpecs, *redactFile)
+	engine, err := redact.Compile(cli.redactSpecs, cli.redactFile)
 	if err != nil {
 		fmt.Fprintf(stderr, "logify: %v\n", err)
 		return 1
@@ -71,7 +98,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "logify: analyze: %v\n", err)
 		return 1
 	}
-	if err = report.Write(*out, result, report.Options{Redact: engine}); err != nil {
+	if err = report.Write(cli.output, result, report.Options{Redact: engine}); err != nil {
 		fmt.Fprintf(stderr, "logify: write report: %v\n", err)
 		return 1
 	}
@@ -79,7 +106,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if engine != nil {
 		fmt.Fprintf(stderr, "logify: applied %d redaction rule(s); redaction is best-effort and does not guarantee secrets are gone\n", engine.RuleCount())
 	}
-	fmt.Fprintf(stdout, "Wrote %s (%s)\n", *out, result.SummaryLine())
+	fmt.Fprintf(stdout, "Wrote %s (%s)\n", cli.output, result.SummaryLine())
 	for _, w := range result.Warnings {
 		fmt.Fprintf(stdout, "  %s\n", w.String())
 	}

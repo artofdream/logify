@@ -80,7 +80,6 @@ Deferred requirement must appear. Values must match `docs/requirements/`.
 |---|---|
 | NFR-009 | Proposed |
 | NFR-013 | Partial |
-| NFR-016 | Proposed |
 | NFR-021 | Partial |
 | NFR-028 | Partial |
 

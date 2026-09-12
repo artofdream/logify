@@ -173,9 +173,18 @@
 ### NFR-016 — Backward-compatible CLI evolution
 
 - **Priority:** Should
-- **Status:** Proposed
-- **Acceptance criteria:** Existing flags and defaults remain supported throughout
-  a major version, or a documented deprecation warning precedes removal.
+- **Status:** Implemented
+- **Acceptance criteria:**
+  1. Existing flags and defaults remain supported throughout a major version,
+     or a documented deprecation warning precedes removal.
+  2. The compatibility policy is recorded (ADR + README) and uses SemVer major
+     bumps for breaking flag or default changes.
+  3. The CLI exposes `-version` / `-V` from an ldflags-friendly `version` var
+     (default `dev` for unreleased builds).
+  4. A test probes that documented stable flags still exist and help exits 0.
+- **Notes:** Policy is [ADR-0010](../knowledge/decisions/ADR-0010-cli-compatibility.md).
+  Release-tag injection via `-ldflags -X main.version=` is deferred to `v0.1.0`.
+  Probes: `TestNFR016StableFlagsExist`, `TestNFR016VersionFlag`.
 
 ## Follow-up data integrity
 

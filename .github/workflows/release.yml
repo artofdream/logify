@@ -65,11 +65,9 @@ jobs:
           if [ "${{ matrix.goos }}" = "windows" ]; then ext=".exe"; fi
           out="dist/logify-${{ matrix.goos }}-${{ matrix.goarch }}${ext}"
           mkdir -p dist
-          # NOTE: cmd/logify has no `version` variable to inject via -ldflags -X
-          # today, so the tag is only reflected in the filename/Release, not
-          # the binary itself. Add a `var version = "dev"` in cmd/logify and
-          # a `-ldflags "-X main.version=${GITHUB_REF_NAME}"` here if you want
-          # `logify -version` to report it later.
+          # Version injection is deferred to the first tagged release (v0.1.0).
+          # cmd/logify already exports `var version = "dev"` for:
+          #   -ldflags "-X main.version=${GITHUB_REF_NAME}"
           go build -trimpath -o "$out" ./cmd/logify
       - uses: actions/upload-artifact@v4
         with:

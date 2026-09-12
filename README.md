@@ -99,10 +99,16 @@ Generated `logify.exe` and `*-report.html` files (including `sample-report.html`
 go test ./...
 go build -o logify.exe ./cmd/logify
 .\logify.exe -h
+.\logify.exe -version
 .\logify.exe -output report.html C:\path\to\support-bundle
 ```
 
 `-h` / `-help` print flags to stderr and exit 0.
+
+`-version` / `-V` print `logify <version>` on stdout and exit 0 without a
+directory. Unreleased builds report `dev`. Tagged releases can overwrite that
+string later with `go build -ldflags "-X main.version=vX.Y.Z"` (not wired in
+the release workflow until `v0.1.0`).
 
 Optional RFC3339 bounds filter timestamped events (untimestamped events are excluded when a bound is active). Bounds are compared as absolute instants. Java and Apache error timestamps without an offset are parsed as UTC, so they will not stay in a `+02:00` "morning" window unless that window still covers the UTC instant. Apache access stamps that include an offset are compared using that offset.
 
@@ -113,6 +119,25 @@ Optional RFC3339 bounds filter timestamped events (untimestamped events are excl
 On `testdata/case`, that example keeps the two Apache access events (`10:00:03+02:00` and `10:00:04+02:00`) and drops Tomcat/Apache error lines whose timezone-less `10:00:00,123` / `10:00:05` stamps become `10:00Z` and fall after `12:00+02:00` (`10:00:00.000Z`). `-from` / `-to` require a zone or `Z`; a value such as `2026-09-03T08:00:00` is rejected.
 
 Release: push a `v*` tag to run [`.github/workflows/release.yml`](.github/workflows/release.yml); do not commit the resulting binaries.
+
+## CLI compatibility
+
+Logify versions the operator CLI with [SemVer](https://semver.org/)
+(NFR-016 / [ADR-0010](docs/knowledge/decisions/ADR-0010-cli-compatibility.md)).
+
+The public surface is the flags documented here and on `-h`: `-output`
+(default `logify-report.html`), `-from`, `-to`, `-redact`, `-redact-file`,
+`-h` / `-help`, and `-version` / `-V`. Those names and defaults stay
+supported throughout a major version. Removing, renaming, changing a default,
+or rejecting a previously accepted value is a breaking change and requires a
+new major version. Before a removal or rename, the CLI prints a deprecation
+warning on stderr and this README names the successor, for at least one
+released minor version in the same major.
+
+Additive flags are minor. Bug fixes that restore documented behavior are
+patch. While the product is still `0.y.z`, documented flags are still a
+compatibility contract; a break after that warning window ships as `1.0.0`
+(or a later major).
 
 ## Behavior
 
@@ -137,7 +162,7 @@ Release: push a `v*` tag to run [`.github/workflows/release.yml`](.github/workfl
 6. Create, flag, tag, and change state with the keyboard: **Tab** reaches labeled controls, **Enter** adds a tag, and **Left/Right** switches the Timeline and Issue queue tabs. Flag and workflow state are named in text (**Flagged**, **State: Open**), not color alone. The status line confirms each action; the queue shows **Showing N of M issue(s)** when filters change.
 7. **Export follow-up JSON** writes a portable file. **Import follow-up JSON** loads it into this report. A later report with the same `signature` + `instance` lists candidate matches and newly observed occurrence counts (or a newer last-seen time) for review; nothing auto-changes state. Duplicate evidence ownership is skipped. **Clear local follow-up data** drops the browser copy after a confirmation.
 
-The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md). Scan warning categories and input-count identity are in [`docs/knowledge/decisions/ADR-0004-scan-warnings.md`](docs/knowledge/decisions/ADR-0004-scan-warnings.md). Redaction rules are in [`docs/knowledge/decisions/ADR-0005-optional-report-redaction.md`](docs/knowledge/decisions/ADR-0005-optional-report-redaction.md). Keyboard, confirmation, and the 10,000-issue filter probe are in [`docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md`](docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md) and [`docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md`](docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md). Multi-evidence merge and review rules are in [`docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md`](docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md). Correlation rules are in [`docs/knowledge/decisions/ADR-0008-event-correlation.md`](docs/knowledge/decisions/ADR-0008-event-correlation.md). Rotated and gzip discovery is in [`docs/knowledge/decisions/ADR-0009-rotated-gzip-logs.md`](docs/knowledge/decisions/ADR-0009-rotated-gzip-logs.md).
+The export schema is documented in [`docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md`](docs/knowledge/decisions/ADR-0002-follow-up-export-schema.md). Identity rules are in [`docs/knowledge/decisions/ADR-0001-follow-up-identities.md`](docs/knowledge/decisions/ADR-0001-follow-up-identities.md). Overdue and detail-field rules are in [`docs/knowledge/decisions/ADR-0003-follow-up-details.md`](docs/knowledge/decisions/ADR-0003-follow-up-details.md). Scan warning categories and input-count identity are in [`docs/knowledge/decisions/ADR-0004-scan-warnings.md`](docs/knowledge/decisions/ADR-0004-scan-warnings.md). Redaction rules are in [`docs/knowledge/decisions/ADR-0005-optional-report-redaction.md`](docs/knowledge/decisions/ADR-0005-optional-report-redaction.md). Keyboard, confirmation, and the 10,000-issue filter probe are in [`docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md`](docs/knowledge/decisions/ADR-0006-issue-workflow-usability.md) and [`docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md`](docs/knowledge/research/RES-20260909-nfr021-issue-filter-probe.md). Multi-evidence merge and review rules are in [`docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md`](docs/knowledge/decisions/ADR-0007-recurring-evidence-merge.md). Correlation rules are in [`docs/knowledge/decisions/ADR-0008-event-correlation.md`](docs/knowledge/decisions/ADR-0008-event-correlation.md). Rotated and gzip discovery is in [`docs/knowledge/decisions/ADR-0009-rotated-gzip-logs.md`](docs/knowledge/decisions/ADR-0009-rotated-gzip-logs.md). CLI compatibility is in [`docs/knowledge/decisions/ADR-0010-cli-compatibility.md`](docs/knowledge/decisions/ADR-0010-cli-compatibility.md).
 
 ## Current limits
 
