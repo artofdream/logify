@@ -3,11 +3,56 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestNFR016StableFlagsExist(t *testing.T) {
+	// NFR-016: documented public flags and defaults remain registered;
+	// -h exits 0.
+	fs := flag.NewFlagSet("logify", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	var cli cliFlags
+	registerCLI(fs, &cli)
+	for _, name := range []string{"from", "to", "output", "redact", "redact-file"} {
+		if fs.Lookup(name) == nil {
+			t.Errorf("missing stable flag -%s", name)
+		}
+	}
+	if got := fs.Lookup("output"); got == nil || got.DefValue != defaultOutput {
+		t.Fatalf("output default=%v want %q", got, defaultOutput)
+	}
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"-h"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("help exit=%d want 0 stderr=%q", code, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("help stdout=%q", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "Usage:") {
+		t.Fatalf("help stderr=%q", stderr.String())
+	}
+}
+
+func TestNFR016VersionFlag(t *testing.T) {
+	// NFR-016: -version / -V print the build version and exit 0 without a directory.
+	for _, arg := range []string{"-version", "-V"} {
+		t.Run(arg, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			if code := run([]string{arg}, &stdout, &stderr); code != 0 {
+				t.Fatalf("exit=%d want 0 stderr=%q", code, stderr.String())
+			}
+			want := "logify " + version
+			if !strings.Contains(stdout.String(), want) {
+				t.Fatalf("stdout=%q want substring %q", stdout.String(), want)
+			}
+		})
+	}
+}
 
 func TestRunHelpExitsZero(t *testing.T) {
 	// NFR-011: -h / -help print usage and are not a failure.
