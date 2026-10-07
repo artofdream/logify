@@ -3,7 +3,7 @@ id: logify-knowledge-index
 type: index
 status: active
 owner: human
-updated: 2026-09-09
+updated: 2026-10-07
 tags: [knowledge, second-brain, obsidian]
 ---
 
@@ -25,7 +25,8 @@ agent vendor. Git is the history and review mechanism.
 
 ## Collections
 
-- `decisions/` — durable architecture decision records.
+- `decisions/` — durable architecture decision records
+  ([ADR index](decisions/README.md)).
 - `research/` — sourced investigations that may inform a decision.
 - `incidents/` — significant failures and the safeguards learned from them.
 - `sessions/` — short episodic memory, one agent per file.
